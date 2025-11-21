@@ -1,0 +1,635 @@
+"""
+FAZ 1: Dataset Generation Pipeline
+===================================
+
+Kapsamlı dataset oluşturma sistemi:
+- Teorik hesaplamalar (SEMF, Shell Model, Woods-Saxon, Nilsson, Schmidt)
+- QM filtreleme (target-based)
+- Çoklu çekirdek sayıları (50, 75, 100, 150, 175, 200, 250, 300, 350)
+- Çoklu targetler (MM, QM, MM_QM, Beta_2)
+- Kalite kontrolü ve validasyon
+- Otomatik raporlama
+
+Author: Nuclear Physics AI Project
+Version: 1.0.0
+Date: 2025-10-15
+"""
+
+import pandas as pd
+import numpy as np
+from pathlib import Path
+import logging
+from datetime import datetime
+import json
+from typing import Dict, List, Tuple, Optional
+import warnings
+warnings.filterwarnings('ignore')
+
+# Project imports
+from physics_modules.theoretical_calculations_manager import TheoreticalCalculationsManager
+from .qm_filter_manager import QMFilterManager
+from .data_quality_modules import OutlierHandler, DataValidator
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+class DatasetGenerationPipelineV2:
+    """
+    Ana Dataset Generation Pipeline V2
+
+    Workflow:
+    1. Ham veriyi yükle
+    2. Teorik hesaplamalar ekle
+    3. Target-based QM filtreleme uygula
+    4. Farklı çekirdek sayıları için örnekle
+    5. Kalite kontrolü
+    6. Dataset'leri kaydet
+    7. Metadata ve raporlar oluştur
+    """
+    
+    def __init__(self,
+                 source_data_path: str = None,
+                 output_base_dir: str = 'generated_datasets',
+                 nucleus_counts: List[int] = None,
+                 targets: List[str] = None,
+                 # Backward compatibility aliases
+                 aaa2_txt_path: str = None,
+                 output_dir: str = None):
+        """
+        Args:
+            source_data_path: Ham veri dosyası yolu (or use aaa2_txt_path)
+            output_base_dir: Çıktı ana dizini (or use output_dir)
+            nucleus_counts: Oluşturulacak dataset boyutları
+            targets: Target değişkenler
+            aaa2_txt_path: Alias for source_data_path (backward compatibility)
+            output_dir: Alias for output_base_dir (backward compatibility)
+        """
+        # Handle aliases
+        if aaa2_txt_path is not None:
+            source_data_path = aaa2_txt_path
+        if output_dir is not None:
+            output_base_dir = output_dir
+
+        self.source_data_path = Path(source_data_path)
+        self.output_base_dir = Path(output_base_dir)
+        self.output_base_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Default parameters (updated per requirements)
+        # ✅ UPDATED: 75, 100, 150, 200, ALL (all available nuclei)
+        self.nucleus_counts = nucleus_counts or [75, 100, 150, 200, 'ALL']
+        self.targets = targets or ['MM', 'QM', 'MM_QM', 'Beta_2']
+        
+        # Initialize managers
+        self.theoretical_calc_manager = TheoreticalCalculationsManager(enable_all=True)
+        self.qm_filter_manager = QMFilterManager()
+        self.outlier_handler = OutlierHandler(output_dir=self.output_base_dir / 'quality_reports')
+        self.data_validator = DataValidator(output_dir=self.output_base_dir / 'quality_reports')
+        
+        # Storage
+        self.raw_data = None
+        self.enriched_data = None
+        self.filtered_data = {}  # {target: df}
+        self.generated_datasets = []
+        self.generation_report = {}
+        
+        logger.info("=" * 80)
+        logger.info("DATASET GENERATION PIPELINE INITIALIZED")
+        logger.info("=" * 80)
+        logger.info(f"Source data: {self.source_data_path}")
+        logger.info(f"Output directory: {self.output_base_dir}")
+        logger.info(f"Nucleus counts: {self.nucleus_counts}")
+        logger.info(f"Targets: {self.targets}")
+    
+    def run_complete_pipeline(self) -> Dict:
+        """
+        Tam pipeline'ı çalıştır
+        
+        Returns:
+            Generation report dictionary
+        """
+        start_time = datetime.now()
+        
+        logger.info("\n" + "=" * 80)
+        logger.info("STARTING COMPLETE DATASET GENERATION PIPELINE")
+        logger.info("=" * 80)
+        
+        # Step 1: Load raw data
+        logger.info("\n📁 STEP 1: LOADING RAW DATA")
+        logger.info("-" * 80)
+        self._load_raw_data()
+        
+        # Step 2: Add theoretical calculations
+        logger.info("\n🔬 STEP 2: ADDING THEORETICAL CALCULATIONS")
+        logger.info("-" * 80)
+        self._add_theoretical_calculations()
+        
+        # Step 3: Apply QM filtering per target
+        logger.info("\n🔍 STEP 3: APPLYING QM FILTERING")
+        logger.info("-" * 80)
+        self._apply_qm_filtering()
+        
+        # Step 4: Quality control
+        logger.info("\n✅ STEP 4: QUALITY CONTROL")
+        logger.info("-" * 80)
+        self._perform_quality_control()
+        
+        # Step 5: Generate datasets
+        logger.info("\n📦 STEP 5: GENERATING DATASETS")
+        logger.info("-" * 80)
+        self._generate_all_datasets()
+        
+        # Step 6: Create metadata and reports
+        logger.info("\n📊 STEP 6: CREATING METADATA & REPORTS")
+        logger.info("-" * 80)
+        self._create_metadata_and_reports()
+        
+        end_time = datetime.now()
+        duration = (end_time - start_time).total_seconds()
+        
+        # Final summary
+        logger.info("\n" + "=" * 80)
+        logger.info("PIPELINE COMPLETED SUCCESSFULLY")
+        logger.info("=" * 80)
+        logger.info(f"Total duration: {duration:.2f} seconds ({duration/60:.2f} minutes)")
+        logger.info(f"Total datasets generated: {len(self.generated_datasets)}")
+        logger.info(f"Output directory: {self.output_base_dir}")
+        
+        self.generation_report['pipeline_completed'] = True
+        self.generation_report['total_duration_seconds'] = duration
+        self.generation_report['completion_timestamp'] = datetime.now().isoformat()
+        
+        return self.generation_report
+    
+    def _load_raw_data(self):
+        """Ham veriyi yükle"""
+        logger.info(f"Loading data from: {self.source_data_path}")
+        
+        if not self.source_data_path.exists():
+            raise FileNotFoundError(f"Source data not found: {self.source_data_path}")
+        
+        # Detect file format and load
+        if self.source_data_path.suffix == '.csv':
+            self.raw_data = pd.read_csv(self.source_data_path)
+        elif self.source_data_path.suffix in ['.xlsx', '.xls']:
+            self.raw_data = pd.read_excel(self.source_data_path)
+        elif self.source_data_path.suffix == '.tsv':
+            self.raw_data = pd.read_csv(self.source_data_path, sep='\t')
+        else:
+            raise ValueError(f"Unsupported file format: {self.source_data_path.suffix}")
+        
+        logger.info(f"✅ Loaded: {len(self.raw_data)} nuclei")
+        logger.info(f"   Columns: {list(self.raw_data.columns)}")
+        
+        # Basic validation
+        required_cols = ['A', 'Z', 'N']
+        missing_cols = [col for col in required_cols if col not in self.raw_data.columns]
+        if missing_cols:
+            raise ValueError(f"Missing required columns: {missing_cols}")
+        
+        self.generation_report['raw_data'] = {
+            'n_nuclei': len(self.raw_data),
+            'n_features': len(self.raw_data.columns),
+            'columns': list(self.raw_data.columns)
+        }
+    
+    def _add_theoretical_calculations(self):
+        """Teorik hesaplamaları ekle"""
+        logger.info("Adding theoretical physics calculations...")
+        
+        self.enriched_data = self.theoretical_calc_manager.calculate_all_theoretical_properties(
+            self.raw_data,
+            save_report=True
+        )
+        
+        n_added_features = len(self.enriched_data.columns) - len(self.raw_data.columns)
+        
+        logger.info(f"✅ Added {n_added_features} theoretical features")
+        logger.info(f"   Total features now: {len(self.enriched_data.columns)}")
+        
+        self.generation_report['theoretical_calculations'] = {
+            'n_original_features': len(self.raw_data.columns),
+            'n_enriched_features': len(self.enriched_data.columns),
+            'n_added_features': n_added_features,
+            'calculations_performed': self.theoretical_calc_manager.calculations_done
+        }
+    
+    def _apply_qm_filtering(self):
+        """Her target için QM filtreleme uygula"""
+        logger.info("Applying QM filtering for each target...")
+        
+        qm_reports = []
+        
+        for target in self.targets:
+            logger.info(f"\n→ Target: {target}")
+            
+            # Target columns
+            if target == 'MM_QM':
+                target_cols = ['MM', 'Q']
+            else:
+                target_cols = [target] if target in self.enriched_data.columns else []
+            
+            # Check if target exists
+            missing_targets = [col for col in target_cols if col not in self.enriched_data.columns]
+            if missing_targets:
+                logger.warning(f"  ⚠️ Target columns not found: {missing_targets}, skipping {target}")
+                continue
+            
+            # Apply filter
+            filtered_df, filter_report = self.qm_filter_manager.filter_by_target(
+                self.enriched_data,
+                target_name=target,
+                target_cols=target_cols,
+                features=list(self.enriched_data.columns)
+            )
+            
+            self.filtered_data[target] = filtered_df
+            filter_report['target'] = target
+            qm_reports.append(filter_report)
+            
+            logger.info(f"  ✅ Filtered: {len(filtered_df)} nuclei remain")
+            logger.info(f"     Removed: {filter_report['removed']} nuclei")
+        
+        # Save QM filter report
+        self.qm_filter_manager.create_filter_report(
+            qm_reports,
+            output_path=self.output_base_dir / 'quality_reports' / 'qm_filter_report.xlsx'
+        )
+        
+        self.generation_report['qm_filtering'] = {
+            'targets_processed': list(self.filtered_data.keys()),
+            'filter_reports': qm_reports
+        }
+    
+    def _perform_quality_control(self):
+        """Kalite kontrolü uygula"""
+        logger.info("Performing quality control...")
+        
+        quality_reports = {}
+        
+        for target, df in self.filtered_data.items():
+            logger.info(f"\n→ Quality control for {target}")
+            
+            # Identify numeric columns (exclude NUCLEUS if exists)
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if 'NUCLEUS' in numeric_cols:
+                numeric_cols.remove('NUCLEUS')
+            
+            # Outlier detection
+            outlier_mask = self.outlier_handler.detect_outliers_iqr(
+                df, numeric_cols, threshold=3.0
+            )
+            
+            n_outliers = outlier_mask.sum()
+            logger.info(f"  Detected {n_outliers} outliers ({n_outliers/len(df)*100:.1f}%)")
+            
+            # Data validation
+            validation_rules = {
+                'ranges': {
+                    'A': (1, 300),
+                    'Z': (1, 120),
+                    'N': (1, 200)
+                }
+            }
+            
+            if target in df.columns:
+                # Add target-specific validation
+                if target == 'MM':
+                    validation_rules['ranges']['MM'] = (-10, 10)
+                elif target == 'QM':
+                    validation_rules['ranges']['Q'] = (-5, 5)
+                elif target == 'Beta_2':
+                    validation_rules['ranges']['Beta_2'] = (-0.5, 0.5)
+            
+            issues = self.data_validator.validate_dataset(df, validation_rules)
+            
+            logger.info(f"  Validation issues: {len(issues)}")
+            
+            quality_reports[target] = {
+                'n_samples': len(df),
+                'n_outliers': int(n_outliers),
+                'outlier_percentage': float(n_outliers / len(df) * 100),
+                'validation_issues': len(issues)
+            }
+        
+        self.generation_report['quality_control'] = quality_reports
+    
+    def _generate_all_datasets(self):
+        """Tüm dataset kombinasyonlarını oluştur"""
+        logger.info("Generating all dataset combinations...")
+        
+        total_combinations = len(self.targets) * len(self.nucleus_counts)
+        logger.info(f"Total combinations to generate: {total_combinations}")
+        
+        generated_count = 0
+        
+        for target in self.targets:
+            if target not in self.filtered_data:
+                logger.warning(f"⚠️ No filtered data for {target}, skipping")
+                continue
+            
+            target_df = self.filtered_data[target]
+            
+            logger.info(f"\n→ Generating datasets for target: {target}")
+            logger.info(f"   Available nuclei: {len(target_df)}")
+            
+            for n_nuclei in self.nucleus_counts:
+                # Handle 'ALL' case
+                if n_nuclei == 'ALL':
+                    actual_n = len(target_df)
+                    logger.info(f"  → 'ALL' option: using all {actual_n} available nuclei")
+                elif n_nuclei > len(target_df):
+                    logger.warning(f"  ⚠️ Requested {n_nuclei} nuclei but only {len(target_df)} available, skipping")
+                    continue
+                
+                # Sample dataset
+                dataset = self._create_single_dataset(target_df, target, n_nuclei)
+                
+                if dataset is not None:
+                    self.generated_datasets.append(dataset)
+                    generated_count += 1
+                    
+                    logger.info(f"  ✅ Generated: {dataset['dataset_name']} ({len(dataset['data'])} nuclei)")
+                    logger.info(f"     Files: CSV + MAT")
+        
+        logger.info(f"\n✅ Total datasets generated: {generated_count}/{total_combinations}")
+        
+        self.generation_report['dataset_generation'] = {
+            'total_requested': total_combinations,
+            'total_generated': generated_count,
+            'success_rate': generated_count / total_combinations if total_combinations > 0 else 0
+        }
+    
+    def _create_single_dataset(self, source_df: pd.DataFrame, target: str, n_nuclei: int) -> Optional[Dict]:
+        """Tek bir dataset oluştur"""
+        
+        # Handle 'ALL' case
+        if n_nuclei == 'ALL':
+            sampled_df = source_df.copy()
+            actual_n = len(sampled_df)
+            dataset_name = f"{target}_ALL_{actual_n}nuclei"
+        else:
+            # Random sampling with seed for reproducibility
+            seed = hash(f"{target}_{n_nuclei}") % (2**32)
+            sampled_df = source_df.sample(n=n_nuclei, random_state=seed)
+            actual_n = n_nuclei
+            dataset_name = f"{target}_{n_nuclei}nuclei"
+        
+        # Determine features and target columns
+        if target == 'MM_QM':
+            target_cols = ['MM', 'Q']
+        else:
+            target_cols = [target]
+        
+        # All columns except target columns are features
+        feature_cols = [col for col in sampled_df.columns if col not in target_cols and col != 'NUCLEUS']
+        
+        # Create dataset directory
+        dataset_dir = self.output_base_dir / dataset_name
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+        
+        # ✅ Save dataset as CSV
+        dataset_file_csv = dataset_dir / f"{dataset_name}.csv"
+        sampled_df.to_csv(dataset_file_csv, index=False)
+        
+        # ✅ Save dataset as MAT (MATLAB format)
+        dataset_file_mat = dataset_dir / f"{dataset_name}.mat"
+        self._save_as_mat(sampled_df, dataset_file_mat, feature_cols, target_cols)
+        
+        # Create metadata
+        metadata = {
+            'dataset_name': dataset_name,
+            'target': target,
+            'target_columns': target_cols,
+            'n_nuclei': actual_n,
+            'n_features': len(feature_cols),
+            'feature_columns': feature_cols,
+            'data_file_csv': str(dataset_file_csv),
+            'data_file_mat': str(dataset_file_mat),
+            'creation_timestamp': datetime.now().isoformat(),
+            'statistics': {
+                'A_range': [int(sampled_df['A'].min()), int(sampled_df['A'].max())],
+                'Z_range': [int(sampled_df['Z'].min()), int(sampled_df['Z'].max())],
+                'N_range': [int(sampled_df['N'].min()), int(sampled_df['N'].max())]
+            }
+        }
+        
+        # Add target statistics
+        for target_col in target_cols:
+            if target_col in sampled_df.columns:
+                metadata['statistics'][f'{target_col}_mean'] = float(sampled_df[target_col].mean())
+                metadata['statistics'][f'{target_col}_std'] = float(sampled_df[target_col].std())
+                metadata['statistics'][f'{target_col}_range'] = [
+                    float(sampled_df[target_col].min()),
+                    float(sampled_df[target_col].max())
+                ]
+        
+        # Save metadata
+        metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
+        with open(metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=2)
+        
+        return {
+            'dataset_name': dataset_name,
+            'dataset_dir': dataset_dir,
+            'data_file_csv': dataset_file_csv,
+            'data_file_mat': dataset_file_mat,
+            'metadata_file': metadata_file,
+            'metadata': metadata,
+            'data': sampled_df
+        }
+    
+    def _save_as_mat(self, df: pd.DataFrame, filepath: Path, feature_cols: List[str], target_cols: List[str]):
+        """
+        Save dataset as MATLAB .mat file
+        
+        Args:
+            df: DataFrame to save
+            filepath: Output .mat file path
+            feature_cols: Feature column names
+            target_cols: Target column names
+        """
+        try:
+            from scipy.io import savemat
+            
+            # Prepare data dictionary for MATLAB
+            mat_dict = {
+                'features': df[feature_cols].values,
+                'targets': df[target_cols].values,
+                'feature_names': feature_cols,
+                'target_names': target_cols,
+                'nucleus_names': df['NUCLEUS'].values if 'NUCLEUS' in df.columns else []
+            }
+            
+            # Save
+            savemat(filepath, mat_dict)
+            logger.info(f"  ✅ MAT file saved: {filepath.name}")
+            
+        except ImportError:
+            logger.warning("  ⚠️ scipy not available, skipping MAT file export")
+        except Exception as e:
+            logger.error(f"  ❌ Error saving MAT file: {e}")
+    
+    def _create_metadata_and_reports(self):
+        """Master metadata ve raporlar oluştur"""
+        logger.info("Creating master metadata and reports...")
+        
+        # Master metadata
+        master_metadata = {
+            'pipeline_version': '1.0.0',
+            'creation_timestamp': datetime.now().isoformat(),
+            'source_data': str(self.source_data_path),
+            'total_datasets': len(self.generated_datasets),
+            'targets': self.targets,
+            'nucleus_counts': self.nucleus_counts,
+            'datasets': []
+        }
+        
+        for dataset in self.generated_datasets:
+            master_metadata['datasets'].append({
+                'name': dataset['dataset_name'],
+                'target': dataset['metadata']['target'],
+                'n_nuclei': dataset['metadata']['n_nuclei'],
+                'n_features': dataset['metadata']['n_features'],
+                'data_file': str(dataset['data_file'])
+            })
+        
+        # Save master metadata
+        master_metadata_file = self.output_base_dir / 'master_metadata.json'
+        with open(master_metadata_file, 'w') as f:
+            json.dump(master_metadata, f, indent=2)
+        
+        logger.info(f"✅ Master metadata: {master_metadata_file}")
+        
+        # Generation report
+        report_file = self.output_base_dir / 'generation_report.json'
+        with open(report_file, 'w') as f:
+            json.dump(self.generation_report, f, indent=2)
+        
+        logger.info(f"✅ Generation report: {report_file}")
+        
+        # Summary Excel report
+        self._create_summary_excel()
+    
+    def _create_summary_excel(self):
+        """Excel özet raporu oluştur"""
+        summary_data = []
+        
+        for dataset in self.generated_datasets:
+            meta = dataset['metadata']
+            summary_data.append({
+                'Dataset_Name': meta['dataset_name'],
+                'Target': meta['target'],
+                'N_Nuclei': meta['n_nuclei'],
+                'N_Features': meta['n_features'],
+                'A_Min': meta['statistics']['A_range'][0],
+                'A_Max': meta['statistics']['A_range'][1],
+                'Z_Min': meta['statistics']['Z_range'][0],
+                'Z_Max': meta['statistics']['Z_range'][1],
+                'Data_File': str(dataset['data_file'])
+            })
+        
+        summary_df = pd.DataFrame(summary_data)
+        
+        # Save to Excel
+        excel_file = self.output_base_dir / 'datasets_summary.xlsx'
+        with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+            summary_df.to_excel(writer, sheet_name='Datasets_Summary', index=False)
+            
+            # Quality control summary
+            if 'quality_control' in self.generation_report:
+                qc_data = []
+                for target, qc_info in self.generation_report['quality_control'].items():
+                    qc_data.append({
+                        'Target': target,
+                        'N_Samples': qc_info['n_samples'],
+                        'N_Outliers': qc_info['n_outliers'],
+                        'Outlier_Percentage': qc_info['outlier_percentage'],
+                        'Validation_Issues': qc_info['validation_issues']
+                    })
+                
+                qc_df = pd.DataFrame(qc_data)
+                qc_df.to_excel(writer, sheet_name='Quality_Control', index=False)
+        
+        logger.info(f"✅ Summary Excel: {excel_file}")
+
+
+# =============================================================================
+# MAIN EXECUTION
+# =============================================================================
+
+def main():
+    """Main execution function"""
+    
+    print("\n" + "=" * 80)
+    print("FAZ 1: DATASET GENERATION PIPELINE")
+    print("=" * 80)
+    
+    # Configuration
+    SOURCE_DATA = "/mnt/user-data/uploads/your_source_data.csv"  # Kullanıcı source data yolunu girecek
+    OUTPUT_DIR = "generated_datasets"
+    NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']  # ✅ UPDATED per requirements
+    TARGETS = ['MM', 'QM', 'MM_QM', 'Beta_2']
+    
+    # Check if source data exists (demo mode if not)
+    if not Path(SOURCE_DATA).exists():
+        logger.warning(f"⚠️ Source data not found: {SOURCE_DATA}")
+        logger.info("Creating DEMO dataset for testing...")
+        
+        # Create demo data
+        demo_data = _create_demo_data()
+        demo_path = Path("demo_source_data.csv")
+        demo_data.to_csv(demo_path, index=False)
+        SOURCE_DATA = str(demo_path)
+        logger.info(f"✅ Demo data created: {demo_path}")
+    
+    # Initialize pipeline
+    pipeline = DatasetGenerationPipelineV2(
+        source_data_path=SOURCE_DATA,
+        output_base_dir=OUTPUT_DIR,
+        nucleus_counts=NUCLEUS_COUNTS,
+        targets=TARGETS
+    )
+    
+    # Run pipeline
+    report = pipeline.run_complete_pipeline()
+    
+    print("\n" + "=" * 80)
+    print("PIPELINE SUMMARY")
+    print("=" * 80)
+    print(f"Total datasets generated: {len(pipeline.generated_datasets)}")
+    print(f"Output directory: {pipeline.output_base_dir}")
+    print(f"Duration: {report.get('total_duration_seconds', 0):.2f} seconds")
+    
+    return pipeline, report
+
+
+def _create_demo_data() -> pd.DataFrame:
+    """Demo veri oluştur (test için)"""
+    np.random.seed(42)
+    n_samples = 500
+    
+    demo_data = pd.DataFrame({
+        'NUCLEUS': [f"Nucleus_{i}" for i in range(n_samples)],
+        'A': np.random.randint(20, 250, n_samples),
+        'Z': np.random.randint(10, 100, n_samples),
+        'N': np.random.randint(10, 150, n_samples),
+        'SPIN': np.random.choice([0, 0.5, 1, 1.5, 2], n_samples),
+        'PARITY': np.random.choice([1, -1], n_samples),
+        'MM': np.random.randn(n_samples) * 2,
+        'Q': np.random.randn(n_samples) * 0.5,
+        'Beta_2': np.random.uniform(-0.3, 0.4, n_samples)
+    })
+    
+    # Add some missing Q values (for QM filtering test)
+    demo_data.loc[np.random.choice(n_samples, 50, replace=False), 'Q'] = np.nan
+    
+    return demo_data
+
+
+if __name__ == "__main__":
+    pipeline, report = main()
+    print("\n✅ FAZ 1: DATASET GENERATION PIPELINE - COMPLETE!")
