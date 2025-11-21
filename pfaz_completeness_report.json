@@ -1,0 +1,345 @@
+{
+  "PFAZ 0": {
+    "description": "Temel Haz\u0131rl\u0131k",
+    "modules": {
+      "required": [
+        "constants_v1_1_0.py",
+        "config.json"
+      ],
+      "found": [
+        "constants_v1_1_0.py (similar: constants.py)",
+        "config.json"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 1": {
+    "description": "Dataset Generation",
+    "modules": {
+      "required": [
+        "data_loader.py",
+        "dataset_generator.py",
+        "data_quality_modules.py",
+        "qm_filter_manager.py",
+        "semf_calculator.py",
+        "woods_saxon.py",
+        "nilsson_model.py",
+        "theoretical_calculations_manager.py"
+      ],
+      "found": [
+        "data_loader.py",
+        "dataset_generator.py",
+        "data_quality_modules.py",
+        "qm_filter_manager.py",
+        "semf_calculator.py",
+        "woods_saxon.py",
+        "nilsson_model.py",
+        "theoretical_calculations_manager.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 2": {
+    "description": "AI Model Training",
+    "modules": {
+      "required": [
+        "model_trainer.py",
+        "hyperparameter_tuner.py",
+        "model_validator.py",
+        "parallel_ai_trainer.py"
+      ],
+      "found": [
+        "model_trainer.py",
+        "hyperparameter_tuner.py",
+        "model_validator.py",
+        "parallel_ai_trainer.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 3": {
+    "description": "ANFIS Training",
+    "modules": {
+      "required": [
+        "matlab_anfis_trainer.py",
+        "anfis_parallel_trainer_v2.py",
+        "anfis_config_manager.py",
+        "anfis_adaptive_strategy.py",
+        "anfis_performance_analyzer.py",
+        "anfis_all_nuclei_predictor.py",
+        "anfis_robustness_tester.py",
+        "anfis_model_saver.py"
+      ],
+      "found": [
+        "matlab_anfis_trainer.py",
+        "anfis_parallel_trainer_v2.py",
+        "anfis_config_manager.py",
+        "anfis_adaptive_strategy.py",
+        "anfis_performance_analyzer.py",
+        "anfis_all_nuclei_predictor.py",
+        "anfis_robustness_tester.py",
+        "anfis_model_saver.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 4": {
+    "description": "Unknown Nuclei Predictions",
+    "modules": {
+      "required": [
+        "unknown_nuclei_predictor.py",
+        "unknown_nuclei_splitter.py",
+        "all_nuclei_predictor.py",
+        "generalization_analyzer.py"
+      ],
+      "found": [
+        "unknown_nuclei_predictor.py",
+        "unknown_nuclei_splitter.py",
+        "all_nuclei_predictor.py",
+        "generalization_analyzer.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 5": {
+    "description": "Cross-Model Analysis",
+    "modules": {
+      "required": [
+        "cross_model_evaluator.py",
+        "faz5_complete_cross_model.py",
+        "best_model_selector.py"
+      ],
+      "found": [
+        "cross_model_evaluator.py",
+        "faz5_complete_cross_model.py",
+        "best_model_selector.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 6": {
+    "description": "Final Reporting",
+    "modules": {
+      "required": [
+        "pfaz6_final_reporting.py",
+        "comprehensive_excel_reporter.py",
+        "excel_formatter.py",
+        "excel_charts.py",
+        "latex_generator.py"
+      ],
+      "found": [
+        "pfaz6_final_reporting.py",
+        "comprehensive_excel_reporter.py",
+        "excel_formatter.py",
+        "excel_charts.py",
+        "latex_generator.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 7": {
+    "description": "Ensemble & Meta-Learning",
+    "modules": {
+      "required": [
+        "ensemble_model_builder.py",
+        "stacking_meta_learner.py",
+        "ensemble_evaluator.py",
+        "faz7_ensemble_pipeline.py"
+      ],
+      "found": [
+        "ensemble_model_builder.py",
+        "stacking_meta_learner.py",
+        "ensemble_evaluator.py",
+        "faz7_ensemble_pipeline.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [
+        "PFAZ7_Ensemble_Results.xlsx"
+      ],
+      "found": [
+        "PFAZ7_Ensemble_Results.xlsx"
+      ],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 8": {
+    "description": "Visualization & Dashboard",
+    "modules": {
+      "required": [
+        "visualization_system.py",
+        "visualization_advanced_modules.py",
+        "ai_visualizer.py",
+        "interactive_html_visualizer.py"
+      ],
+      "found": [
+        "visualization_system.py",
+        "visualization_advanced_modules.py",
+        "ai_visualizer.py",
+        "interactive_html_visualizer.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 9": {
+    "description": "AAA2 & Monte Carlo",
+    "modules": {
+      "required": [
+        "aaa2_control_group_complete_v4.py",
+        "monte_carlo_simulation_system.py",
+        "advanced_analytics_comprehensive.py"
+      ],
+      "found": [
+        "aaa2_control_group_complete_v4.py",
+        "monte_carlo_simulation_system.py",
+        "advanced_analytics_comprehensive.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 10": {
+    "description": "Thesis Compilation",
+    "modules": {
+      "required": [
+        "pfaz10_complete_package.py",
+        "pfaz10_master_integration.py",
+        "pfaz10_content_generator.py",
+        "pfaz10_latex_integration.py",
+        "pfaz10_visualization_qa.py"
+      ],
+      "found": [
+        "pfaz10_complete_package.py",
+        "pfaz10_master_integration.py",
+        "pfaz10_content_generator.py",
+        "pfaz10_latex_integration.py",
+        "pfaz10_visualization_qa.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 12": {
+    "description": "Advanced Analytics",
+    "modules": {
+      "required": [
+        "advanced_analytics_comprehensive.py",
+        "statistical_testing_suite.py",
+        "bootstrap_confidence_intervals.py",
+        "advanced_sensitivity_analysis.py"
+      ],
+      "found": [
+        "advanced_analytics_comprehensive.py",
+        "statistical_testing_suite.py",
+        "bootstrap_confidence_intervals.py",
+        "advanced_sensitivity_analysis.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  },
+  "PFAZ 13": {
+    "description": "AutoML Integration",
+    "modules": {
+      "required": [
+        "automl_anfis_optimizer.py",
+        "automl_hyperparameter_optimizer.py",
+        "automl_feature_engineer.py",
+        "automl_visualizer.py",
+        "automl_logging_reporting_system.py"
+      ],
+      "found": [
+        "automl_anfis_optimizer.py",
+        "automl_hyperparameter_optimizer.py",
+        "automl_feature_engineer.py",
+        "automl_visualizer.py",
+        "automl_logging_reporting_system.py"
+      ],
+      "missing": []
+    },
+    "outputs": {
+      "required": [],
+      "found": [],
+      "missing": []
+    },
+    "completion_percentage": 100.0,
+    "status": "\u2705 Complete"
+  }
+}

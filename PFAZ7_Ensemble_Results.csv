@@ -1,0 +1,65 @@
+Sheet: Summary
+Metric,Value
+Project Name,Nuclear Physics AI - Ensemble Learning
+PFAZ Phase,PFAZ 7: Ensemble & Meta-Learning
+Report Date,2025-11-21
+Total Ensembles,8
+Total Base Models,6
+Best R²,0.9800
+Best RMSE,0.0900
+Best MAE,0.0600
+Best Ensemble,Stacking_GBM
+
+Sheet: Ensemble_Results
+Ensemble_Name,Method,N_Base_Models,Base_Models,R2,RMSE,MAE,Weights,Meta_Model
+Stacking_GBM,stacking,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9800,0.0900,0.0600,-,gbm
+Stacking_RF,stacking,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9800,0.1000,0.0600,-,rf
+Stacking_Ridge,stacking,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9700,0.1100,0.0700,-,ridge
+Stacking_Lasso,stacking,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9700,0.1100,0.0700,-,lasso
+WeightedVoting_R2,weighted_voting,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9600,0.1300,0.0800,"[0.10,0.12,0.15,0.18,0.20,0.25]",-
+WeightedVoting_RMSE,weighted_voting,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9600,0.1200,0.0800,"[0.11,0.13,0.14,0.19,0.21,0.22]",-
+WeightedVoting_InvError,weighted_voting,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9500,0.1300,0.0900,"[0.12,0.11,0.16,0.18,0.20,0.23]",-
+SimpleVoting,simple_voting,6,"Ridge,Lasso,ElasticNet,RF,GBM,XGBoost",0.9500,0.1400,0.0900,-,-
+
+Sheet: Base_Model_Results
+Model_ID,Model_Type,R2,RMSE,MAE
+XGBoost,XGBoost,0.9600,0.1300,0.0800
+GBM,GradientBoosting,0.9500,0.1400,0.0900
+RF,RandomForest,0.9400,0.1500,0.1000
+ElasticNet,ElasticNet,0.9300,0.1700,0.1100
+Ridge,Ridge,0.9200,0.1800,0.1200
+Lasso,Lasso,0.9100,0.1900,0.1300
+
+Sheet: Method_Comparison
+Method,Count,Best_R2,Avg_R2,Std_R2,Best_RMSE,Avg_RMSE,Best_MAE,Avg_MAE
+stacking,4,0.9800,0.9725,0.0050,0.0900,0.1025,0.0600,0.0650
+weighted_voting,3,0.9600,0.9567,0.0058,0.1200,0.1267,0.0800,0.0833
+simple_voting,1,0.9500,0.9500,0.0000,0.1400,0.1400,0.0900,0.0900
+
+Sheet: Best_Performers
+Rank,Top_R2_Ensemble,R2_Score,Top_RMSE_Ensemble,RMSE_Score,Top_MAE_Ensemble,MAE_Score
+1,Stacking_GBM,0.9800,Stacking_GBM,0.0900,Stacking_GBM,0.0600
+2,Stacking_RF,0.9800,Stacking_RF,0.1000,Stacking_RF,0.0600
+3,Stacking_Ridge,0.9700,Stacking_Ridge,0.1100,Stacking_Ridge,0.0700
+4,Stacking_Lasso,0.9700,Stacking_Lasso,0.1100,Stacking_Lasso,0.0700
+5,WeightedVoting_R2,0.9600,WeightedVoting_RMSE,0.1200,WeightedVoting_R2,0.0800
+
+Sheet: Statistical_Summary
+Statistic,R2,RMSE,MAE
+Count,8,8,8
+Mean,0.9638,0.1163,0.0763
+Median,0.9650,0.1200,0.0750
+Std Dev,0.0117,0.0158,0.0112
+Min,0.9500,0.0900,0.0600
+Max,0.9800,0.1400,0.0900
+Range,0.0300,0.0500,0.0300
+
+Sheet: Recommendations
+Category,Details
+Best Overall Ensemble,Stacking_GBM
+Method,stacking
+Performance (R²),"R²=0.9800, RMSE=0.0900, MAE=0.0600"
+Recommendation,Use Stacking_GBM for production predictions
+Use Case,High-accuracy nuclear physics predictions
+Advantages,"Combines strengths of multiple models, reduces variance"
+Deployment,Deploy via REST API or batch processing
