@@ -16,6 +16,7 @@ import logging
 import sys
 # sys.path.append('..') - REMOVED
 from nuclear_physics_modules.constants import *
+from .nuclei_distribution_analyzer import NucleiDistributionAnalyzer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -145,6 +146,9 @@ class DatasetGenerator:
         self.base_path.mkdir(parents=True, exist_ok=True)
         self.sampler = StratifiedSampler()
         self.generated_datasets = []
+        self.distribution_analyzer = NucleiDistributionAnalyzer(
+            output_dir=self.base_path / 'distribution_reports'
+        )
     
     def generate_all_datasets(self, df, targets=None, nucleus_counts=None,
                             scenarios=None, anomaly_modes=None,
@@ -213,6 +217,16 @@ class DatasetGenerator:
         
         logger.info(f"\n✓ Toplam {dataset_count} veri seti oluşturuldu")
         self._save_catalog()
+
+        # Master çekirdek kataloğu oluştur
+        logger.info("\n→ Master çekirdek kataloğu oluşturuluyor...")
+        try:
+            self.distribution_analyzer.create_master_nuclei_catalog(
+                df, self.base_path / 'Master_Nuclei_Catalog.xlsx'
+            )
+            logger.info("✓ Master çekirdek kataloğu oluşturuldu")
+        except Exception as e:
+            logger.error(f"✗ Master katalog hatası: {e}")
     
     def _generate_single_dataset(self, df, target_name, target_cols,
                                 nucleus_count, scenario_name, split_ratios,
@@ -412,7 +426,24 @@ class DatasetGenerator:
         
         # 5. Nükleus seçimi
         nucleus_selection = df_full[['NUCLEUS', 'A', 'Z', 'N']].copy()
+
+        # Ek bilgiler varsa ekle
+        for col in ['SPIN', 'PARITY', 'Beta_2', 'MM', 'Q', 'p_factor']:
+            if col in df_full.columns:
+                nucleus_selection[col] = df_full[col]
+
         nucleus_selection.to_excel(path / 'nucleus_selection.xlsx', index=False)
+
+        # 6. Dağılım analizi raporu oluştur
+        try:
+            analysis = self.distribution_analyzer.analyze_dataset(
+                df_full, dataset_name
+            )
+            self.distribution_analyzer.create_distribution_report(
+                analysis, path / 'nuclei_distribution_report.xlsx'
+            )
+        except Exception as e:
+            logger.warning(f"  ⚠ Dağılım raporu oluşturulamadı: {e}")
     
     def _estimate_total_combinations(self):
         """Toplam kombinasyon sayısını tahmin et"""
