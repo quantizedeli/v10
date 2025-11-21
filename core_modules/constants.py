@@ -14,6 +14,19 @@ import numpy as np
 MAGIC_NUMBERS_Z = [2, 8, 20, 28, 50, 82, 114, 126]  # Proton için
 MAGIC_NUMBERS_N = [2, 8, 20, 28, 50, 82, 126, 184]  # Nötron için
 
+# Shell gap energies (MeV) - Her magic number için kabuk açıklığı
+SHELL_GAPS = {
+    2: 8.0,
+    8: 11.0,
+    20: 8.0,
+    28: 7.0,
+    50: 8.5,
+    82: 6.0,
+    126: 6.5,
+    114: 5.0,
+    184: 5.5
+}
+
 # ============================================================================
 # SEMF (Semi-Empirical Mass Formula) PARAMETRELERİ
 # ============================================================================
@@ -25,6 +38,9 @@ SEMF_PARAMS = {
     'a_a': 23.7,     # Asimetri terimi (MeV)
     'a_p': 11.18     # Pairing terimi (MeV)
 }
+
+# Nuclear radius parameter (fm)
+R0 = 1.2  # fm - Nükleer yarıçap parametresi: r = R0 * A^(1/3)
 
 # ============================================================================
 # SCHMIDT MODELİ PARAMETRELERİ
@@ -39,6 +55,19 @@ SCHMIDT_PARAMS = {
         'g_l': 0.0,
         'g_s': -3.826
     }
+}
+
+# G_FACTORS için alias (theoretical_calculations_manager.py ile uyumluluk için)
+G_FACTORS = SCHMIDT_PARAMS
+
+# ============================================================================
+# WOODS-SAXON POTANSİYEL PARAMETRELERİ
+# ============================================================================
+
+WOODS_SAXON_PARAMS = {
+    'V0': 51.0,     # Potansiyel derinliği (MeV)
+    'r0': 1.25,     # Yarıçap parametresi (fm)
+    'a': 0.67       # Surface diffuseness (yüzey difüzlüğü) (fm)
 }
 
 # ============================================================================
