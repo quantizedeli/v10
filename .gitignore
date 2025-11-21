@@ -58,6 +58,8 @@ logs/
 *.pkl
 *.pickle
 *.joblib
+*.mat
+*.onnx
 
 # Model checkpoints
 checkpoints/
@@ -88,12 +90,17 @@ visualizations/
 *.bbl
 *.blg
 *.synctex.gz
+*.fdb_latexmk
+*.fls
+*.lof
+*.lot
 thesis/*.pdf
 thesis/chapters/*.pdf
 
 # MATLAB
 *.asv
 *.m~
+*.slxc
 
 # Temporary files
 tmp/
