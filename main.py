@@ -417,7 +417,7 @@ class NuclearPhysicsAIOrchestrator:
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 10)
             
-            from pfaz_modules.pfaz03_anfis.anfis_parallel_trainer_v2 import ANFISParallelTrainerV2
+            from pfaz_modules.pfaz03_anfis_training.anfis_parallel_trainer_v2 import ANFISParallelTrainerV2
             
             self.status_manager.update_pfaz(pfaz_id, 'running', 30)
             
@@ -459,7 +459,7 @@ class NuclearPhysicsAIOrchestrator:
         
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            from pfaz_modules.pfaz04_unknown_nuclei.unknown_nuclei_predictor import (
+            from pfaz_modules.pfaz04_unknown_predictions.unknown_nuclei_predictor import (
                 UnknownNucleiPredictor
             )
             
@@ -515,7 +515,7 @@ class NuclearPhysicsAIOrchestrator:
         
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            from pfaz_modules.pfaz06_reporting.pfaz6_final_reporting import FinalReporter
+            from pfaz_modules.pfaz06_final_reporting.pfaz6_final_reporting import FinalReporter
             
             reporter = FinalReporter(output_dir=str(self.pfaz_outputs[6]))
             results = reporter.generate_all_reports()
@@ -596,7 +596,7 @@ class NuclearPhysicsAIOrchestrator:
         
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            from pfaz_modules.pfaz09_control_group.aaa2_control_group_complete_v4 import (
+            from pfaz_modules.pfaz09_aaa2_monte_carlo.aaa2_control_group_complete_v4 import (
                 AAA2ControlGroupAnalyzerComplete
             )
             
@@ -629,7 +629,7 @@ class NuclearPhysicsAIOrchestrator:
         
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            from pfaz_modules.pfaz10_thesis.pfaz10_master_integration import (
+            from pfaz_modules.pfaz10_thesis_compilation.pfaz10_master_integration import (
                 MasterThesisIntegration
             )
             
