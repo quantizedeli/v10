@@ -423,38 +423,59 @@ class ParallelAITrainer:
     - Checkpoint & resume
     """
     
-    def __init__(self, 
-                 output_dir: str = 'trained_models',
+    def __init__(self,
+                 datasets_dir: str = None,
+                 models_dir: str = None,
+                 training_config_path: str = None,
+                 output_dir: str = None,
                  n_workers: int = None,
                  gpu_enabled: bool = False):
         """
         Initialize Parallel AI Trainer
-        
+
         Args:
-            output_dir: Output directory for models
+            datasets_dir: Directory containing datasets from PFAZ 1
+            models_dir: Output directory for trained models (PFAZ 2 output)
+            training_config_path: Path to training configurations JSON file
+            output_dir: Alternative to models_dir (for backward compatibility)
             n_workers: Number of parallel workers (None = auto)
             gpu_enabled: Enable GPU training (for DNN)
         """
-        self.output_dir = Path(output_dir)
+        # Handle both parameter styles
+        if models_dir is not None:
+            self.output_dir = Path(models_dir)
+        elif output_dir is not None:
+            self.output_dir = Path(output_dir)
+        else:
+            self.output_dir = Path('trained_models')
+
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
+        # Set datasets directory
+        self.datasets_dir = Path(datasets_dir) if datasets_dir else None
+
+        # Set training config path
+        self.training_config_path = Path(training_config_path) if training_config_path else None
+
         # Determine number of workers
         if n_workers is None:
             import multiprocessing
             self.n_workers = max(1, multiprocessing.cpu_count() - 2)
         else:
             self.n_workers = n_workers
-        
+
         self.gpu_enabled = gpu_enabled
-        
+
         # Storage
         self.training_results = []
         self.failed_jobs = []
-        
+
         logger.info("=" * 80)
         logger.info("PARALLEL AI TRAINER INITIALIZED")
         logger.info("=" * 80)
+        logger.info(f"Datasets directory: {self.datasets_dir}")
         logger.info(f"Output directory: {self.output_dir}")
+        logger.info(f"Training config: {self.training_config_path}")
         logger.info(f"Workers: {self.n_workers}")
         logger.info(f"GPU enabled: {self.gpu_enabled}")
         logger.info("=" * 80)
@@ -671,16 +692,16 @@ class ParallelAITrainer:
     
     def save_summary_report(self):
         """Save summary report"""
-        
+
         report_file = self.output_dir / 'training_summary.json'
-        
+
         summary = {
             'total_jobs': len(self.training_results),
             'successful': len([r for r in self.training_results if r.success]),
             'failed': len(self.failed_jobs),
             'results': []
         }
-        
+
         for result in self.training_results:
             result_dict = {
                 'job_id': result.job_id,
@@ -690,19 +711,204 @@ class ParallelAITrainer:
                 'success': result.success,
                 'training_time': result.training_time
             }
-            
+
             if result.success:
                 result_dict['metrics'] = result.metrics
                 result_dict['model_path'] = str(result.model_path)
             else:
                 result_dict['error'] = result.error_message
-            
+
             summary['results'].append(result_dict)
-        
+
         with open(report_file, 'w') as f:
             json.dump(summary, f, indent=2)
-        
+
         logger.info(f"Summary report saved: {report_file}")
+
+    def train_all_models_parallel(self, n_configs: int = 50, use_parallel: bool = True) -> Dict:
+        """
+        Main entry point for training all models with multiple configurations
+
+        This method:
+        1. Loads or creates training configurations
+        2. Discovers datasets from datasets_dir
+        3. Creates training jobs for all combinations
+        4. Trains all models in parallel
+        5. Saves summary report
+
+        Args:
+            n_configs: Number of configurations to use (max 50)
+            use_parallel: Whether to use parallel training
+
+        Returns:
+            Dictionary with training results
+        """
+        logger.info("\n" + "=" * 80)
+        logger.info("TRAIN ALL MODELS - PARALLEL EXECUTION")
+        logger.info("=" * 80)
+
+        # Step 1: Load or create training configurations
+        if self.training_config_path and self.training_config_path.exists():
+            configs = self.load_training_configs(self.training_config_path)
+        else:
+            logger.warning(f"Training config not found: {self.training_config_path}")
+            logger.info("Creating default training configurations...")
+            configs = self._create_default_configs(n_configs)
+
+        # Limit to n_configs
+        configs = configs[:n_configs]
+        logger.info(f"Using {len(configs)} training configurations")
+
+        # Step 2: Discover datasets
+        if self.datasets_dir is None or not self.datasets_dir.exists():
+            raise ValueError(f"Datasets directory not found: {self.datasets_dir}")
+
+        dataset_paths = self._discover_datasets(self.datasets_dir)
+        logger.info(f"Found {len(dataset_paths)} datasets")
+
+        # Step 3: Define model types to train
+        model_types = ['RF', 'XGBoost'] if XGBOOST_AVAILABLE else ['RF']
+        if TF_AVAILABLE:
+            model_types.append('DNN')
+
+        logger.info(f"Model types: {model_types}")
+
+        # Step 4: Create training jobs
+        jobs = self.create_training_jobs(
+            model_types=model_types,
+            configs=configs,
+            dataset_paths=dataset_paths
+        )
+
+        # Step 5: Train all models
+        if use_parallel and self.n_workers > 1:
+            results = self.train_all_parallel(jobs)
+        else:
+            # Sequential training
+            logger.info("Training sequentially...")
+            results = []
+            for i, job in enumerate(jobs):
+                logger.info(f"Training job {i+1}/{len(jobs)}: {job.job_id}")
+                result = self.train_single_job(job)
+                results.append(result)
+
+        # Step 6: Save summary report
+        self.save_summary_report()
+
+        # Step 7: Return summary
+        successful = len([r for r in results if r.success])
+        failed = len([r for r in results if not r.success])
+
+        return {
+            'status': 'completed',
+            'total_jobs': len(results),
+            'successful': successful,
+            'failed': failed,
+            'results': results,
+            'summary_file': str(self.output_dir / 'training_summary.json')
+        }
+
+    def _discover_datasets(self, datasets_dir: Path) -> List[Path]:
+        """
+        Discover dataset directories in datasets_dir
+
+        Args:
+            datasets_dir: Directory to search for datasets
+
+        Returns:
+            List of dataset directory paths
+        """
+        dataset_paths = []
+
+        # Look for subdirectories that contain data files
+        for subdir in datasets_dir.iterdir():
+            if subdir.is_dir():
+                # Check if directory contains CSV, XLSX, or TSV files
+                has_data = (
+                    list(subdir.glob('*.csv')) or
+                    list(subdir.glob('*.xlsx')) or
+                    list(subdir.glob('*.tsv'))
+                )
+
+                if has_data:
+                    dataset_paths.append(subdir)
+                    logger.info(f"  Found dataset: {subdir.name}")
+
+        if not dataset_paths:
+            logger.warning(f"No datasets found in {datasets_dir}")
+
+        return dataset_paths
+
+    def _create_default_configs(self, n_configs: int = 50) -> List[Dict]:
+        """
+        Create default training configurations
+
+        Args:
+            n_configs: Number of configurations to create
+
+        Returns:
+            List of configuration dictionaries
+        """
+        configs = []
+
+        # Random Forest configs (20 configs)
+        rf_configs = [
+            {'id': f'RF_{i:03d}', 'n_estimators': n_est, 'max_depth': depth, 'min_samples_split': split}
+            for i, (n_est, depth, split) in enumerate([
+                (50, 5, 2), (50, 10, 2), (50, 15, 2), (50, None, 2),
+                (100, 5, 2), (100, 10, 2), (100, 15, 2), (100, None, 2),
+                (200, 5, 2), (200, 10, 2), (200, 15, 2), (200, None, 2),
+                (100, 10, 5), (100, 10, 10), (200, 15, 5), (200, 15, 10),
+                (150, 8, 3), (150, 12, 4), (300, 10, 2), (300, 20, 5)
+            ], start=1)
+        ]
+
+        # XGBoost configs (15 configs)
+        xgb_configs = [
+            {'id': f'XGB_{i:03d}', 'n_estimators': n_est, 'learning_rate': lr, 'max_depth': depth}
+            for i, (n_est, lr, depth) in enumerate([
+                (50, 0.1, 3), (50, 0.1, 6), (50, 0.3, 3), (50, 0.3, 6),
+                (100, 0.1, 3), (100, 0.1, 6), (100, 0.3, 3), (100, 0.3, 6),
+                (200, 0.05, 5), (200, 0.1, 5), (200, 0.2, 5),
+                (150, 0.15, 4), (150, 0.2, 6), (300, 0.1, 4), (300, 0.05, 8)
+            ], start=21)
+        ]
+
+        # DNN configs (15 configs)
+        dnn_configs = [
+            {
+                'id': f'DNN_{i:03d}',
+                'architecture': arch,
+                'dropout': dropout,
+                'learning_rate': lr,
+                'batch_size': batch,
+                'epochs': 100,
+                'early_stopping_patience': 15
+            }
+            for i, (arch, dropout, lr, batch) in enumerate([
+                ([128, 64, 32], [0.1, 0.1, 0.0], 0.001, 32),
+                ([256, 128, 64], [0.1, 0.1, 0.1], 0.001, 32),
+                ([512, 256, 128, 64], [0.2, 0.2, 0.1, 0.1], 0.001, 64),
+                ([128, 64], [0.1, 0.0], 0.01, 32),
+                ([256, 128], [0.2, 0.1], 0.001, 64),
+                ([512, 256], [0.2, 0.2], 0.0005, 64),
+                ([256, 256, 128], [0.1, 0.1, 0.1], 0.001, 32),
+                ([128, 128, 64, 32], [0.1, 0.1, 0.1, 0.0], 0.001, 32),
+                ([512, 256, 128], [0.3, 0.2, 0.1], 0.0005, 128),
+                ([256, 128, 64, 32], [0.2, 0.1, 0.1, 0.0], 0.001, 64),
+                ([128, 64, 32, 16], [0.1, 0.1, 0.1, 0.0], 0.002, 32),
+                ([512, 384, 256], [0.2, 0.2, 0.1], 0.001, 64),
+                ([384, 256, 128, 64], [0.2, 0.2, 0.1, 0.1], 0.001, 64),
+                ([256, 192, 128, 64], [0.1, 0.1, 0.1, 0.1], 0.001, 32),
+                ([512, 512, 256, 128], [0.3, 0.2, 0.2, 0.1], 0.0003, 128)
+            ], start=36)
+        ]
+
+        # Combine all configs
+        all_configs = rf_configs + xgb_configs + dnn_configs
+
+        # Return requested number
+        return all_configs[:n_configs]
 
 
 # ============================================================================
