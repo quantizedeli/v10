@@ -327,19 +327,18 @@ class NuclearPhysicsAIOrchestrator:
             self.status_manager.update_pfaz(pfaz_id, 'running', 30)
             
             # Initialize
+            config = self.config['pfaz_config'][pfaz_id]
             pipeline = DatasetGenerationPipelineV2(
                 aaa2_txt_path=self.config.get('data_file', 'aaa2.txt'),
-                output_dir=str(self.pfaz_outputs[pfaz_id])
-            )
-            
-            self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            
-            # Run
-            config = self.config['pfaz_config'][pfaz_id]
-            results = pipeline.run_complete_pipeline(
+                output_dir=str(self.pfaz_outputs[pfaz_id]),
                 targets=config.get('targets', ['MM', 'QM', 'MM_QM', 'Beta_2']),
                 nucleus_counts=config.get('dataset_sizes', [75, 100, 150, 200, 'ALL'])
             )
+
+            self.status_manager.update_pfaz(pfaz_id, 'running', 50)
+
+            # Run
+            results = pipeline.run_complete_pipeline()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
             logger.info("✅ PFAZ 1 tamamlandı!")
