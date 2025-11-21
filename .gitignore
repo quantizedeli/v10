@@ -1,0 +1,109 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Project specific outputs
+outputs/
+models/
+logs/
+*.log
+
+# Data files (large)
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+
+# Model checkpoints
+checkpoints/
+saved_models/
+*.pth
+*.pt
+*.ckpt
+
+# Visualization outputs
+visualizations/
+*.png
+*.jpg
+*.svg
+*.pdf
+*.html
+
+# Excel and CSV outputs (generated)
+*.xlsx
+*.csv
+!PFAZ7_Ensemble_Results.xlsx
+!PFAZ7_Ensemble_Results.csv
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.synctex.gz
+thesis/*.pdf
+thesis/chapters/*.pdf
+
+# MATLAB
+*.asv
+*.m~
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project specific
+archive/duplicates_*/
