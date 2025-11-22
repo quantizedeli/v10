@@ -21,6 +21,9 @@ import json
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Fiziksel sabitler
+HBAR_C = 197.3269804  # MeV·fm (ℏc)
+
 
 class TheoreticalCalculationsManager:
     """Tüm teorik hesaplamaları koordine eden merkezi sistem"""
@@ -412,10 +415,6 @@ class TheoreticalCalculationsManager:
             json.dump(report, f, indent=2)
         
         logger.info(f"\n[OK] Hesaplama raporu kaydedildi: {report_file}")
-
-
-# Global constants (imported from constants.py)
-HBAR_C = 197.3269804  # MeV·fm
 
 
 def main():
