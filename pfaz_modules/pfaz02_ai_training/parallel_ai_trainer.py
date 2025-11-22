@@ -241,6 +241,23 @@ class BaseAITrainer:
             # ALL dataseti için: NaN oranı %50'den az olan özellikleri kullan
             all_possible_features = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
 
+            # CRITICAL: Prevent data leakage - exclude theoretical predictions of targets
+            # If target is Beta_2, exclude Beta_2_estimated and Q0_intrinsic
+            # If target is MM, exclude schmidt_moment
+            # If target is Q, exclude Q0_intrinsic
+            leakage_features = []
+            if 'Beta_2' in requested_targets:
+                leakage_features.extend(['Beta_2_estimated', 'Q0_intrinsic'])
+            if 'MM' in requested_targets:
+                leakage_features.extend(['schmidt_moment'])
+            if 'Q' in requested_targets:
+                leakage_features.extend(['Q0_intrinsic'])
+
+            # Remove leakage features
+            if leakage_features:
+                all_possible_features = [col for col in all_possible_features if col not in leakage_features]
+                logger.info(f"Excluded {len(leakage_features)} features to prevent data leakage: {leakage_features}")
+
             # Convert to numeric first
             for col in all_possible_features:
                 if col in df.columns:
@@ -341,12 +358,20 @@ class BaseAITrainer:
         n_train = int(0.7 * n_total)
         n_val = int(0.15 * n_total)
 
+        # WARNING: Check if we have enough data for neural networks
+        if self.model_type == 'DNN' and n_total < 50:
+            logger.warning(f"[WARNING] Only {n_total} samples available! DNNs typically need 100+ samples for good performance")
+            logger.warning(f"[WARNING] Train: {n_train}, Val: {n_val}, Test: {n_total - n_train - n_val}")
+            logger.warning(f"[WARNING] Consider using simpler models (RF, XGBoost) for small datasets")
+
         X_train = X[:n_train]
         y_train = y[:n_train]
         X_val = X[n_train:n_train+n_val]
         y_val = y[n_train:n_train+n_val]
         X_test = X[n_train+n_val:]
         y_test = y[n_train+n_val:]
+
+        logger.info(f"Data split: Train={n_train}, Val={n_val}, Test={len(X_test)}")
 
         return X_train, y_train, X_val, y_val, X_test, y_test
     
