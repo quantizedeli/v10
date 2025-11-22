@@ -506,17 +506,25 @@ class DNNTrainer(BaseAITrainer):
     
     def train(self, X_train, y_train, X_val, y_val) -> Dict:
         """Train DNN"""
-        
+
         batch_size = self.config.get('batch_size', 32)
         epochs = self.config.get('epochs', 100)
         early_stopping_patience = self.config.get('early_stopping_patience', 15)
-        
+
         logger.info(f"Training DNN: batch_size={batch_size}, epochs={epochs}")
-        
+
+        # CRITICAL: Scale features for neural networks
+        from sklearn.preprocessing import StandardScaler
+        self.scaler = StandardScaler()
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_val_scaled = self.scaler.transform(X_val)
+
+        logger.info(f"Features scaled using StandardScaler (mean=0, std=1)")
+
         # Build model
         input_dim = X_train.shape[1]
         output_dim = y_train.shape[1] if y_train.ndim > 1 else 1
-        
+
         self.model = self.build_model(input_dim, output_dim)
         
         # Callbacks
@@ -536,20 +544,20 @@ class DNNTrainer(BaseAITrainer):
         # Train
         start_time = time.time()
         history = self.model.fit(
-            X_train, y_train,
-            validation_data=(X_val, y_val),
+            X_train_scaled, y_train,
+            validation_data=(X_val_scaled, y_val),
             batch_size=batch_size,
             epochs=epochs,
             callbacks=[early_stop, reduce_lr],
             verbose=0
         )
         training_time = time.time() - start_time
-        
+
         self.history = history.history
-        
+
         # Evaluate
-        y_train_pred = self.model.predict(X_train, verbose=0)
-        y_val_pred = self.model.predict(X_val, verbose=0)
+        y_train_pred = self.model.predict(X_train_scaled, verbose=0)
+        y_val_pred = self.model.predict(X_val_scaled, verbose=0)
         
         train_metrics = self.calculate_metrics(y_train, y_train_pred)
         val_metrics = self.calculate_metrics(y_val, y_val_pred)
@@ -560,8 +568,18 @@ class DNNTrainer(BaseAITrainer):
             'training_time': training_time,
             'epochs_trained': len(history.history['loss'])
         }
-        
+
         return metrics
+
+    def predict(self, X):
+        """Make predictions with feature scaling"""
+        if self.model is None:
+            raise ValueError("Model not trained yet")
+        if not hasattr(self, 'scaler'):
+            raise ValueError("Scaler not fitted yet")
+
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict(X_scaled, verbose=0)
 
 
 # ============================================================================
