@@ -179,6 +179,17 @@ class DatasetGenerationPipelineV2:
             self.raw_data = pd.read_excel(self.source_data_path)
         elif self.source_data_path.suffix == '.tsv':
             self.raw_data = pd.read_csv(self.source_data_path, sep='\t')
+        elif self.source_data_path.suffix == '.txt':
+            # Try to detect delimiter automatically for .txt files
+            # First try tab-delimited, then comma, then whitespace
+            try:
+                self.raw_data = pd.read_csv(self.source_data_path, sep='\t')
+            except:
+                try:
+                    self.raw_data = pd.read_csv(self.source_data_path, sep=',')
+                except:
+                    # Last resort: whitespace-delimited
+                    self.raw_data = pd.read_csv(self.source_data_path, delim_whitespace=True)
         else:
             raise ValueError(f"Unsupported file format: {self.source_data_path.suffix}")
         

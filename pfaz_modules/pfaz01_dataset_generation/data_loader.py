@@ -10,6 +10,11 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import logging
+import sys
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from utils.file_io_utils import read_nuclear_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,9 +36,9 @@ class NuclearDataLoader:
             pd.DataFrame: Temizlenmiş veri
         """
         logger.info(f"Veri yükleniyor: {filepath}")
-        
-        # Veriyi oku
-        df = pd.read_csv(filepath, sep='\t', encoding='utf-8')
+
+        # Veriyi oku (esnek format desteği)
+        df = read_nuclear_data(filepath, encoding='utf-8')
         
         logger.info(f"[OK] Ham veri yüklendi: {len(df)} satır")
         

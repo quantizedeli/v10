@@ -25,6 +25,12 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 import warnings
 import joblib
+import sys
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from utils.file_io_utils import read_nuclear_data
+
 warnings.filterwarnings('ignore')
 
 # Sklearn
@@ -485,7 +491,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     # Load AAA2 data
     logger.info("\nLoading AAA2 dataset...")
     try:
-        aaa2_df = pd.read_csv('aaa2.txt', sep='\t', encoding='utf-8')
+        aaa2_df = read_nuclear_data('aaa2.txt', encoding='utf-8')
         aaa2_df.columns = aaa2_df.columns.str.strip()
         logger.info(f"[OK] AAA2 loaded: {len(aaa2_df)} nuclei")
     except Exception as e:
