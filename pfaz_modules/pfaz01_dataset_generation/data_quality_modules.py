@@ -46,16 +46,19 @@ class OutlierHandler:
         outlier_mask = pd.Series([False] * len(df))
         
         for col in columns:
-            Q1 = df[col].quantile(0.25)
-            Q3 = df[col].quantile(0.75)
+            # String değerleri numeric'e çevir
+            col_data = pd.to_numeric(df[col], errors='coerce')
+
+            Q1 = col_data.quantile(0.25)
+            Q3 = col_data.quantile(0.75)
             IQR = Q3 - Q1
-            
+
             lower_bound = Q1 - threshold * IQR
             upper_bound = Q3 + threshold * IQR
-            
-            col_outliers = (df[col] < lower_bound) | (df[col] > upper_bound)
+
+            col_outliers = (col_data < lower_bound) | (col_data > upper_bound)
             outlier_mask |= col_outliers
-            
+
             n_outliers = col_outliers.sum()
             logger.info(f"  {col}: {n_outliers} outliers ({n_outliers/len(df)*100:.1f}%)")
         
@@ -65,12 +68,15 @@ class OutlierHandler:
         """Z-score method"""
         
         outlier_mask = pd.Series([False] * len(df))
-        
+
         for col in columns:
-            z_scores = np.abs((df[col] - df[col].mean()) / df[col].std())
+            # String değerleri numeric'e çevir
+            col_data = pd.to_numeric(df[col], errors='coerce')
+
+            z_scores = np.abs((col_data - col_data.mean()) / col_data.std())
             col_outliers = z_scores > threshold
             outlier_mask |= col_outliers
-            
+
             n_outliers = col_outliers.sum()
             logger.info(f"  {col}: {n_outliers} outliers (Z>{threshold})")
         
@@ -78,19 +84,29 @@ class OutlierHandler:
     
     def detect_outliers_isolation_forest(self, df, columns, contamination=0.1):
         """Isolation Forest method"""
-        
+
         logger.info(f"Isolation Forest (contamination={contamination})")
-        
-        X = df[columns].values
-        
+
+        # String değerleri numeric'e çevir
+        df_numeric = df[columns].copy()
+        for col in columns:
+            df_numeric[col] = pd.to_numeric(df_numeric[col], errors='coerce')
+
+        # NaN satırlarını çıkar
+        df_numeric = df_numeric.dropna()
+
+        X = df_numeric.values
+
         iso_forest = IsolationForest(contamination=contamination, random_state=42)
         predictions = iso_forest.fit_predict(X)
-        
-        outlier_mask = predictions == -1
-        
+
+        # Tüm DataFrame için mask oluştur
+        outlier_mask = pd.Series([False] * len(df), index=df.index)
+        outlier_mask.loc[df_numeric.index] = (predictions == -1)
+
         n_outliers = outlier_mask.sum()
         logger.info(f"  Detected: {n_outliers} outliers ({n_outliers/len(df)*100:.1f}%)")
-        
+
         return outlier_mask
     
     def remove_outliers(self, df, outlier_mask, save_removed=True):
@@ -111,23 +127,27 @@ class OutlierHandler:
         """Cap outliers instead of removing"""
         
         df_capped = df.copy()
-        
+
         for col in columns:
+            # String değerleri numeric'e çevir
+            col_data = pd.to_numeric(df[col], errors='coerce')
+            df_capped[col] = col_data
+
             if method == 'iqr':
-                Q1 = df[col].quantile(0.25)
-                Q3 = df[col].quantile(0.75)
+                Q1 = col_data.quantile(0.25)
+                Q3 = col_data.quantile(0.75)
                 IQR = Q3 - Q1
                 lower_bound = Q1 - threshold * IQR
                 upper_bound = Q3 + threshold * IQR
             else:
-                mean = df[col].mean()
-                std = df[col].std()
+                mean = col_data.mean()
+                std = col_data.std()
                 lower_bound = mean - threshold * std
                 upper_bound = mean + threshold * std
-            
-            df_capped[col] = df_capped[col].clip(lower_bound, upper_bound)
-            
-            n_capped = ((df[col] < lower_bound) | (df[col] > upper_bound)).sum()
+
+            df_capped[col] = col_data.clip(lower_bound, upper_bound)
+
+            n_capped = ((col_data < lower_bound) | (col_data > upper_bound)).sum()
             logger.info(f"  {col}: {n_capped} values capped")
         
         return df_capped
@@ -253,32 +273,44 @@ class DataValidator:
         """Check if values are within expected ranges"""
         
         logger.info("\n-> Checking value ranges...")
-        
+
         for col, (min_val, max_val) in ranges.items():
             if col in df.columns:
-                out_of_range = ((df[col] < min_val) | (df[col] > max_val)).sum()
-                
-                if out_of_range > 0:
-                    issue = f"Out of range values in {col}: {out_of_range} (expected [{min_val}, {max_val}])"
-                    self.validation_report.append(issue)
-                    logger.warning(f"  [WARNING] {issue}")
+                # String değerleri numeric'e çevir
+                col_data = pd.to_numeric(df[col], errors='coerce')
+
+                # NaN olmayan değerleri kontrol et
+                valid_data = col_data.dropna()
+                if len(valid_data) > 0:
+                    out_of_range = ((valid_data < min_val) | (valid_data > max_val)).sum()
+
+                    if out_of_range > 0:
+                        issue = f"Out of range values in {col}: {out_of_range} (expected [{min_val}, {max_val}])"
+                        self.validation_report.append(issue)
+                        logger.warning(f"  [WARNING] {issue}")
     
     def _check_physical_constraints(self, df):
         """Check nuclear physics constraints"""
         
         logger.info("\n-> Checking physical constraints...")
-        
+
         # A = Z + N
         if all(col in df.columns for col in ['A', 'Z', 'N']):
-            mismatch = (df['A'] != df['Z'] + df['N']).sum()
+            # String değerleri numeric'e çevir
+            A = pd.to_numeric(df['A'], errors='coerce')
+            Z = pd.to_numeric(df['Z'], errors='coerce')
+            N = pd.to_numeric(df['N'], errors='coerce')
+
+            mismatch = (A != Z + N).sum()
             if mismatch > 0:
                 issue = f"A ≠ Z + N mismatch: {mismatch} samples"
                 self.validation_report.append(issue)
                 logger.warning(f"  [WARNING] {issue}")
-        
+
         # Z, N > 0
         if 'Z' in df.columns:
-            invalid_z = (df['Z'] <= 0).sum()
+            Z = pd.to_numeric(df['Z'], errors='coerce')
+            invalid_z = (Z <= 0).sum()
             if invalid_z > 0:
                 issue = f"Invalid Z values: {invalid_z}"
                 self.validation_report.append(issue)
