@@ -77,9 +77,10 @@ class DatasetGenerationPipelineV2:
         self.source_data_path = Path(source_data_path)
         self.output_base_dir = Path(output_base_dir)
         self.output_base_dir.mkdir(parents=True, exist_ok=True)
-        
+
+
         # Default parameters (updated per requirements)
-        # ✅ UPDATED: 75, 100, 150, 200, ALL (all available nuclei)
+        # [UPDATED]: 75, 100, 150, 200, ALL (all available nuclei)
         self.nucleus_counts = nucleus_counts or [75, 100, 150, 200, 'ALL']
         self.targets = targets or ['MM', 'QM', 'MM_QM', 'Beta_2']
         
@@ -118,32 +119,32 @@ class DatasetGenerationPipelineV2:
         logger.info("=" * 80)
         
         # Step 1: Load raw data
-        logger.info("\n📁 STEP 1: LOADING RAW DATA")
+        logger.info("\n[STEP 1] LOADING RAW DATA")
         logger.info("-" * 80)
         self._load_raw_data()
-        
+
         # Step 2: Add theoretical calculations
-        logger.info("\n🔬 STEP 2: ADDING THEORETICAL CALCULATIONS")
+        logger.info("\n[STEP 2] ADDING THEORETICAL CALCULATIONS")
         logger.info("-" * 80)
         self._add_theoretical_calculations()
-        
+
         # Step 3: Apply QM filtering per target
-        logger.info("\n🔍 STEP 3: APPLYING QM FILTERING")
+        logger.info("\n[STEP 3] APPLYING QM FILTERING")
         logger.info("-" * 80)
         self._apply_qm_filtering()
-        
+
         # Step 4: Quality control
-        logger.info("\n✅ STEP 4: QUALITY CONTROL")
+        logger.info("\n[STEP 4] QUALITY CONTROL")
         logger.info("-" * 80)
         self._perform_quality_control()
-        
+
         # Step 5: Generate datasets
-        logger.info("\n📦 STEP 5: GENERATING DATASETS")
+        logger.info("\n[STEP 5] GENERATING DATASETS")
         logger.info("-" * 80)
         self._generate_all_datasets()
-        
+
         # Step 6: Create metadata and reports
-        logger.info("\n📊 STEP 6: CREATING METADATA & REPORTS")
+        logger.info("\n[STEP 6] CREATING METADATA & REPORTS")
         logger.info("-" * 80)
         self._create_metadata_and_reports()
         
@@ -181,9 +182,9 @@ class DatasetGenerationPipelineV2:
         else:
             raise ValueError(f"Unsupported file format: {self.source_data_path.suffix}")
         
-        logger.info(f"✅ Loaded: {len(self.raw_data)} nuclei")
+        logger.info(f"[SUCCESS] Loaded: {len(self.raw_data)} nuclei")
         logger.info(f"   Columns: {list(self.raw_data.columns)}")
-        
+
         # Basic validation
         required_cols = ['A', 'Z', 'N']
         missing_cols = [col for col in required_cols if col not in self.raw_data.columns]
@@ -206,8 +207,8 @@ class DatasetGenerationPipelineV2:
         )
         
         n_added_features = len(self.enriched_data.columns) - len(self.raw_data.columns)
-        
-        logger.info(f"✅ Added {n_added_features} theoretical features")
+
+        logger.info(f"[SUCCESS] Added {n_added_features} theoretical features")
         logger.info(f"   Total features now: {len(self.enriched_data.columns)}")
         
         self.generation_report['theoretical_calculations'] = {
@@ -235,9 +236,9 @@ class DatasetGenerationPipelineV2:
             # Check if target exists
             missing_targets = [col for col in target_cols if col not in self.enriched_data.columns]
             if missing_targets:
-                logger.warning(f"  ⚠️ Target columns not found: {missing_targets}, skipping {target}")
+                logger.warning(f"  [WARNING] Target columns not found: {missing_targets}, skipping {target}")
                 continue
-            
+
             # Apply filter
             filtered_df, filter_report = self.qm_filter_manager.filter_by_target(
                 self.enriched_data,
@@ -245,12 +246,12 @@ class DatasetGenerationPipelineV2:
                 target_cols=target_cols,
                 features=list(self.enriched_data.columns)
             )
-            
+
             self.filtered_data[target] = filtered_df
             filter_report['target'] = target
             qm_reports.append(filter_report)
-            
-            logger.info(f"  ✅ Filtered: {len(filtered_df)} nuclei remain")
+
+            logger.info(f"  [SUCCESS] Filtered: {len(filtered_df)} nuclei remain")
             logger.info(f"     Removed: {filter_report['removed']} nuclei")
         
         # Save QM filter report
@@ -328,34 +329,34 @@ class DatasetGenerationPipelineV2:
         
         for target in self.targets:
             if target not in self.filtered_data:
-                logger.warning(f"⚠️ No filtered data for {target}, skipping")
+                logger.warning(f"[WARNING] No filtered data for {target}, skipping")
                 continue
-            
+
             target_df = self.filtered_data[target]
-            
-            logger.info(f"\n→ Generating datasets for target: {target}")
+
+            logger.info(f"\n-> Generating datasets for target: {target}")
             logger.info(f"   Available nuclei: {len(target_df)}")
-            
+
             for n_nuclei in self.nucleus_counts:
                 # Handle 'ALL' case
                 if n_nuclei == 'ALL':
                     actual_n = len(target_df)
-                    logger.info(f"  → 'ALL' option: using all {actual_n} available nuclei")
+                    logger.info(f"  -> 'ALL' option: using all {actual_n} available nuclei")
                 elif n_nuclei > len(target_df):
-                    logger.warning(f"  ⚠️ Requested {n_nuclei} nuclei but only {len(target_df)} available, skipping")
+                    logger.warning(f"  [WARNING] Requested {n_nuclei} nuclei but only {len(target_df)} available, skipping")
                     continue
-                
+
                 # Sample dataset
                 dataset = self._create_single_dataset(target_df, target, n_nuclei)
-                
+
                 if dataset is not None:
                     self.generated_datasets.append(dataset)
                     generated_count += 1
-                    
-                    logger.info(f"  ✅ Generated: {dataset['dataset_name']} ({len(dataset['data'])} nuclei)")
+
+                    logger.info(f"  [SUCCESS] Generated: {dataset['dataset_name']} ({len(dataset['data'])} nuclei)")
                     logger.info(f"     Files: CSV + MAT")
-        
-        logger.info(f"\n✅ Total datasets generated: {generated_count}/{total_combinations}")
+
+        logger.info(f"\n[SUCCESS] Total datasets generated: {generated_count}/{total_combinations}")
         
         self.generation_report['dataset_generation'] = {
             'total_requested': total_combinations,
@@ -466,12 +467,12 @@ class DatasetGenerationPipelineV2:
             
             # Save
             savemat(filepath, mat_dict)
-            logger.info(f"  ✅ MAT file saved: {filepath.name}")
-            
+            logger.info(f"  [SUCCESS] MAT file saved: {filepath.name}")
+
         except ImportError:
-            logger.warning("  ⚠️ scipy not available, skipping MAT file export")
+            logger.warning("  [WARNING] scipy not available, skipping MAT file export")
         except Exception as e:
-            logger.error(f"  ❌ Error saving MAT file: {e}")
+            logger.error(f"  [ERROR] Error saving MAT file: {e}")
     
     def _create_metadata_and_reports(self):
         """Master metadata ve raporlar oluştur"""
@@ -501,15 +502,15 @@ class DatasetGenerationPipelineV2:
         master_metadata_file = self.output_base_dir / 'master_metadata.json'
         with open(master_metadata_file, 'w') as f:
             json.dump(master_metadata, f, indent=2)
-        
-        logger.info(f"✅ Master metadata: {master_metadata_file}")
-        
+
+        logger.info(f"[SUCCESS] Master metadata: {master_metadata_file}")
+
         # Generation report
         report_file = self.output_base_dir / 'generation_report.json'
         with open(report_file, 'w') as f:
             json.dump(self.generation_report, f, indent=2)
-        
-        logger.info(f"✅ Generation report: {report_file}")
+
+        logger.info(f"[SUCCESS] Generation report: {report_file}")
         
         # Summary Excel report
         self._create_summary_excel()
@@ -553,8 +554,8 @@ class DatasetGenerationPipelineV2:
                 
                 qc_df = pd.DataFrame(qc_data)
                 qc_df.to_excel(writer, sheet_name='Quality_Control', index=False)
-        
-        logger.info(f"✅ Summary Excel: {excel_file}")
+
+        logger.info(f"[SUCCESS] Summary Excel: {excel_file}")
 
 
 # =============================================================================
@@ -571,20 +572,20 @@ def main():
     # Configuration
     SOURCE_DATA = "/mnt/user-data/uploads/your_source_data.csv"  # Kullanıcı source data yolunu girecek
     OUTPUT_DIR = "generated_datasets"
-    NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']  # ✅ UPDATED per requirements
+    NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']  # [UPDATED] per requirements
     TARGETS = ['MM', 'QM', 'MM_QM', 'Beta_2']
     
     # Check if source data exists (demo mode if not)
     if not Path(SOURCE_DATA).exists():
-        logger.warning(f"⚠️ Source data not found: {SOURCE_DATA}")
+        logger.warning(f"[WARNING] Source data not found: {SOURCE_DATA}")
         logger.info("Creating DEMO dataset for testing...")
-        
+
         # Create demo data
         demo_data = _create_demo_data()
         demo_path = Path("demo_source_data.csv")
         demo_data.to_csv(demo_path, index=False)
         SOURCE_DATA = str(demo_path)
-        logger.info(f"✅ Demo data created: {demo_path}")
+        logger.info(f"[SUCCESS] Demo data created: {demo_path}")
     
     # Initialize pipeline
     pipeline = DatasetGenerationPipelineV2(
@@ -632,4 +633,4 @@ def _create_demo_data() -> pd.DataFrame:
 
 if __name__ == "__main__":
     pipeline, report = main()
-    print("\n✅ FAZ 1: DATASET GENERATION PIPELINE - COMPLETE!")
+    print("\n[SUCCESS] FAZ 1: DATASET GENERATION PIPELINE - COMPLETE!")
