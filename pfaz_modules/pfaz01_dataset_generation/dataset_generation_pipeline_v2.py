@@ -647,7 +647,8 @@ class DatasetGenerationPipelineV2:
                 'A_Max': meta['statistics']['A_range'][1],
                 'Z_Min': meta['statistics']['Z_range'][0],
                 'Z_Max': meta['statistics']['Z_range'][1],
-                'Data_File': str(dataset['data_file'])
+                'Data_File_CSV': str(dataset['data_file_csv']),
+                'Data_File_MAT': str(dataset['data_file_mat'])
             })
         
         summary_df = pd.DataFrame(summary_data)
