@@ -118,7 +118,7 @@ class TheoreticalCalculationsManager:
     
     def _calculate_semf(self, df):
         """SEMF hesaplamaları"""
-        from constants import SEMF_PARAMS, R0
+        from core_modules.constants import SEMF_PARAMS, R0
         
         # Temel parametreler
         a_v = SEMF_PARAMS['a_v']
@@ -163,7 +163,7 @@ class TheoreticalCalculationsManager:
     
     def _calculate_shell_model(self, df):
         """Shell Model hesaplamaları"""
-        from constants import MAGIC_NUMBERS_Z, MAGIC_NUMBERS_N, SHELL_GAPS
+        from core_modules.constants import MAGIC_NUMBERS_Z, MAGIC_NUMBERS_N, SHELL_GAPS
         
         # En yakın magic numbers
         df['Z_nearest_magic'] = df['Z'].apply(
@@ -212,7 +212,7 @@ class TheoreticalCalculationsManager:
     
     def _calculate_deformation(self, df):
         """Deformation hesaplamaları"""
-        from constants import R0, SPHERICAL_THRESHOLD
+        from core_modules.constants import R0, SPHERICAL_THRESHOLD
 
         # β₂ varsa kullan, yoksa tahmin et
         if 'Beta_2' not in df.columns or df['Beta_2'].isna().all():
@@ -263,7 +263,7 @@ class TheoreticalCalculationsManager:
     
     def _calculate_schmidt_moments(self, df):
         """Schmidt moment hesaplamaları"""
-        from constants import G_FACTORS
+        from core_modules.constants import G_FACTORS
         
         g_l_p = G_FACTORS['proton']['g_l']
         g_s_p = G_FACTORS['proton']['g_s']
@@ -341,7 +341,7 @@ class TheoreticalCalculationsManager:
     
     def _calculate_woods_saxon(self, df):
         """Woods-Saxon potansiyel hesaplamaları (simplified)"""
-        from constants import WOODS_SAXON_PARAMS
+        from core_modules.constants import WOODS_SAXON_PARAMS
         
         V0 = WOODS_SAXON_PARAMS['V0']
         r0 = WOODS_SAXON_PARAMS['r0']
