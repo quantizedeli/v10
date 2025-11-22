@@ -11,7 +11,7 @@ import logging
 
 import sys
 # sys.path.append('..') - REMOVED
-from nuclear_physics_modules.constants import *
+from core_modules.constants import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

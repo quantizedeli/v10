@@ -141,8 +141,8 @@ ANOMALY_THRESHOLDS = {
 NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']
 
 SCENARIOS = {
-    'S70': (0.70, 0.15, 0.15),  # (train, check, test)
-    'S80': (0.80, 0.10, 0.10)
+    'S70': (0.70, 0.15, 0.15),  # (train, check, test) - Standard split
+    'S80': (0.80, 0.10, 0.10)   # High training ratio
 }
 
 ANOMALY_MODES = ['anomalili', 'anomalisiz']
@@ -414,10 +414,18 @@ def get_anfis_config_id(config_name):
 # VERSİYON BİLGİSİ
 # ============================================================================
 
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 AUTHOR = "Nuclear Physics AI Project"
-DATE = "2025-10-14"
+DATE = "2025-11-21"
 CHANGELOG = """
+v1.0.3 (2025-11-21):
+  - SCENARIOS: S70 (70/15/15) ve S80 (80/10/10) - İki eğitim senaryosu
+  - Yeni özellik: Çekirdek dağılım analizi (nuclei_distribution_analyzer.py)
+  - Her dataset için detaylı dağılım raporları (Z, N, A, magik sayılar, izotop çeşitliliği)
+  - Master çekirdek kataloğu oluşturma
+  - MATLAB, Excel ve CSV formatları için tam destek
+  - Kapsamlı dokümantasyon: DATASET_GUIDE.md eklendi
+
 v1.0.2 (2025-10-14):
   - FAZ 2: ANFIS config isimleri güncellendi (GAU2MF, GEN2MF, TRI2MF, TRA2MF, GAU3MF, SUBR03, SUBR05, SUBR07)
   - Config ID <-> Name mapping eklendi
