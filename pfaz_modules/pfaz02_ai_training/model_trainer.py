@@ -50,7 +50,7 @@ from pathlib import Path
 parent_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(parent_dir))
 
-from nuclear_physics_modules.constants import *
+from core_modules.constants import *
 from adaptive_learning.adaptive_strategy import AdaptiveLearningStrategy
 
 logging.basicConfig(level=logging.INFO)
