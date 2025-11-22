@@ -4,11 +4,18 @@ Integrates with new progress tracking system
 """
 
 import numpy as np
-import matlab.engine
 from typing import Dict, Tuple, Optional
 import time
 import logging
 from pathlib import Path
+
+# Optional MATLAB import - only required if using MATLAB ANFIS
+try:
+    import matlab.engine
+    MATLAB_AVAILABLE = True
+except ImportError:
+    MATLAB_AVAILABLE = False
+    matlab = None
 
 from progress_tracker import TrainingProgressTracker
 
@@ -25,6 +32,15 @@ class MATLABAnfisTrainer:
         
     def initialize_engine(self):
         """Initialize MATLAB engine"""
+        if not MATLAB_AVAILABLE:
+            raise ImportError(
+                "MATLAB Engine for Python is not installed.\n"
+                "To use MATLAB ANFIS, install it with:\n"
+                "  pip install matlabengine\n"
+                "Or uncomment 'matlab-engine' in requirements.txt and reinstall.\n"
+                "Note: MATLAB software must be installed on your system."
+            )
+
         if self.engine is None:
             try:
                 logger.info("Starting MATLAB engine...")
