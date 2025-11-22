@@ -49,9 +49,17 @@ class QMFilterManager:
         
         # Filtreleme mantığı
         if target_name == 'MM':
-            # MM için QM yoksa sorun değil [OK]
-            filter_result = 'no_filtering_needed'
-            logger.info(f"[OK] Target: MM -> QM filtresi UYGULANMADI (QM olmayan çekirdekler kullanılabilir)")
+            # MM için Q feature kontrolü
+            if features and self._has_q_dependent_features(features):
+                # Q feature varsa QM gerekli [FAIL]
+                df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
+                removed_nuclei = removed
+                filter_result = 'qm_required_for_features'
+                logger.info(f"[OK] Target: MM + Q feature -> QM filtresi UYGULANDI ({len(removed)} çekirdek çıkarıldı)")
+            else:
+                # Q feature yoksa QM gerekmez [OK]
+                filter_result = 'no_filtering_needed'
+                logger.info(f"[OK] Target: MM -> QM filtresi UYGULANMADI (Q feature yok)")
             
         elif target_name == 'QM':
             # QM hedefi, QM olmayan çıkar [FAIL]
