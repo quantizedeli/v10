@@ -134,34 +134,55 @@ class BaseAITrainer:
         logger.info("No specific feature set detected, using adaptive selection")
         return None
 
-    def load_dataset(self, dataset_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Load dataset from path"""
+    def load_dataset(self, dataset_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Load dataset from path with pre-split train/val/test files
 
-        # Try different file formats
-        data_file = None
-        for ext in ['.csv', '.xlsx', '.tsv']:
-            potential_file = dataset_path / f"{dataset_path.name}{ext}"
-            if potential_file.exists():
-                data_file = potential_file
-                break
+        NEW STRUCTURE (from PFAZ 1):
+        dataset_path/
+            ├── train.csv / train.xlsx
+            ├── val.csv / val.xlsx
+            └── test.csv / test.xlsx
 
-        if data_file is None:
-            # Try finding any data file
-            csv_files = list(dataset_path.glob('*.csv'))
-            if csv_files:
-                data_file = csv_files[0]
+        Returns:
+            X_train, y_train, X_val, y_val, X_test, y_test
+        """
+
+        # Check for train/val/test split files
+        # Try Excel first (preferred), then CSV
+        split_files = {}
+        for split_name in ['train', 'val', 'test']:
+            # Try .xlsx first
+            xlsx_file = dataset_path / f"{split_name}.xlsx"
+            csv_file = dataset_path / f"{split_name}.csv"
+
+            if xlsx_file.exists():
+                split_files[split_name] = xlsx_file
+            elif csv_file.exists():
+                split_files[split_name] = csv_file
             else:
-                raise FileNotFoundError(f"No data file found in {dataset_path}")
+                raise FileNotFoundError(f"Missing {split_name} file in {dataset_path}")
 
-        # Load data with UTF-8 encoding to handle special characters (e.g., µ, ±)
-        if data_file.suffix == '.csv':
-            df = pd.read_csv(data_file, encoding='utf-8')
-        elif data_file.suffix == '.xlsx':
-            df = pd.read_excel(data_file)
-        elif data_file.suffix == '.tsv':
-            df = pd.read_csv(data_file, sep='\t', encoding='utf-8')
-        else:
-            raise ValueError(f"Unsupported file format: {data_file.suffix}")
+        logger.info(f"Loading pre-split dataset from: {dataset_path}")
+        logger.info(f"  Train: {split_files['train'].name}")
+        logger.info(f"  Val: {split_files['val'].name}")
+        logger.info(f"  Test: {split_files['test'].name}")
+
+        # Load each split
+        splits = {}
+        for split_name, file_path in split_files.items():
+            if file_path.suffix == '.xlsx':
+                df = pd.read_excel(file_path)
+            elif file_path.suffix == '.csv':
+                df = pd.read_csv(file_path, encoding='utf-8')
+            else:
+                raise ValueError(f"Unsupported file format: {file_path.suffix}")
+
+            splits[split_name] = df
+            logger.info(f"  Loaded {split_name}: {len(df)} samples")
+
+        # Process train split to determine columns (same logic for all splits)
+        df = splits['train']
 
         # DATA CLEANING - Fix invalid values
         logger.info(f"Initial data shape: {df.shape}")
@@ -317,87 +338,51 @@ class BaseAITrainer:
             logger.info(f"Selected features: {feature_cols[:10]}...")
 
         if len(feature_cols) == 0:
-            raise ValueError(f"No valid features after filtering in {data_file}")
+            raise ValueError(f"No valid features after filtering in {dataset_path}")
 
-        # 5. Convert to numeric
-        all_numeric_cols = feature_cols + target_cols
-        for col in all_numeric_cols:
-            if col in df.columns:
-                before_count = df[col].notna().sum()
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-                after_count = df[col].notna().sum()
-                if before_count != after_count:
-                    logger.warning(f"Column {col}: {before_count - after_count} values became NaN during conversion")
+        # 5-7. Process each split with same pipeline
+        # Train imputer on train set, apply to val and test
+        from sklearn.impute import SimpleImputer
+        imputer = SimpleImputer(strategy='median')
 
-        # 6. Check NaN counts before handling
-        nan_counts = df[all_numeric_cols].isna().sum()
-        if nan_counts.sum() > 0:
-            logger.info(f"NaN counts per column:\n{nan_counts[nan_counts > 0]}")
+        processed_splits = {}
 
-        # 7. Handle NaN values using imputation strategy
-        # First, drop rows where TARGET has NaN (we cannot train without target values)
-        df_with_targets = df[all_numeric_cols].copy()
-        initial_count = len(df_with_targets)
+        for split_name in ['train', 'val', 'test']:
+            df_split = splits[split_name].copy()
 
-        # Drop rows with NaN in target columns
-        df_with_targets = df_with_targets.dropna(subset=target_cols)
-        rows_dropped_for_target = initial_count - len(df_with_targets)
+            # Convert to numeric
+            all_numeric_cols = feature_cols + target_cols
+            for col in all_numeric_cols:
+                if col in df_split.columns:
+                    df_split[col] = pd.to_numeric(df_split[col], errors='coerce')
 
-        if rows_dropped_for_target > 0:
-            logger.info(f"Dropped {rows_dropped_for_target} rows with NaN in target columns")
+            # Drop rows with NaN targets
+            df_clean = df_split[all_numeric_cols].dropna(subset=target_cols)
 
-        if len(df_with_targets) == 0:
-            logger.error(f"All {initial_count} rows were dropped due to NaN in targets!")
-            logger.error(f"NaN summary:\n{df[target_cols].isna().sum()}")
-            raise ValueError(f"No valid data after dropping NaN targets in {data_file}")
+            # Impute features
+            if split_name == 'train':
+                # Fit imputer on train
+                df_clean[feature_cols] = imputer.fit_transform(df_clean[feature_cols])
+            else:
+                # Transform val/test with train imputer
+                df_clean[feature_cols] = imputer.transform(df_clean[feature_cols])
 
-        # For features: use median imputation for remaining NaN values
-        feature_nan_count = df_with_targets[feature_cols].isna().sum().sum()
-        if feature_nan_count > 0:
-            logger.info(f"Imputing {feature_nan_count} NaN values in features using median strategy")
-            imputer = SimpleImputer(strategy='median')
-            df_with_targets[feature_cols] = imputer.fit_transform(df_with_targets[feature_cols])
-            logger.info(f"Imputation complete. Remaining NaN in features: {df_with_targets[feature_cols].isna().sum().sum()}")
+            # Extract X, y
+            X = df_clean[feature_cols].values.astype(np.float32)
+            y = df_clean[target_cols].values.astype(np.float32)
 
-        # Final cleaning summary
-        logger.info(f"Data cleaning: {initial_count} -> {len(df_with_targets)} samples ({rows_dropped_for_target} removed due to NaN targets)")
+            processed_splits[split_name] = (X, y)
+            logger.info(f"  Processed {split_name}: {len(X)} samples")
 
-        # Extract features and targets
-        X = df_with_targets[feature_cols].values
-        y = df_with_targets[target_cols].values
+        X_train, y_train = processed_splits['train']
+        X_val, y_val = processed_splits['val']
+        X_test, y_test = processed_splits['test']
 
-        # Ensure data types are correct
-        X = X.astype(np.float32)
-        y = y.astype(np.float32)
+        # DNN warning for small datasets
+        if self.model_type == 'DNN' and len(X_train) < 70:
+            logger.warning(f"[WARNING] Only {len(X_train)} train samples! DNNs need 100+ for good performance")
 
-        # Final validation: check for any remaining NaN
-        if np.isnan(X).any():
-            nan_features = [feature_cols[i] for i in range(len(feature_cols)) if np.isnan(X[:, i]).any()]
-            logger.error(f"NaN still present in features after imputation: {nan_features}")
-            raise ValueError(f"NaN values still present in features after imputation")
-        if np.isnan(y).any():
-            logger.error(f"NaN still present in targets after cleaning")
-            raise ValueError(f"NaN values still present in targets after cleaning")
-
-        # Split into train/val/test (70/15/15)
-        n_total = len(X)
-        n_train = int(0.7 * n_total)
-        n_val = int(0.15 * n_total)
-
-        # WARNING: Check if we have enough data for neural networks
-        if self.model_type == 'DNN' and n_total < 50:
-            logger.warning(f"[WARNING] Only {n_total} samples available! DNNs typically need 100+ samples for good performance")
-            logger.warning(f"[WARNING] Train: {n_train}, Val: {n_val}, Test: {n_total - n_train - n_val}")
-            logger.warning(f"[WARNING] Consider using simpler models (RF, XGBoost) for small datasets")
-
-        X_train = X[:n_train]
-        y_train = y[:n_train]
-        X_val = X[n_train:n_train+n_val]
-        y_val = y[n_train:n_train+n_val]
-        X_test = X[n_train+n_val:]
-        y_test = y[n_train+n_val:]
-
-        logger.info(f"Data split: Train={n_train}, Val={n_val}, Test={len(X_test)}")
+        logger.info(f"Final: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
 
         return X_train, y_train, X_val, y_val, X_test, y_test
     
