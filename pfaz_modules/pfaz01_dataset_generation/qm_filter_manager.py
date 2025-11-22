@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 class QMFilterManager:
     """QM filtreleme yöneticisi"""
-    
+
     def __init__(self):
-        self.qm_columns = ['Q', 'QUADRUPOLE MOMENT [Q]']  # Olası QM sütun isimleri
+        self.qm_columns = ['Q', 'QUADRUPOLE MOMENT [Q]', 'QM']  # Olası QM sütun isimleri
         
     def filter_by_target(self, df, target_name, target_cols, features=None):
         """
