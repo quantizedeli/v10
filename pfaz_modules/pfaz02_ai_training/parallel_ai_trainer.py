@@ -108,7 +108,7 @@ class BaseAITrainer:
         
     def load_dataset(self, dataset_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Load dataset from path"""
-        
+
         # Try different file formats
         data_file = None
         for ext in ['.csv', '.xlsx', '.tsv']:
@@ -116,7 +116,7 @@ class BaseAITrainer:
             if potential_file.exists():
                 data_file = potential_file
                 break
-        
+
         if data_file is None:
             # Try finding any data file
             csv_files = list(dataset_path.glob('*.csv'))
@@ -124,7 +124,7 @@ class BaseAITrainer:
                 data_file = csv_files[0]
             else:
                 raise FileNotFoundError(f"No data file found in {dataset_path}")
-        
+
         # Load data
         if data_file.suffix == '.csv':
             df = pd.read_csv(data_file)
@@ -134,36 +134,66 @@ class BaseAITrainer:
             df = pd.read_csv(data_file, sep='\t')
         else:
             raise ValueError(f"Unsupported file format: {data_file.suffix}")
-        
+
+        # DATA CLEANING - Fix invalid values
+        # 1. Replace 'unknown' strings with NaN
+        df = df.replace('unknown', np.nan)
+        df = df.replace('Unknown', np.nan)
+        df = df.replace('UNKNOWN', np.nan)
+
+        # 2. Fix Unicode minus signs (U+2212 '−' to regular '-')
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                df[col] = df[col].astype(str).str.replace('−', '-', regex=False)
+
+        # 3. Convert all numeric columns to proper numeric type
         # Identify feature and target columns
         # Assume target columns are: MM, Q, Beta_2, or combinations
         target_cols = []
         for col in ['MM', 'Q', 'Beta_2']:
             if col in df.columns:
                 target_cols.append(col)
-        
+
         if not target_cols:
             raise ValueError(f"No target columns found in {data_file}")
-        
+
         # Features are all columns except targets and NUCLEUS
         feature_cols = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
-        
+
+        # Convert to numeric
+        all_numeric_cols = feature_cols + target_cols
+        for col in all_numeric_cols:
+            if col in df.columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+
+        # 4. Drop rows with NaN values in features or targets
+        df_clean = df[all_numeric_cols].dropna()
+
+        if len(df_clean) == 0:
+            raise ValueError(f"No valid data after cleaning in {data_file}")
+
+        logger.info(f"Data cleaning: {len(df)} -> {len(df_clean)} samples ({len(df)-len(df_clean)} removed)")
+
         # Extract features and targets
-        X = df[feature_cols].values
-        y = df[target_cols].values
-        
+        X = df_clean[feature_cols].values
+        y = df_clean[target_cols].values
+
+        # Ensure data types are correct
+        X = X.astype(np.float32)
+        y = y.astype(np.float32)
+
         # Split into train/val/test (70/15/15)
         n_total = len(X)
         n_train = int(0.7 * n_total)
         n_val = int(0.15 * n_total)
-        
+
         X_train = X[:n_train]
         y_train = y[:n_train]
         X_val = X[n_train:n_train+n_val]
         y_val = y[n_train:n_train+n_val]
         X_test = X[n_train+n_val:]
         y_test = y[n_train+n_val:]
-        
+
         return X_train, y_train, X_val, y_val, X_test, y_test
     
     def calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray) -> Dict:
