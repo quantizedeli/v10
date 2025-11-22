@@ -977,9 +977,17 @@ class ParallelAITrainer:
         """
         dataset_paths = []
 
+        # Directories to exclude (not datasets, but metadata/reports)
+        excluded_dirs = {'quality_reports', 'metadata', 'reports', 'logs', '__pycache__', '.git'}
+
         # Look for subdirectories that contain data files
         for subdir in datasets_dir.iterdir():
             if subdir.is_dir():
+                # Skip excluded directories
+                if subdir.name in excluded_dirs:
+                    logger.debug(f"  Skipping non-dataset directory: {subdir.name}")
+                    continue
+
                 # Check if directory contains CSV, XLSX, or TSV files
                 has_data = (
                     list(subdir.glob('*.csv')) or
