@@ -141,8 +141,7 @@ ANOMALY_THRESHOLDS = {
 NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']
 
 SCENARIOS = {
-    'S60': (0.60, 0.20, 0.20),  # (train, check, test) - Balanced validation/test
-    'S70': (0.70, 0.15, 0.15),  # Standard split
+    'S70': (0.70, 0.15, 0.15),  # (train, check, test) - Standard split
     'S80': (0.80, 0.10, 0.10)   # High training ratio
 }
 
@@ -420,7 +419,7 @@ AUTHOR = "Nuclear Physics AI Project"
 DATE = "2025-11-21"
 CHANGELOG = """
 v1.0.3 (2025-11-21):
-  - SCENARIOS: S60 (60/20/20) senaryosu eklendi
+  - SCENARIOS: S70 (70/15/15) ve S80 (80/10/10) - İki eğitim senaryosu
   - Yeni özellik: Çekirdek dağılım analizi (nuclei_distribution_analyzer.py)
   - Her dataset için detaylı dağılım raporları (Z, N, A, magik sayılar, izotop çeşitliliği)
   - Master çekirdek kataloğu oluşturma

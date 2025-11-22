@@ -12,9 +12,9 @@
 
 **New Dataset Features Added:**
 
-✅ **Training Scenarios Enhanced**
-- Added S60 scenario (60/20/20 split) for balanced validation/test sets
-- Existing S70 (70/15/15) and S80 (80/10/10) scenarios maintained
+✅ **Training Scenarios**
+- S70 (70/15/15) - Standard split
+- S80 (80/10/10) - High training ratio
 - All scenarios documented in `core_modules/constants.py`
 
 ✅ **Comprehensive Nuclei Distribution Analysis**

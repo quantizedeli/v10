@@ -6,7 +6,7 @@ Dataset Generation phase - Comprehensive nuclear physics dataset creation with t
 
 ## Features
 
-- **Multiple Training Scenarios**: 60/20/20, 70/15/15, 80/10/10 (train/validation/test splits)
+- **Multiple Training Scenarios**: 70/15/15, 80/10/10 (train/validation/test splits)
 - **Nuclei Counts**: 75, 100, 150, 200, and ALL available nuclei
 - **Target Variables**: Magnetic Moment (MM), Quadrupole Moment (Q), Combined (MM_QM), Beta_2 deformation
 - **Advanced Sampling**: Stratified and random sampling methods
@@ -15,19 +15,14 @@ Dataset Generation phase - Comprehensive nuclear physics dataset creation with t
 
 ## Training Scenarios
 
-The module supports three different data split scenarios:
+The module supports two different data split scenarios:
 
-1. **S60 (60/20/20)**: Balanced validation/test split
-   - 60% Training
-   - 20% Validation (Check)
-   - 20% Testing
-
-2. **S70 (70/15/15)**: Standard split
+1. **S70 (70/15/15)**: Standard split
    - 70% Training
    - 15% Validation (Check)
    - 15% Testing
 
-3. **S80 (80/10/10)**: High training ratio
+2. **S80 (80/10/10)**: High training ratio
    - 80% Training
    - 10% Validation (Check)
    - 10% Testing
@@ -88,7 +83,7 @@ df = data_loader.load_and_enrich_data()
 generator = DatasetGenerator(base_path='ANFIS_Datasets')
 
 # Generate all dataset combinations
-# This will create datasets for all scenarios (S60, S70, S80)
+# This will create datasets for all scenarios (S70, S80)
 generator.generate_all_datasets(df)
 
 # Output will include:
@@ -107,8 +102,8 @@ ANFIS_Datasets/
 ├── distribution_reports/
 │   └── [Various distribution analysis reports]
 ├── MM/
-│   ├── S60/
-│   │   └── MM_75_S60_anomalisiz_AZN_standard_stratified/
+│   ├── S70/
+│   │   └── MM_75_S70_anomalisiz_AZN_standard_stratified/
 │   │       ├── train.csv, train.xlsx, train.mat
 │   │       ├── check.csv, check.xlsx, check.mat
 │   │       ├── test.csv, test.xlsx, test.mat
@@ -116,8 +111,6 @@ ANFIS_Datasets/
 │   │       ├── nucleus_selection.xlsx
 │   │       ├── nuclei_distribution_report.xlsx
 │   │       └── scaler.pkl
-│   ├── S70/
-│   │   └── [Similar structure]
 │   └── S80/
 │       └── [Similar structure]
 ├── QM/
@@ -185,7 +178,6 @@ Key parameters (defined in `core_modules/constants.py`):
 ```python
 NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']
 SCENARIOS = {
-    'S60': (0.60, 0.20, 0.20),
     'S70': (0.70, 0.15, 0.15),
     'S80': (0.80, 0.10, 0.10)
 }

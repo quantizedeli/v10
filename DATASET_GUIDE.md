@@ -27,14 +27,14 @@
 This project generates comprehensive nuclear physics datasets for machine learning and ANFIS training. The datasets include:
 
 - **267 nuclei** from the aaa2.txt database
-- **Multiple training scenarios** (60/20/20, 70/15/15, 80/10/10)
+- **Two training scenarios** (70/15/15, 80/10/10)
 - **4 target variables** (MM, Q, MM_QM, Beta_2)
 - **Multiple formats** (CSV, Excel, MATLAB)
 - **Detailed distribution analysis** for each dataset
 
 ### Key Features
 
-✅ **Multiple Training Scenarios**: Choose between 60/20/20, 70/15/15, or 80/10/10 splits
+✅ **Multiple Training Scenarios**: Choose between 70/15/15 or 80/10/10 splits
 ✅ **MATLAB-Compatible**: Direct .mat file export for ANFIS training
 ✅ **Excel Reports**: Comprehensive Excel files with distribution analysis
 ✅ **Nuclei Lists**: Detailed lists of which nuclei are in each dataset
@@ -44,19 +44,6 @@ This project generates comprehensive nuclear physics datasets for machine learni
 ---
 
 ## Training Scenarios
-
-### S60: Balanced Validation/Test (60/20/20)
-
-**Best for**: When you need substantial validation and test sets
-
-- **Training**: 60% of data
-- **Validation (Check)**: 20% of data
-- **Testing**: 20% of data
-
-**Use cases**:
-- Small datasets where you want to maximize validation/test data
-- Rigorous model evaluation
-- Cross-validation experiments
 
 ### S70: Standard Split (70/15/15)
 

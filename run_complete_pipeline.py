@@ -89,7 +89,7 @@ def step_2_theoretical_calculations(cleaned_data, output_dir='output'):
     """
     try:
         # DÜZELTILMIŞ IMPORT
-        from nuclear_physics_modules.semf_calculator import TheoreticalCalculator
+        from physics_modules.semf_calculator import TheoreticalCalculator
         
         logger.info("Teorik hesaplamalar yapılıyor (SEMF)...")
         calculator = TheoreticalCalculator()

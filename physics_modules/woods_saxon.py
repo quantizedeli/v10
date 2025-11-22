@@ -12,7 +12,7 @@ import logging
 
 import sys
 # sys.path.append('..') - REMOVED
-from nuclear_physics_modules.constants import WOODS_SAXON_PARAMS, HBAR_C, R0
+from core_modules.constants import WOODS_SAXON_PARAMS, HBAR_C, R0
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
