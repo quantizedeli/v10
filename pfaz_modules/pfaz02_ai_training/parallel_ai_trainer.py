@@ -269,6 +269,14 @@ class BaseAITrainer:
             # ALL dataseti için: NaN oranı %50'den az olan özellikleri kullan
             all_possible_features = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
 
+            # Exclude CATEGORICAL features (string values, cannot be used in numeric models)
+            # These are descriptive labels derived from other features, not useful for ML
+            categorical_features = ['deformation_type', 'nucleus_collective_type']
+            all_possible_features = [col for col in all_possible_features if col not in categorical_features]
+            if any(col in df.columns for col in categorical_features):
+                found_categorical = [col for col in categorical_features if col in df.columns]
+                logger.info(f"Excluded {len(found_categorical)} categorical features (string values): {found_categorical}")
+
             # CRITICAL: Prevent data leakage - exclude theoretical predictions of targets
             # These features are direct theoretical calculations/estimates of the targets
             # Using them would give artificially high R² scores
