@@ -664,7 +664,7 @@ class DatasetGenerationPipelineV2:
             master_metadata['datasets'].append({
                 'name': dataset['dataset_name'],
                 'target': dataset['metadata']['target'],
-                'n_nuclei': dataset['metadata']['n_nuclei'],
+                'n_nuclei_total': dataset['metadata']['n_nuclei_total'],
                 'n_features': dataset['metadata']['n_features'],
                 'data_file_csv': str(dataset['data_file_csv']),
                 'data_file_mat': str(dataset['data_file_mat'])
@@ -696,14 +696,17 @@ class DatasetGenerationPipelineV2:
             summary_data.append({
                 'Dataset_Name': meta['dataset_name'],
                 'Target': meta['target'],
-                'N_Nuclei': meta['n_nuclei'],
+                'N_Nuclei_Total': meta['n_nuclei_total'],
+                'N_Train': meta['split_info']['train']['n_samples'],
+                'N_Val': meta['split_info']['val']['n_samples'],
+                'N_Test': meta['split_info']['test']['n_samples'],
                 'N_Features': meta['n_features'],
                 'A_Min': meta['statistics']['A_range'][0],
                 'A_Max': meta['statistics']['A_range'][1],
                 'Z_Min': meta['statistics']['Z_range'][0],
                 'Z_Max': meta['statistics']['Z_range'][1],
-                'Data_File_CSV': str(dataset['data_file_csv']),
-                'Data_File_MAT': str(dataset['data_file_mat'])
+                'Train_CSV': str(dataset['split_files']['train']['csv'].name),
+                'Train_Excel': str(dataset['split_files']['train']['xlsx'].name)
             })
         
         summary_df = pd.DataFrame(summary_data)
