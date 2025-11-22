@@ -106,6 +106,33 @@ class BaseAITrainer:
         self.model = None
         self.history = {}
         
+    def _get_feature_set_from_name(self, dataset_name: str) -> List[str]:
+        """Özellik setlerini dataset adından belirle"""
+
+        # Önceden tanımlı özellik setleri
+        FEATURE_SETS = {
+            'AZN': ['A', 'Z', 'N'],
+            'AZNS': ['A', 'Z', 'N', 'SPIN'],
+            'AZNP': ['A', 'Z', 'N', 'PARITY'],
+            'AZNSP': ['A', 'Z', 'N', 'SPIN', 'PARITY'],
+            'AZN_beta': ['A', 'Z', 'N', 'Beta_2_estimated'],
+            'AZN_p': ['A', 'Z', 'N', 'P-factor'],
+            'AZN_beta_p': ['A', 'Z', 'N', 'Beta_2_estimated', 'P-factor'],
+            'AZNSP_beta_p': ['A', 'Z', 'N', 'SPIN', 'PARITY', 'Beta_2_estimated', 'P-factor'],
+            'GELISMIS': ['A', 'Z', 'N', 'SPIN', 'PARITY', 'Beta_2_estimated', 'P-factor',
+                         'BE_per_A', 'Z_magic_dist', 'N_magic_dist']
+        }
+
+        # Dataset adından özellik setini çıkar
+        for feature_set_name in FEATURE_SETS:
+            if feature_set_name in dataset_name:
+                logger.info(f"Detected feature set: {feature_set_name}")
+                return FEATURE_SETS[feature_set_name]
+
+        # Eğer "ALL" varsa veya tanımlı bir set yoksa, None döndür (tüm özellikleri kullan)
+        logger.info("No specific feature set detected, using adaptive selection")
+        return None
+
     def load_dataset(self, dataset_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Load dataset from path"""
 
@@ -166,11 +193,39 @@ class BaseAITrainer:
 
         logger.info(f"Target columns: {target_cols}")
 
-        # Features are all columns except targets and NUCLEUS
-        feature_cols = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
-        logger.info(f"Feature columns ({len(feature_cols)}): {feature_cols[:5]}...")
+        # 4. Dataset adından özellik setini belirle
+        predefined_features = self._get_feature_set_from_name(dataset_path.name)
 
-        # 4. Convert to numeric
+        if predefined_features is not None:
+            # Önceden tanımlanmış özellik seti kullan
+            feature_cols = [col for col in predefined_features if col in df.columns]
+            logger.info(f"Using predefined feature set ({len(feature_cols)} features): {feature_cols}")
+        else:
+            # ALL dataseti için: NaN oranı %50'den az olan özellikleri kullan
+            all_possible_features = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
+
+            # Convert to numeric first
+            for col in all_possible_features:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+
+            # NaN oranlarını hesapla
+            nan_threshold = 0.5  # %50
+            feature_cols = []
+            for col in all_possible_features:
+                nan_ratio = df[col].isna().sum() / len(df)
+                if nan_ratio < nan_threshold:
+                    feature_cols.append(col)
+                else:
+                    logger.warning(f"Excluding {col}: {nan_ratio*100:.1f}% NaN (threshold: {nan_threshold*100}%)")
+
+            logger.info(f"Using adaptive feature selection ({len(feature_cols)}/{len(all_possible_features)} features)")
+            logger.info(f"Selected features: {feature_cols[:10]}...")
+
+        if len(feature_cols) == 0:
+            raise ValueError(f"No valid features after filtering in {data_file}")
+
+        # 5. Convert to numeric
         all_numeric_cols = feature_cols + target_cols
         for col in all_numeric_cols:
             if col in df.columns:
@@ -180,11 +235,12 @@ class BaseAITrainer:
                 if before_count != after_count:
                     logger.warning(f"Column {col}: {before_count - after_count} values became NaN during conversion")
 
-        # 5. Check NaN counts before dropping
+        # 6. Check NaN counts before dropping
         nan_counts = df[all_numeric_cols].isna().sum()
-        logger.info(f"NaN counts per column:\n{nan_counts[nan_counts > 0]}")
+        if nan_counts.sum() > 0:
+            logger.info(f"NaN counts per column:\n{nan_counts[nan_counts > 0]}")
 
-        # 6. Drop rows with NaN values in features or targets
+        # 7. Drop rows with NaN values in SELECTED features or targets
         df_clean = df[all_numeric_cols].dropna()
 
         if len(df_clean) == 0:
