@@ -209,13 +209,65 @@ class DatasetGenerationPipelineV2:
         missing_cols = [col for col in required_cols if col not in self.raw_data.columns]
         if missing_cols:
             raise ValueError(f"Missing required columns: {missing_cols}")
-        
+
+        # Clean and convert numeric columns
+        self._clean_and_convert_numeric_columns()
+
         self.generation_report['raw_data'] = {
             'n_nuclei': len(self.raw_data),
             'n_features': len(self.raw_data.columns),
             'columns': list(self.raw_data.columns)
         }
-    
+
+    def _clean_and_convert_numeric_columns(self):
+        """
+        Clean and convert numeric columns to proper numeric types.
+        Handles comma decimal separators and ensures data integrity.
+        """
+        logger.info("Cleaning and converting numeric columns...")
+
+        # Columns that should always be excluded from numeric conversion
+        exclude_cols = ['NUCLEUS']
+
+        # Get columns to process (all except excluded ones)
+        cols_to_process = [col for col in self.raw_data.columns if col not in exclude_cols]
+
+        conversions_made = 0
+        errors_found = []
+
+        for col in cols_to_process:
+            try:
+                # Skip if already numeric
+                if pd.api.types.is_numeric_dtype(self.raw_data[col]):
+                    continue
+
+                # Try to convert to numeric
+                # First, handle comma decimal separators (e.g., "1,024" -> "1.024")
+                if self.raw_data[col].dtype == object:
+                    # Replace commas with dots for decimal conversion
+                    cleaned_values = self.raw_data[col].astype(str).str.replace(',', '.', regex=False)
+                    # Convert to numeric, coercing errors to NaN
+                    converted = pd.to_numeric(cleaned_values, errors='coerce')
+
+                    # Only apply conversion if it resulted in at least some numeric values
+                    if converted.notna().any():
+                        self.raw_data[col] = converted
+                        conversions_made += 1
+
+                        # Log if any values were converted to NaN
+                        nan_count = converted.isna().sum() - self.raw_data[col].isna().sum()
+                        if nan_count > 0:
+                            logger.warning(f"  [WARNING] Column '{col}': {nan_count} values could not be converted to numeric")
+                            errors_found.append(f"{col}: {nan_count} invalid values")
+
+            except Exception as e:
+                logger.warning(f"  [WARNING] Error converting column '{col}': {e}")
+                errors_found.append(f"{col}: {str(e)}")
+
+        logger.info(f"[SUCCESS] Converted {conversions_made} columns to numeric types")
+        if errors_found:
+            logger.info(f"   Conversion warnings: {len(errors_found)}")
+
     def _add_theoretical_calculations(self):
         """Teorik hesaplamaları ekle"""
         logger.info("Adding theoretical physics calculations...")
@@ -472,12 +524,25 @@ class DatasetGenerationPipelineV2:
         # Add target statistics
         for target_col in target_cols:
             if target_col in sampled_df.columns:
-                metadata['statistics'][f'{target_col}_mean'] = float(sampled_df[target_col].mean())
-                metadata['statistics'][f'{target_col}_std'] = float(sampled_df[target_col].std())
-                metadata['statistics'][f'{target_col}_range'] = [
-                    float(sampled_df[target_col].min()),
-                    float(sampled_df[target_col].max())
-                ]
+                # Ensure column is numeric before calculating statistics
+                if not pd.api.types.is_numeric_dtype(sampled_df[target_col]):
+                    logger.warning(f"  [WARNING] Target column '{target_col}' is not numeric, attempting conversion...")
+                    sampled_df[target_col] = pd.to_numeric(sampled_df[target_col], errors='coerce')
+
+                # Calculate statistics only on non-null values
+                col_data = sampled_df[target_col].dropna()
+                if len(col_data) > 0:
+                    metadata['statistics'][f'{target_col}_mean'] = float(col_data.mean())
+                    metadata['statistics'][f'{target_col}_std'] = float(col_data.std())
+                    metadata['statistics'][f'{target_col}_range'] = [
+                        float(col_data.min()),
+                        float(col_data.max())
+                    ]
+                else:
+                    logger.warning(f"  [WARNING] Target column '{target_col}' has no valid numeric values")
+                    metadata['statistics'][f'{target_col}_mean'] = None
+                    metadata['statistics'][f'{target_col}_std'] = None
+                    metadata['statistics'][f'{target_col}_range'] = [None, None]
         
         # Save metadata
         metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
