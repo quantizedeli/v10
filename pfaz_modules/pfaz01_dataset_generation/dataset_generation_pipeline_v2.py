@@ -83,6 +83,14 @@ class DatasetGenerationPipelineV2:
         # [UPDATED]: 75, 100, 150, 200, ALL (all available nuclei)
         self.nucleus_counts = nucleus_counts or [75, 100, 150, 200, 'ALL']
         self.targets = targets or ['MM', 'QM', 'MM_QM', 'Beta_2']
+
+        # Target column name mapping (simplified name -> actual column name)
+        self.target_column_map = {
+            'MM': 'MAGNETIC MOMENT [µ]',
+            'QM': 'QUADRUPOLE MOMENT [Q]',
+            'Q': 'QUADRUPOLE MOMENT [Q]',
+            'Beta_2': 'Beta_2'
+        }
         
         # Initialize managers
         self.theoretical_calc_manager = TheoreticalCalculationsManager(enable_all=True)
@@ -172,24 +180,24 @@ class DatasetGenerationPipelineV2:
         if not self.source_data_path.exists():
             raise FileNotFoundError(f"Source data not found: {self.source_data_path}")
         
-        # Detect file format and load
+        # Detect file format and load with UTF-8 encoding
         if self.source_data_path.suffix == '.csv':
-            self.raw_data = pd.read_csv(self.source_data_path)
+            self.raw_data = pd.read_csv(self.source_data_path, encoding='utf-8')
         elif self.source_data_path.suffix in ['.xlsx', '.xls']:
             self.raw_data = pd.read_excel(self.source_data_path)
         elif self.source_data_path.suffix == '.tsv':
-            self.raw_data = pd.read_csv(self.source_data_path, sep='\t')
+            self.raw_data = pd.read_csv(self.source_data_path, sep='\t', encoding='utf-8')
         elif self.source_data_path.suffix == '.txt':
             # Try to detect delimiter automatically for .txt files
             # First try tab-delimited, then comma, then whitespace
             try:
-                self.raw_data = pd.read_csv(self.source_data_path, sep='\t')
+                self.raw_data = pd.read_csv(self.source_data_path, sep='\t', encoding='utf-8')
             except:
                 try:
-                    self.raw_data = pd.read_csv(self.source_data_path, sep=',')
+                    self.raw_data = pd.read_csv(self.source_data_path, sep=',', encoding='utf-8')
                 except:
                     # Last resort: whitespace-delimited
-                    self.raw_data = pd.read_csv(self.source_data_path, delim_whitespace=True)
+                    self.raw_data = pd.read_csv(self.source_data_path, delim_whitespace=True, encoding='utf-8')
         else:
             raise ValueError(f"Unsupported file format: {self.source_data_path.suffix}")
         
@@ -232,18 +240,15 @@ class DatasetGenerationPipelineV2:
     def _apply_qm_filtering(self):
         """Her target için QM filtreleme uygula"""
         logger.info("Applying QM filtering for each target...")
-        
+
         qm_reports = []
-        
+
         for target in self.targets:
             logger.info(f"\n-> Target: {target}")
-            
-            # Target columns
-            if target == 'MM_QM':
-                target_cols = ['MM', 'Q']
-            else:
-                target_cols = [target] if target in self.enriched_data.columns else []
-            
+
+            # Get actual target column names
+            target_cols = self._get_actual_column_names(target, self.enriched_data)
+
             # Check if target exists
             missing_targets = [col for col in target_cols if col not in self.enriched_data.columns]
             if missing_targets:
@@ -306,15 +311,18 @@ class DatasetGenerationPipelineV2:
                     'N': (1, 200)
                 }
             }
-            
-            if target in df.columns:
-                # Add target-specific validation
-                if target == 'MM':
-                    validation_rules['ranges']['MM'] = (-10, 10)
-                elif target == 'QM':
-                    validation_rules['ranges']['Q'] = (-5, 5)
-                elif target == 'Beta_2':
-                    validation_rules['ranges']['Beta_2'] = (-0.5, 0.5)
+
+            # Get actual target column names for validation
+            target_cols = self._get_actual_column_names(target, df)
+            for target_col in target_cols:
+                if target_col in df.columns:
+                    # Add target-specific validation based on target type
+                    if target == 'MM' or 'MAGNETIC' in target_col.upper():
+                        validation_rules['ranges'][target_col] = (-10, 10)
+                    elif target == 'QM' or 'QUADRUPOLE' in target_col.upper():
+                        validation_rules['ranges'][target_col] = (-5, 5)
+                    elif target == 'Beta_2':
+                        validation_rules['ranges'][target_col] = (-0.5, 0.5)
             
             issues = self.data_validator.validate_dataset(df, validation_rules)
             
@@ -375,9 +383,44 @@ class DatasetGenerationPipelineV2:
             'success_rate': generated_count / total_combinations if total_combinations > 0 else 0
         }
     
+    def _get_actual_column_names(self, target: str, df: pd.DataFrame) -> List[str]:
+        """
+        Get actual column names for a target from the dataframe
+
+        Args:
+            target: Target name (simplified, e.g., 'MM', 'QM')
+            df: DataFrame to check for actual column names
+
+        Returns:
+            List of actual column names
+        """
+        if target == 'MM_QM':
+            # Special case: both MM and Q targets
+            actual_cols = []
+            for t in ['MM', 'Q']:
+                col_name = self.target_column_map.get(t, t)
+                if col_name in df.columns:
+                    actual_cols.append(col_name)
+                elif t in df.columns:
+                    actual_cols.append(t)
+            return actual_cols
+        else:
+            # Single target
+            col_name = self.target_column_map.get(target, target)
+            if col_name in df.columns:
+                return [col_name]
+            elif target in df.columns:
+                return [target]
+            else:
+                # Try to find column by checking if it contains the target name
+                for col in df.columns:
+                    if target.upper() in col.upper():
+                        return [col]
+                return [target]  # Fallback to original name
+
     def _create_single_dataset(self, source_df: pd.DataFrame, target: str, n_nuclei: int) -> Optional[Dict]:
         """Tek bir dataset oluştur"""
-        
+
         # Handle 'ALL' case
         if n_nuclei == 'ALL':
             sampled_df = source_df.copy()
@@ -389,13 +432,10 @@ class DatasetGenerationPipelineV2:
             sampled_df = source_df.sample(n=n_nuclei, random_state=seed)
             actual_n = n_nuclei
             dataset_name = f"{target}_{n_nuclei}nuclei"
-        
-        # Determine features and target columns
-        if target == 'MM_QM':
-            target_cols = ['MM', 'Q']
-        else:
-            target_cols = [target]
-        
+
+        # Determine features and target columns using actual column names
+        target_cols = self._get_actual_column_names(target, sampled_df)
+
         # All columns except target columns are features
         feature_cols = [col for col in sampled_df.columns if col not in target_cols and col != 'NUCLEUS']
         
