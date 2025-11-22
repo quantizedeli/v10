@@ -63,7 +63,7 @@ class LogAnalyticsVisualizationsComplete:
             log_data: DataFrame with columns:
                 timestamp, level, module, message, phase, target, model_id
         """
-        logger.info("\n→ Creating training progress timeline...")
+        logger.info("\n-> Creating training progress timeline...")
         
         fig, axes = plt.subplots(3, 1, figsize=(18, 12), sharex=True)
         fig.suptitle('Training Progress Timeline\nEnd-to-End Project Execution', 
@@ -199,7 +199,7 @@ class LogAnalyticsVisualizationsComplete:
                                    save_name: str = 'error_warning_analysis'):
         """Error and warning distribution analysis"""
         
-        logger.info("\n→ Creating error/warning analysis...")
+        logger.info("\n-> Creating error/warning analysis...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Error & Warning Analysis\nSystem Reliability Metrics', 
@@ -302,7 +302,7 @@ class LogAnalyticsVisualizationsComplete:
                                     save_name: str = 'module_activity_heatmap'):
         """Module activity heatmap over time"""
         
-        logger.info("\n→ Creating module activity heatmap...")
+        logger.info("\n-> Creating module activity heatmap...")
         
         fig, ax = plt.subplots(figsize=(18, 10))
         fig.suptitle('Module Activity Heatmap\nSystem Component Usage Over Time', 
@@ -375,7 +375,7 @@ class LogAnalyticsVisualizationsComplete:
             metrics_log: DataFrame with columns:
                 timestamp, model_id, target, r2, rmse, mae, training_time
         """
-        logger.info("\n→ Creating performance over time plot...")
+        logger.info("\n-> Creating performance over time plot...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Model Performance Metrics Over Time\nTraining Evolution', 
@@ -495,7 +495,7 @@ class LogAnalyticsVisualizationsComplete:
             resource_log: DataFrame with columns:
                 timestamp, cpu_percent, gpu_percent, ram_gb, gpu_ram_gb
         """
-        logger.info("\n→ Creating resource usage monitoring plot...")
+        logger.info("\n-> Creating resource usage monitoring plot...")
         
         fig, axes = plt.subplots(3, 1, figsize=(18, 12), sharex=True)
         fig.suptitle('Resource Usage Monitoring\nSystem Resource Utilization', 

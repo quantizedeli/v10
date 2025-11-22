@@ -229,9 +229,9 @@ $BE = a_v A - a_s A^{2/3} - a_c \frac{Z^2}{A^{1/3}} - a_a \frac{(N-Z)^2}{A} + \d
             if result.returncode == 0:
                 logger.info(f"✓ PDF compiled: {tex_file.with_suffix('.pdf')}")
             else:
-                logger.warning("⚠ PDF compilation failed (pdflatex may not be installed)")
+                logger.warning("[WARNING] PDF compilation failed (pdflatex may not be installed)")
         except:
-            logger.warning("⚠ Could not compile PDF (pdflatex not available)")
+            logger.warning("[WARNING] Could not compile PDF (pdflatex not available)")
 
 
 if __name__ == "__main__":

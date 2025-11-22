@@ -46,7 +46,7 @@ class GPUOptimizer:
                 logger.info(f"  GPU: {self.gpu_name}")
             self._setup_gpu_memory_growth()
         else:
-            logger.warning("⚠️ No GPU detected - using CPU")
+            logger.warning("[WARNING] No GPU detected - using CPU")
 
     def _check_gpu_availability(self) -> bool:
         """Check if GPU is available"""
@@ -109,7 +109,7 @@ class GPUOptimizer:
             'n_estimators': 1000,
             'max_depth': 6,
             'learning_rate': 0.1,
-            'tree_method': 'gpu_hist',  # ← GPU acceleration
+            'tree_method': 'gpu_hist',  # <- GPU acceleration
             'gpu_id': 0,
             'predictor': 'gpu_predictor',
             'sampling_method': 'gradient_based',
@@ -234,7 +234,7 @@ class GPUOptimizer:
 
         optimal_size = 32  # Safe default
 
-        logger.info("🔍 Finding optimal batch size...")
+        logger.info("[SEARCH] Finding optimal batch size...")
 
         for batch_size in batch_sizes:
             try:
@@ -253,7 +253,7 @@ class GPUOptimizer:
                 logger.info(f"  ✗ Batch size {batch_size} - Out of memory")
                 break
             except Exception as e:
-                logger.warning(f"  ⚠️ Batch size {batch_size} - Error: {e}")
+                logger.warning(f"  [WARNING] Batch size {batch_size} - Error: {e}")
                 break
 
         logger.info(f"✓ Optimal batch size: {optimal_size}")
@@ -336,7 +336,7 @@ def train_xgboost_optimized(
     optimized_config = gpu_opt.optimize_xgboost(config)
 
     # Train with GPU
-    logger.info("🚀 Training XGBoost with GPU acceleration...")
+    logger.info("[START] Training XGBoost with GPU acceleration...")
 
     start_time = time.time()
 
@@ -425,7 +425,7 @@ def train_dnn_optimized(
     )
 
     # Train
-    logger.info(f"🚀 Training DNN with GPU optimization...")
+    logger.info(f"[START] Training DNN with GPU optimization...")
     logger.info(f"  Batch size: {optimal_batch_size}")
     logger.info(f"  Mixed precision: FP16")
 
@@ -547,7 +547,7 @@ class PerformanceBenchmark:
         """
         from xgboost import XGBRegressor
 
-        logger.info("🔬 Benchmarking XGBoost CPU vs GPU...")
+        logger.info("[CALC] Benchmarking XGBoost CPU vs GPU...")
 
         # CPU benchmark
         cpu_times = []

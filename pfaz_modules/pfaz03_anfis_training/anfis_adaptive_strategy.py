@@ -411,7 +411,7 @@ def test_adaptive_strategy():
 
 if __name__ == "__main__":
     test_adaptive_strategy()
-    print("\n✅ Adaptive Strategy - COMPLETE")
+    print("\n[SUCCESS] Adaptive Strategy - COMPLETE")
     print("Location: adaptive_learning/adaptive_strategy.py")
 
 # ==================== EKLEME BAŞI ====================

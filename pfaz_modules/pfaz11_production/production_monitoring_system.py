@@ -205,7 +205,7 @@ class DataDriftDetector:
         self.drift_history.append(metrics)
         
         if drift_detected:
-            logger.warning(f"⚠️ Data drift detected! Score: {overall_drift:.4f}")
+            logger.warning(f"[WARNING] Data drift detected! Score: {overall_drift:.4f}")
         
         return metrics
     
@@ -276,7 +276,7 @@ class ModelDegradationDetector:
         })
         
         if degraded:
-            logger.warning(f"⚠️ Model degradation detected!")
+            logger.warning(f"[WARNING] Model degradation detected!")
         
         return degraded, degradation
 

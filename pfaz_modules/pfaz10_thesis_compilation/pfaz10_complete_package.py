@@ -124,7 +124,7 @@ class PFAZ10CompletePackage:
 ║                                                                              ║
 ║              COMPLETE AUTOMATED THESIS GENERATION SYSTEM                    ║
 ║                                                                              ║
-║  From Raw Data → Publication-Ready PDF in One Command                       ║
+║  From Raw Data -> Publication-Ready PDF in One Command                       ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -240,7 +240,7 @@ This system will:
         
         # Step 1: Master Integration
         if self.modules_available['master_integration']:
-            print("\n→ Running Master Integration...")
+            print("\n-> Running Master Integration...")
             try:
                 from pfaz10_master_integration import MasterThesisIntegration
                 
@@ -269,7 +269,7 @@ This system will:
         
         # Step 2: Visualization Gallery
         if generate_gallery and self.modules_available['visualization_gallery']:
-            print("\n→ Generating Visualization Gallery...")
+            print("\n-> Generating Visualization Gallery...")
             try:
                 from pfaz10_visualization_qa import VisualizationGalleryManager
                 
@@ -286,7 +286,7 @@ This system will:
         
         # Step 3: Quality Assurance
         if run_qa and self.modules_available['quality_assurance']:
-            print("\n→ Running Quality Assurance...")
+            print("\n-> Running Quality Assurance...")
             try:
                 from pfaz10_visualization_qa import ThesisQualityAssurance
                 
@@ -341,9 +341,9 @@ This system will:
         
         # Warnings
         if results['warnings']:
-            print(f"\n⚠ Warnings ({len(results['warnings'])}):")
+            print(f"\n[WARNING] Warnings ({len(results['warnings'])}):")
             for warning in results['warnings'][:5]:
-                print(f"  ⚠ {warning}")
+                print(f"  [WARNING] {warning}")
             if len(results['warnings']) > 5:
                 print(f"  ... and {len(results['warnings']) - 5} more warnings")
         
@@ -357,7 +357,7 @@ This system will:
         
         # Final message
         if results['success']:
-            print("\n🎉 SUCCESS! Your thesis has been generated!")
+            print("\n[COMPLETE] SUCCESS! Your thesis has been generated!")
             print("\nYou can find your thesis in: output/thesis/")
             print("Main file: output/thesis/thesis_main.tex")
             if any('pdf' in f.lower() for f in results['files']):

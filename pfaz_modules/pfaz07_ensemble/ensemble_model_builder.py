@@ -500,7 +500,7 @@ def main():
         ensemble_names=['Simple Voting', 'Weighted Voting (R²)']
     )
     
-    logger.info("\n✅ TEST COMPLETED!")
+    logger.info("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

@@ -621,7 +621,7 @@ class ParallelTrainingPipeline:
 # ============================================================================
 
 if __name__ == "__main__":
-    print("\n✅ MODEL_TRAINER.PY - COMPLETE VERSION")
+    print("\n[SUCCESS] MODEL_TRAINER.PY - COMPLETE VERSION")
     print("Includes: RF, GBM, XGBoost, DNN + Parallel Training")
 
 # ==================== EKLEME BAŞI ====================

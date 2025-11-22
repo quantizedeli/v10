@@ -64,7 +64,7 @@ class RobustnessVisualizationsComplete:
                 }
             }
         """
-        logger.info("\n→ Creating detailed noise sensitivity plot...")
+        logger.info("\n-> Creating detailed noise sensitivity plot...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Detailed Noise Sensitivity Analysis', 
@@ -216,7 +216,7 @@ class RobustnessVisualizationsComplete:
             robustness_matrix: DataFrame with models as rows, targets as columns
                                Values are robustness scores (0-1)
         """
-        logger.info("\n→ Creating robustness score heatmap...")
+        logger.info("\n-> Creating robustness score heatmap...")
         
         fig, ax = plt.subplots(figsize=(14, 10))
         
@@ -283,7 +283,7 @@ class RobustnessVisualizationsComplete:
                 ...
             }
         """
-        logger.info("\n→ Creating perturbation impact analysis...")
+        logger.info("\n-> Creating perturbation impact analysis...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Feature Perturbation Impact Analysis', 

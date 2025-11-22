@@ -1367,7 +1367,7 @@ class MasterVisualizationSystem:
         
         # Robustness
         if 'robustness' in project_data:
-            logger.info("\n→ Robustness Visualizations")
+            logger.info("\n-> Robustness Visualizations")
             self.robustness_viz.plot_perturbation_sensitivity(
                 project_data['robustness']['predictions'],
                 project_data['robustness']['results']
@@ -1375,7 +1375,7 @@ class MasterVisualizationSystem:
         
         # SHAP
         if 'shap' in project_data:
-            logger.info("\n→ SHAP Visualizations")
+            logger.info("\n-> SHAP Visualizations")
             self.shap_viz.plot_shap_summary(
                 project_data['shap']['features'],
                 project_data['shap']['values'],
@@ -1384,7 +1384,7 @@ class MasterVisualizationSystem:
         
         # Anomaly
         if 'anomaly' in project_data:
-            logger.info("\n→ Anomaly Analysis")
+            logger.info("\n-> Anomaly Analysis")
             self.anomaly_viz.plot_anomaly_characteristics(
                 project_data['anomaly']['normal'],
                 project_data['anomaly']['anomalous'],
@@ -1393,14 +1393,14 @@ class MasterVisualizationSystem:
         
         # Master Report
         if 'master_results' in project_data:
-            logger.info("\n→ Master Report Visualizations")
+            logger.info("\n-> Master Report Visualizations")
             self.master_report_viz.plot_master_summary_stats(
                 project_data['master_results']['summary_df']
             )
         
         # Predictions
         if 'predictions' in project_data:
-            logger.info("\n→ Prediction Visualizations")
+            logger.info("\n-> Prediction Visualizations")
             self.prediction_viz.plot_prediction_comparison(
                 project_data['predictions']['experimental'],
                 project_data['predictions']['models']
@@ -1408,14 +1408,14 @@ class MasterVisualizationSystem:
         
         # Model Comparison
         if 'model_metrics' in project_data:
-            logger.info("\n→ Model Comparison")
+            logger.info("\n-> Model Comparison")
             self.model_comparison_viz.plot_model_ranking(
                 project_data['model_metrics']
             )
         
         # Training Metrics
         if 'training_history' in project_data:
-            logger.info("\n→ Training Metrics")
+            logger.info("\n-> Training Metrics")
             self.training_metrics_viz.plot_training_curves(
                 project_data['training_history']
             )

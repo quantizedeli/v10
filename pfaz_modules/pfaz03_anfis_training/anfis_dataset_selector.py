@@ -102,7 +102,7 @@ class ANFISDatasetSelector:
         target_df = self.results_df[self.results_df['Target'] == target].copy()
         
         if len(target_df) == 0:
-            logger.warning(f"⚠ {target} için sonuç bulunamadı!")
+            logger.warning(f"[WARNING] {target} için sonuç bulunamadı!")
             return pd.DataFrame()
         
         # Layers
@@ -126,7 +126,7 @@ class ANFISDatasetSelector:
         # Adjust if total < 50
         total_available = n_top + n_mid + n_low
         if total_available < n_datasets:
-            logger.warning(f"  ⚠ Sadece {total_available} dataset mevcut (hedef: {n_datasets})")
+            logger.warning(f"  [WARNING] Sadece {total_available} dataset mevcut (hedef: {n_datasets})")
             n_datasets = total_available
         
         # Select randomly from each layer (or all if not enough)
@@ -167,7 +167,7 @@ class ANFISDatasetSelector:
         target_df = self.results_df[self.results_df['Target'] == target].copy()
         
         if len(target_df) == 0:
-            logger.warning(f"⚠ {target} için sonuç bulunamadı!")
+            logger.warning(f"[WARNING] {target} için sonuç bulunamadı!")
             return pd.DataFrame()
         
         # Sort by Composite Score (or R² if not available)
@@ -339,7 +339,7 @@ class ANFISDatasetSelector:
                 
                 shutil.copytree(source_path, dest_path)
             else:
-                logger.warning(f"    ⚠ Dataset bulunamadı: {dataset_name}")
+                logger.warning(f"    [WARNING] Dataset bulunamadı: {dataset_name}")
     
     def _find_dataset_path(self, dataset_name):
         """Find dataset path"""

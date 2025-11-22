@@ -124,7 +124,7 @@ class StackingMetaLearner:
         kf = KFold(n_splits=self.cv_folds, shuffle=True, random_state=42)
         
         for model_idx, (model_id, model) in enumerate(self.base_models.items()):
-            logger.info(f"\n→ Processing: {model_id}")
+            logger.info(f"\n-> Processing: {model_id}")
             metadata = self.base_model_metadata[model_id]
             model_type = metadata['model_type']
             
@@ -443,7 +443,7 @@ def main():
     # Save
     stacker.save_stacking_model('TestStacking')
     
-    logger.info("\n✅ TEST COMPLETED!")
+    logger.info("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

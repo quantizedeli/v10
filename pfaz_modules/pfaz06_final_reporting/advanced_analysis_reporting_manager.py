@@ -161,10 +161,10 @@ class AdvancedAnalysisReportingManager:
             }
         
         except ImportError:
-            logger.warning("  ⚠️ SHAP kütüphanesi yüklü değil")
+            logger.warning("  [WARNING] SHAP kütüphanesi yüklü değil")
             return {'status': 'shap_not_available'}
         except Exception as e:
-            logger.warning(f"  ⚠️ SHAP hatası: {e}")
+            logger.warning(f"  [WARNING] SHAP hatası: {e}")
             return {'status': 'error', 'message': str(e)}
     
     def _feature_importance_ranking(self, shap_results, feature_names):
@@ -455,7 +455,7 @@ class AdvancedAnalysisReportingManager:
             
             logger.info(f"  ✓ Excel özeti kaydedildi")
         except Exception as e:
-            logger.warning(f"  ⚠️ Excel oluşturma hatası: {e}")
+            logger.warning(f"  [WARNING] Excel oluşturma hatası: {e}")
     
     def generate_final_summary_report(self, output_file='final_summary.xlsx'):
         """Tüm modeller için nihai özet rapor"""

@@ -25,7 +25,7 @@ import sys
 try:
     from cross_model_evaluator import CrossModelEvaluator
 except ImportError:
-    print("❌ cross_model_evaluator.py bulunamadı!")
+    print("[ERROR] cross_model_evaluator.py bulunamadı!")
     print("Lütfen cross_model_evaluator.py'yi aynı klasöre kopyalayın.")
     sys.exit(1)
 
@@ -95,7 +95,7 @@ class CrossModelAnalysisPipeline:
             logger.info(f"{'='*80}")
             
             if target not in self.all_predictions or len(self.all_predictions[target]) == 0:
-                logger.warning(f"⚠️ {target} için tahmin bulunamadı, atlanıyor...")
+                logger.warning(f"[WARNING] {target} için tahmin bulunamadı, atlanıyor...")
                 continue
             
             # Cross-model evaluator oluştur
@@ -171,7 +171,7 @@ class CrossModelAnalysisPipeline:
                 
                 self._load_model_predictions(model_name, model_dir, 'AI')
         else:
-            logger.warning(f"⚠️ AI modelleri dizini bulunamadı: {ai_dir}")
+            logger.warning(f"[WARNING] AI modelleri dizini bulunamadı: {ai_dir}")
         
         # ANFIS modelleri
         anfis_dir = self.trained_models_dir / 'ANFIS'
@@ -184,7 +184,7 @@ class CrossModelAnalysisPipeline:
                 
                 self._load_model_predictions(f'ANFIS_{config_name}', config_dir, 'ANFIS')
         else:
-            logger.warning(f"⚠️ ANFIS modelleri dizini bulunamadı: {anfis_dir}")
+            logger.warning(f"[WARNING] ANFIS modelleri dizini bulunamadı: {anfis_dir}")
         
         # Özet
         logger.info(f"\n  ✓ Tahmin toplama özeti:")
@@ -472,7 +472,7 @@ def main():
     
     # Başarı mesajı
     logger.info("\n" + "="*80)
-    logger.info("✅ FAZ 5 BAŞARIYLA TAMAMLANDI!")
+    logger.info("[SUCCESS] FAZ 5 BAŞARIYLA TAMAMLANDI!")
     logger.info("="*80)
     logger.info("\nOluşturulan raporlar:")
     logger.info("  1. MASTER_CROSS_MODEL_REPORT.xlsx (Tüm targetler)")

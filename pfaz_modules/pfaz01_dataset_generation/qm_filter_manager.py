@@ -40,7 +40,7 @@ class QMFilterManager:
         # QM sütununu bul
         qm_col = self._find_qm_column(df)
         if qm_col is None:
-            logger.warning("⚠️ QM sütunu bulunamadı, filtreleme yapılamıyor")
+            logger.warning("[WARNING] QM sütunu bulunamadı, filtreleme yapılamıyor")
             return df, {'status': 'no_qm_column', 'removed': 0}
         
         df_filtered = df.copy()
@@ -51,21 +51,21 @@ class QMFilterManager:
         if target_name == 'MM':
             # MM için QM yoksa sorun değil ✓
             filter_result = 'no_filtering_needed'
-            logger.info(f"✓ Target: MM → QM filtresi UYGULANMADI (QM olmayan çekirdekler kullanılabilir)")
+            logger.info(f"✓ Target: MM -> QM filtresi UYGULANMADI (QM olmayan çekirdekler kullanılabilir)")
             
         elif target_name == 'QM':
             # QM hedefi, QM olmayan çıkar ✗
             df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
             removed_nuclei = removed
             filter_result = 'qm_required'
-            logger.info(f"✓ Target: QM → QM filtresi UYGULAN DI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
+            logger.info(f"✓ Target: QM -> QM filtresi UYGULAN DI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
             
         elif target_name == 'MM_QM':
             # MM_QM hedefi, QM olmayan çıkar ✗
             df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
             removed_nuclei = removed
             filter_result = 'qm_required'
-            logger.info(f"✓ Target: MM_QM → QM filtresi UYGULANDI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
+            logger.info(f"✓ Target: MM_QM -> QM filtresi UYGULANDI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
             
         elif target_name == 'Beta_2':
             # Beta_2 için Q'ya bağlı feature kontrolü
@@ -74,14 +74,14 @@ class QMFilterManager:
                 df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
                 removed_nuclei = removed
                 filter_result = 'qm_required_for_features'
-                logger.info(f"✓ Target: Beta_2 + Q-bağlı features → QM filtresi UYGULANDI ({len(removed)} çekirdek çıkarıldı)")
+                logger.info(f"✓ Target: Beta_2 + Q-bağlı features -> QM filtresi UYGULANDI ({len(removed)} çekirdek çıkarıldı)")
             else:
                 # Q'ya bağlı feature yoksa QM gerekmez ✓
                 filter_result = 'no_filtering_needed'
-                logger.info(f"✓ Target: Beta_2 → QM filtresi UYGULANMADI (Q-bağlı feature yok)")
+                logger.info(f"✓ Target: Beta_2 -> QM filtresi UYGULANMADI (Q-bağlı feature yok)")
         
         else:
-            logger.warning(f"⚠️ Bilinmeyen target: {target_name}, filtreleme yapılmadı")
+            logger.warning(f"[WARNING] Bilinmeyen target: {target_name}, filtreleme yapılmadı")
             filter_result = 'unknown_target'
         
         final_count = len(df_filtered)

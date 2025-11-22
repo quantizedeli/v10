@@ -72,7 +72,7 @@ class VisualizationGalleryManager:
         Returns:
             List of figure metadata dictionaries
         """
-        logger.info("→ Scanning figures directory...")
+        logger.info("-> Scanning figures directory...")
         
         if not self.figures_dir.exists():
             logger.warning(f"Figures directory not found: {self.figures_dir}")
@@ -185,7 +185,7 @@ class VisualizationGalleryManager:
         Returns:
             LaTeX code for appendix
         """
-        logger.info("→ Generating appendix gallery...")
+        logger.info("-> Generating appendix gallery...")
         
         latex = r"""\chapter{Complete Figure Gallery}
 \label{app:figures}
@@ -317,7 +317,7 @@ class ThesisQualityAssurance:
         ]
         
         for check_name, check_func in checks:
-            logger.info(f"\n→ Checking: {check_name}")
+            logger.info(f"\n-> Checking: {check_name}")
             try:
                 passed = check_func()
                 if passed:
@@ -501,7 +501,7 @@ class ThesisQualityAssurance:
         if self.qa_results['warnings']:
             print("\nWarnings:")
             for warning in self.qa_results['warnings']:
-                print(f"  ⚠ {warning}")
+                print(f"  [WARNING] {warning}")
         
         print("="*80)
 

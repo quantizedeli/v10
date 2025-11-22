@@ -225,7 +225,7 @@ class DatasetGenerationPipelineV2:
         qm_reports = []
         
         for target in self.targets:
-            logger.info(f"\n→ Target: {target}")
+            logger.info(f"\n-> Target: {target}")
             
             # Target columns
             if target == 'MM_QM':
@@ -272,7 +272,7 @@ class DatasetGenerationPipelineV2:
         quality_reports = {}
         
         for target, df in self.filtered_data.items():
-            logger.info(f"\n→ Quality control for {target}")
+            logger.info(f"\n-> Quality control for {target}")
             
             # Identify numeric columns (exclude NUCLEUS if exists)
             numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
@@ -392,11 +392,11 @@ class DatasetGenerationPipelineV2:
         dataset_dir = self.output_base_dir / dataset_name
         dataset_dir.mkdir(parents=True, exist_ok=True)
         
-        # ✅ Save dataset as CSV
+        # [SUCCESS] Save dataset as CSV
         dataset_file_csv = dataset_dir / f"{dataset_name}.csv"
         sampled_df.to_csv(dataset_file_csv, index=False)
         
-        # ✅ Save dataset as MAT (MATLAB format)
+        # [SUCCESS] Save dataset as MAT (MATLAB format)
         dataset_file_mat = dataset_dir / f"{dataset_name}.mat"
         self._save_as_mat(sampled_df, dataset_file_mat, feature_cols, target_cols)
         

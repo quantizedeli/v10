@@ -192,7 +192,7 @@ class AutoMLANFISOptimizer:
         # MATLAB
         self.use_matlab = use_matlab and MATLAB_AVAILABLE
         if self.use_matlab:
-            logger.info("→ Initializing MATLAB engine...")
+            logger.info("-> Initializing MATLAB engine...")
             try:
                 self.matlab_eng = matlab.engine.start_matlab()
                 logger.info("  ✓ MATLAB engine started")
@@ -260,7 +260,7 @@ class AutoMLANFISOptimizer:
         start_time = time.time()
         
         # Run optimization
-        logger.info("→ Starting ANFIS optimization (random search)...")
+        logger.info("-> Starting ANFIS optimization (random search)...")
         
         for trial_id in range(self.n_trials):
             # Sample configuration
@@ -276,7 +276,7 @@ class AutoMLANFISOptimizer:
             if score > self.best_score:
                 self.best_score = score
                 self.best_config = config
-                logger.info(f"  🎯 NEW BEST! Trial {trial_id}: {objective}={score:.4f}")
+                logger.info(f"  [TARGET] NEW BEST! Trial {trial_id}: {objective}={score:.4f}")
         
         total_time = time.time() - start_time
         
@@ -566,7 +566,7 @@ class AutoMLANFISOptimizer:
         if self.best_config is None:
             raise ValueError("Must run optimize() first!")
         
-        logger.info("\n→ Training final ANFIS with best config...")
+        logger.info("\n-> Training final ANFIS with best config...")
         
         start_time = time.time()
         

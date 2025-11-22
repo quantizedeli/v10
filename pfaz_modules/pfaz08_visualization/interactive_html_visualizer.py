@@ -70,7 +70,7 @@ class InteractiveHTMLVisualizer:
             logger.info("BONUS: Creating error distribution...")
             self.create_error_distribution(results_df)
             
-            logger.info(f"\n✅ All visualizations saved to: {self.output_dir}")
+            logger.info(f"\n[SUCCESS] All visualizations saved to: {self.output_dir}")
             logger.info("="*60)
             
         except Exception as e:
@@ -472,4 +472,4 @@ if __name__ == "__main__":
     visualizer = InteractiveHTMLVisualizer('test_output/html')
     visualizer.create_all_visualizations(df)
     
-    print("\n✅ Test visualizations created successfully!")
+    print("\n[SUCCESS] Test visualizations created successfully!")

@@ -351,7 +351,7 @@ def run_complete_pipeline():
     print("✓ PIPELINE COMPLETED SUCCESSFULLY!")
     print("="*80)
 
-    print("\n💡 TIP: Run this script again to see the caching speedup!")
+    print("\n[TIP] TIP: Run this script again to see the caching speedup!")
     print("   Data preparation will be 90%+ faster on subsequent runs.")
 
     return {

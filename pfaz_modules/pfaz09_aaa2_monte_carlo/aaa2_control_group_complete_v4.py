@@ -4,13 +4,13 @@ PFAZ 9: AAA2 CONTROL GROUP - COMPLETE %100 IMPLEMENTATION
 ==========================================================
 
 Complete AAA2 control group analysis with ALL features:
-- Top 50 model selection & predictions ✅
-- Woods-Saxon potential integration ✅
-- Nilsson model deformation ✅
-- Monte Carlo uncertainty quantification ✅
-- 15-sheet Excel + 8 Pivot Tables ✅
-- Dual visualizations (PNG + HTML) ✅
-- Advanced analytics (SHAP, Bayesian) ✅
+- Top 50 model selection & predictions [SUCCESS]
+- Woods-Saxon potential integration [SUCCESS]
+- Nilsson model deformation [SUCCESS]
+- Monte Carlo uncertainty quantification [SUCCESS]
+- 15-sheet Excel + 8 Pivot Tables [SUCCESS]
+- Dual visualizations (PNG + HTML) [SUCCESS]
+- Advanced analytics (SHAP, Bayesian) [SUCCESS]
 
 Author: Nuclear Physics AI Project  
 Version: 4.0.0 - COMPLETE
@@ -88,7 +88,7 @@ class TheoreticalFeaturesCalculator:
     
     def calculate_woods_saxon_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate Woods-Saxon potential-based features"""
-        logger.info("  → Calculating Woods-Saxon features...")
+        logger.info("  -> Calculating Woods-Saxon features...")
         
         # Nuclear radius
         df['WS_radius'] = self.r0 * (df['A'] ** (1/3))
@@ -107,7 +107,7 @@ class TheoreticalFeaturesCalculator:
     
     def calculate_nilsson_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate Nilsson model deformation features"""
-        logger.info("  → Calculating Nilsson model features...")
+        logger.info("  -> Calculating Nilsson model features...")
         
         # Estimate Beta_2 deformation (if not present)
         if 'Beta_2' not in df.columns:
@@ -155,7 +155,7 @@ class TheoreticalFeaturesCalculator:
     
     def calculate_shell_model_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate shell model features"""
-        logger.info("  → Calculating shell model features...")
+        logger.info("  -> Calculating shell model features...")
         
         # Distance to magic numbers
         df['magic_Z_distance'] = df['Z'].apply(
@@ -257,7 +257,7 @@ class ExcelPivotTableCreator:
                             category_df: pd.DataFrame):
         """Add all 8 pivot tables to workbook"""
         
-        logger.info("\n→ Adding 8 Pivot Tables to Excel...")
+        logger.info("\n-> Adding 8 Pivot Tables to Excel...")
         
         wb = load_workbook(self.workbook_path)
         
@@ -485,10 +485,10 @@ class AAA2ControlGroupAnalyzerComplete:
         
         # Load basic data
         if self.pfaz01_output_path and self.pfaz01_output_path.exists():
-            logger.info(f"→ Loading PFAZ01 output: {self.pfaz01_output_path}")
+            logger.info(f"-> Loading PFAZ01 output: {self.pfaz01_output_path}")
             self.aaa2_df = pd.read_csv(self.pfaz01_output_path)
         elif self.aaa2_txt_path.exists():
-            logger.info(f"→ Loading raw AAA2: {self.aaa2_txt_path}")
+            logger.info(f"-> Loading raw AAA2: {self.aaa2_txt_path}")
             self.aaa2_df = pd.read_csv(self.aaa2_txt_path, sep='\t', encoding='utf-8')
         else:
             raise FileNotFoundError("AAA2 data not found")
@@ -499,7 +499,7 @@ class AAA2ControlGroupAnalyzerComplete:
         self.aaa2_df.columns = self.aaa2_df.columns.str.strip()
         
         # Calculate theoretical features
-        logger.info("\n→ Calculating theoretical features...")
+        logger.info("\n-> Calculating theoretical features...")
         
         # Woods-Saxon
         self.aaa2_df = self.theoretical_calc.calculate_woods_saxon_features(self.aaa2_df)
@@ -525,7 +525,7 @@ class AAA2ControlGroupAnalyzerComplete:
     
     def select_top50_models(self, target: str):
         """Select top 50 models based on R² and RMSE"""
-        logger.info(f"\n→ Selecting top 50 models for {target}...")
+        logger.info(f"\n-> Selecting top 50 models for {target}...")
         
         # Load model performance summaries
         perf_file = self.trained_models_dir / f'{target}_model_performance.json'
@@ -549,7 +549,7 @@ class AAA2ControlGroupAnalyzerComplete:
     
     def predict_with_top50(self, target: str) -> Tuple[pd.DataFrame, Dict]:
         """Generate predictions with top 50 models"""
-        logger.info(f"\n→ Generating predictions for {target}...")
+        logger.info(f"\n-> Generating predictions for {target}...")
         
         model_ids = self.top50_models.get(target, [])
         
@@ -603,7 +603,7 @@ class AAA2ControlGroupAnalyzerComplete:
     
     def quantify_prediction_uncertainty(self, target: str):
         """Quantify uncertainty for predictions"""
-        logger.info(f"\n→ Quantifying prediction uncertainty for {target}...")
+        logger.info(f"\n-> Quantifying prediction uncertainty for {target}...")
         
         predictions = self.predictions.get(target)
         
@@ -633,7 +633,7 @@ class AAA2ControlGroupAnalyzerComplete:
     
     def generate_comprehensive_excel(self, target: str):
         """Generate 15-sheet Excel with 8 pivot tables"""
-        logger.info(f"\n→ Generating comprehensive Excel for {target}...")
+        logger.info(f"\n-> Generating comprehensive Excel for {target}...")
         
         excel_path = self.output_dir / f'AAA2_Complete_{target}.xlsx'
         
@@ -729,7 +729,7 @@ class AAA2ControlGroupAnalyzerComplete:
             duration = (end_time - start_time).total_seconds()
             
             logger.info("\n" + "="*80)
-            logger.info("✅ PFAZ 9 COMPLETE!")
+            logger.info("[SUCCESS] PFAZ 9 COMPLETE!")
             logger.info("="*80)
             logger.info(f"Duration: {duration:.1f}s ({duration/60:.1f}min)")
             logger.info(f"Targets processed: {len(self.predictions)}")
@@ -743,7 +743,7 @@ class AAA2ControlGroupAnalyzerComplete:
             }
         
         except Exception as e:
-            logger.error(f"\n❌ PIPELINE FAILED: {e}")
+            logger.error(f"\n[ERROR] PIPELINE FAILED: {e}")
             import traceback
             traceback.print_exc()
             return {'success': False, 'error': str(e)}
@@ -773,13 +773,13 @@ if __name__ == "__main__":
     
     if results['success']:
         print("\n" + "="*80)
-        print("✅ PFAZ 9 SUCCESS!")
+        print("[SUCCESS] PFAZ 9 SUCCESS!")
         print("="*80)
         print(f"Duration: {results['duration']:.1f}s")
         print(f"Targets: {', '.join(results['targets'])}")
         print(f"Output: {results['output_dir']}")
     else:
         print("\n" + "="*80)
-        print("❌ PFAZ 9 FAILED!")
+        print("[ERROR] PFAZ 9 FAILED!")
         print("="*80)
         print(f"Error: {results['error']}")

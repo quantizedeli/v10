@@ -50,7 +50,7 @@ class TrainingTimeout:
         
         elapsed = time.time() - self.start_time
         if elapsed > self.max_time:
-            logger.warning(f"⚠️  TIMEOUT! Elapsed: {elapsed:.1f}s > {self.max_time}s")
+            logger.warning(f"[WARNING]  TIMEOUT! Elapsed: {elapsed:.1f}s > {self.max_time}s")
             return True
         return False
     
@@ -173,7 +173,7 @@ class EarlyStoppingMonitor:
         is_overfitting, reason = self.overfitting_detector.check_overfitting()
         
         if is_overfitting:
-            logger.warning(f"⚠️  Overfitting detected: {reason}")
+            logger.warning(f"[WARNING]  Overfitting detected: {reason}")
             self.should_stop = True
             return True
         
@@ -187,10 +187,10 @@ class EarlyStoppingMonitor:
             self.best_score = val_score
             self.counter = 0
             self.best_epoch = epoch
-            logger.info(f"✅ New best: {val_score:.6f} at epoch {epoch}")
+            logger.info(f"[SUCCESS] New best: {val_score:.6f} at epoch {epoch}")
         else:
             self.counter += 1
-            logger.info(f"⏳ No improvement: {self.counter}/{self.patience}")
+            logger.info(f"[WAIT] No improvement: {self.counter}/{self.patience}")
         
         if self.counter >= self.patience:
             logger.info(f"🛑 Early stopping at epoch {epoch}")
@@ -265,7 +265,7 @@ class TrainingConfigManager:
                     configs.append(config)
                     config_id += 1
         
-        logger.info(f"✅ Generated {len(configs)} training configurations")
+        logger.info(f"[SUCCESS] Generated {len(configs)} training configurations")
         return configs
     
     @staticmethod
@@ -287,7 +287,7 @@ class TrainingConfigManager:
         with open(output_path, 'w') as f:
             json.dump(configs, f, indent=2)
         
-        logger.info(f"✅ Saved {len(configs)} configs to {output_path}")
+        logger.info(f"[SUCCESS] Saved {len(configs)} configs to {output_path}")
 
 
 # ============================================================================
@@ -326,7 +326,7 @@ class TrainingLogger:
             'status': 'running'
         }
         
-        logger.info(f"📝 Training log started: {config['id']}")
+        logger.info(f"[NOTE] Training log started: {config['id']}")
     
     def log_epoch(self, epoch: int, train_metrics: Dict, val_metrics: Dict):
         """Epoch logla"""
@@ -358,7 +358,7 @@ class TrainingLogger:
         with open(log_file, 'w') as f:
             json.dump(self.current_log, f, indent=2)
         
-        logger.info(f"✅ Training log saved: {log_file}")
+        logger.info(f"[SUCCESS] Training log saved: {log_file}")
         
         # Reset
         self.current_log = None
@@ -420,13 +420,13 @@ class CheckpointManager:
             pickle.dump(checkpoint_data, f)
         
         self.last_save_time = time.time()
-        logger.info(f"💾 Checkpoint saved: {checkpoint_name}")
+        logger.info(f"[SAVE] Checkpoint saved: {checkpoint_name}")
         
         # Best checkpoint tracking
         if 'val_r2' in metrics and metrics['val_r2'] > self.best_score:
             self.best_score = metrics['val_r2']
             self.best_checkpoint = checkpoint_path
-            logger.info(f"🏆 New best checkpoint: R²={self.best_score:.6f}")
+            logger.info(f"[BEST] New best checkpoint: R²={self.best_score:.6f}")
     
     def load_checkpoint(self, checkpoint_path: Path) -> Dict:
         """Checkpoint yükle"""
@@ -456,7 +456,7 @@ class ComprehensiveTrainingMonitor:
         self.logger = TrainingLogger(self.output_dir / 'logs')
         self.checkpoint_manager = CheckpointManager(self.output_dir / 'checkpoints')
         
-        logger.info("✅ Comprehensive Training Monitor initialized")
+        logger.info("[SUCCESS] Comprehensive Training Monitor initialized")
     
     def start_training(self, config: Dict, dataset_info: Dict):
         """Training başlat"""
@@ -516,7 +516,7 @@ class ComprehensiveTrainingMonitor:
         # Finish log
         self.logger.finish_training(final_metrics, status)
         
-        logger.info(f"✅ Training finished: {status}")
+        logger.info(f"[SUCCESS] Training finished: {status}")
 
 
 # ============================================================================
@@ -531,7 +531,7 @@ if __name__ == "__main__":
     # 1. Generate 50 configs
     print("\n1. Generating 50 training configurations...")
     configs = TrainingConfigManager.get_all_configs()
-    print(f"   ✅ Generated {len(configs)} configs")
+    print(f"   [SUCCESS] Generated {len(configs)} configs")
     print(f"   Sample config: {configs[0]}")
     
     # 2. Save configs
@@ -580,5 +580,5 @@ if __name__ == "__main__":
         status='completed'
     )
     
-    print("\n✅ All tests passed!")
+    print("\n[SUCCESS] All tests passed!")
     print("="*80)

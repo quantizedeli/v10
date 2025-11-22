@@ -31,7 +31,7 @@ def print_banner():
     ║                                                                   ║
     ║   NUCLEAR PHYSICS AI-ASSISTED DATA ANALYSIS PROJECT              ║
     ║                                                                   ║
-    ║   🚀 OTOMATIK PIPELINE - TÜM MODÜLLER 🚀                          ║
+    ║   [START] OTOMATIK PIPELINE - TÜM MODÜLLER [START]                          ║
     ║                                                                   ║
     ║   Tüm modülleri sırayla çalıştırır:                              ║
     ║   1. Veri Yükleme & Temizleme                                    ║
@@ -196,7 +196,7 @@ def step_6_train_anfis(datasets, output_dir='output'):
         
         # MATLAB kontrolü
         if not trainer.matlab_interface.matlab_available:
-            logger.warning("⚠ MATLAB bulunamadı, ANFIS eğitimi atlanıyor")
+            logger.warning("[WARNING] MATLAB bulunamadı, ANFIS eğitimi atlanıyor")
             return None
         
         results = trainer.train_selected_datasets(datasets)
@@ -205,7 +205,7 @@ def step_6_train_anfis(datasets, output_dir='output'):
         return results
         
     except Exception as e:
-        logger.warning(f"⚠ ADIM 6 ATLANIYOR: {e}")
+        logger.warning(f"[WARNING] ADIM 6 ATLANIYOR: {e}")
         return None
 
 

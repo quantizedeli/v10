@@ -90,7 +90,7 @@ class ComprehensiveContentGenerator:
         Returns:
             Abstract LaTeX code
         """
-        logger.info(f"→ Generating abstract ({language})...")
+        logger.info(f"-> Generating abstract ({language})...")
         
         if language == 'en':
             content = r"""\chapter*{Abstract}
@@ -192,7 +192,7 @@ Sinir Ağları, Topluluk Yöntemleri, Nükleer Yapı, Kuantum Çok-Cisim Problem
     
     def generate_introduction(self) -> str:
         """Generate comprehensive introduction chapter"""
-        logger.info("→ Generating introduction...")
+        logger.info("-> Generating introduction...")
         
         content = r"""\chapter{Introduction}
 
@@ -313,7 +313,7 @@ detailed statistical tests, visualization gallery, and code documentation.
     
     def generate_literature_review(self) -> str:
         """Generate literature review chapter"""
-        logger.info("→ Generating literature review...")
+        logger.info("-> Generating literature review...")
         
         content = r"""\chapter{Literature Review}
 

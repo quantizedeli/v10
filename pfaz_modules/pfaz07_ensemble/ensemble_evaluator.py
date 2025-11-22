@@ -169,7 +169,7 @@ class EnsembleEvaluator:
         else:
             raise ValueError(f"Unknown criterion: {criterion}")
         
-        logger.info(f"\n✅ BEST ENSEMBLE: {best_result['name']}")
+        logger.info(f"\n[SUCCESS] BEST ENSEMBLE: {best_result['name']}")
         logger.info(f"  Method: {best_result['method']}")
         logger.info(f"  R²: {best_result['r2']:.4f}")
         logger.info(f"  RMSE: {best_result['rmse']:.4f}")
@@ -374,7 +374,7 @@ class EnsembleEvaluator:
         logger.info(f"\n{'='*60}")
         logger.info(f"ENSEMBLE EVALUATION COMPLETED!")
         logger.info(f"{'='*60}")
-        logger.info(f"✅ Best Ensemble: {best_ensemble['name']}")
+        logger.info(f"[SUCCESS] Best Ensemble: {best_ensemble['name']}")
         logger.info(f"   R² = {best_ensemble['r2']:.4f}")
         logger.info(f"   RMSE = {best_ensemble['rmse']:.4f}")
         logger.info(f"   MAE = {best_ensemble['mae']:.4f}")
@@ -444,7 +444,7 @@ def main():
     # Generate report
     report = evaluator.generate_final_report()
     
-    logger.info("\n✅ TEST COMPLETED!")
+    logger.info("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

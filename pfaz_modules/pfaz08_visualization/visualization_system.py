@@ -75,20 +75,20 @@ class UnifiedVisualizationManager:
         
         # 1. AI Model Visualizations
         if 'ai_results' in project_results and self.ai_viz:
-            logger.info("\n→ AI Model Visualizations")
+            logger.info("\n-> AI Model Visualizations")
             self._create_ai_visualizations(project_results['ai_results'])
         
         # 2. ANFIS Visualizations
         if 'anfis_results' in project_results and self.anfis_viz:
-            logger.info("\n→ ANFIS Visualizations")
+            logger.info("\n-> ANFIS Visualizations")
             self._create_anfis_visualizations(project_results['anfis_results'])
         
         # 3. Comparison Visualizations
-        logger.info("\n→ Comparison Visualizations")
+        logger.info("\n-> Comparison Visualizations")
         self._create_comparison_visualizations(project_results)
         
         # 4. Summary Dashboard
-        logger.info("\n→ Summary Dashboard")
+        logger.info("\n-> Summary Dashboard")
         self._create_summary_dashboard(project_results)
         
         logger.info("\n" + "="*80)

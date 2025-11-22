@@ -264,7 +264,7 @@ class UnknownNucleiPredictor:
             ai_df.to_csv(self.output_dir / 'ai_unknown_results.csv', index=False)
             anfis_df.to_csv(self.output_dir / 'anfis_unknown_results.csv', index=False)
         
-        logger.info(f"✅ Report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Report saved: {excel_path}")
     
     def _write_sheet(self, ws, df: pd.DataFrame):
         """Write dataframe to sheet"""
@@ -307,7 +307,7 @@ def main():
     print("\nGenerating Excel report...")
     predictor.generate_excel_report()
     
-    print("\n✅ TEST COMPLETED!")
+    print("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

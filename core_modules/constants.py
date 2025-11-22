@@ -75,7 +75,7 @@ WOODS_SAXON_PARAMS = {
 # ============================================================================
 
 # Küresel nükleus eşik değeri
-SPHERICAL_THRESHOLD = 0.05  # |β₂| < 0.05 → küresel
+SPHERICAL_THRESHOLD = 0.05  # |β₂| < 0.05 -> küresel
 
 # Bölge tanımlamaları (β₂ değerlerine göre)
 DEFORMATION_REGIONS = {
@@ -137,7 +137,7 @@ ANOMALY_THRESHOLDS = {
 # VERİ SETİ OLUŞTURMA PARAMETRELERİ
 # ============================================================================
 
-# ✅ FAZ 1 - DÜZELTİLDİ: 120 ve 250 kaldırıldı
+# [SUCCESS] FAZ 1 - DÜZELTİLDİ: 120 ve 250 kaldırıldı
 NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']
 
 SCENARIOS = {
@@ -203,7 +203,7 @@ BETA2_FEATURE_SETS = {
 # ANFİS KONFİGÜRASYONLARI
 # ============================================================================
 
-# ✅ FAZ 2 - GÜNCELLENDİ: Config isimleri değiştirildi
+# [SUCCESS] FAZ 2 - GÜNCELLENDİ: Config isimleri değiştirildi
 ANFIS_CONFIGS = {
     # Grid Partition (genfis1) - 5 config
     'GAU2MF': {

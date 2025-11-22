@@ -70,7 +70,7 @@ class AutoInstaller:
     def check_and_install():
         """Eksik kütüphaneleri kontrol et ve yükle"""
         print("\n" + "="*80)
-        print("🔍 Kütüphane kontrolü yapılıyor...")
+        print("[SEARCH] Kütüphane kontrolü yapılıyor...")
         print("="*80)
         
         missing = []
@@ -86,13 +86,13 @@ class AutoInstaller:
                 print(f"✗ {package} - YÜKLENMESİ GEREKİYOR")
         
         if missing:
-            print(f"\n⚠️  {len(missing)} eksik kütüphane bulundu!")
+            print(f"\n[WARNING]  {len(missing)} eksik kütüphane bulundu!")
             print(f"Yüklenecekler: {', '.join(missing)}")
             
             response = input("\nOtomatik yüklensin mi? (E/h): ").lower()
             if response == 'e' or response == '':
                 for package in missing:
-                    print(f"\n📦 {package} yükleniyor...")
+                    print(f"\n[PACKAGE] {package} yükleniyor...")
                     try:
                         subprocess.check_call([
                             sys.executable, "-m", "pip", "install", package, "-q"
@@ -100,15 +100,15 @@ class AutoInstaller:
                         print(f"✓ {package} başarıyla yüklendi")
                     except Exception as e:
                         print(f"✗ {package} yüklenemedi: {e}")
-                print("\n✅ Kütüphane yükleme tamamlandı!")
-                print("🔄 Lütfen programı yeniden başlatın...")
+                print("\n[SUCCESS] Kütüphane yükleme tamamlandı!")
+                print("[RUN] Lütfen programı yeniden başlatın...")
                 sys.exit(0)
             else:
-                print("\n⚠️  Kütüphaneler yüklenmedi. Lütfen manuel yükleyin:")
+                print("\n[WARNING]  Kütüphaneler yüklenmedi. Lütfen manuel yükleyin:")
                 print(f"pip install {' '.join(missing)}")
                 sys.exit(1)
         else:
-            print(f"\n✅ Tüm kütüphaneler mevcut! ({len(installed)}/{len(AutoInstaller.REQUIRED_PACKAGES)})")
+            print(f"\n[SUCCESS] Tüm kütüphaneler mevcut! ({len(installed)}/{len(AutoInstaller.REQUIRED_PACKAGES)})")
 
 # ============================================================================
 # LOGGING CONFIGURATION
@@ -198,17 +198,17 @@ class PFAZStatusManager:
     def print_status(self):
         """Durum özeti yazdır"""
         print("\n" + "="*80)
-        print("📊 PFAZ DURUM ÖZETİ")
+        print("[REPORT] PFAZ DURUM ÖZETİ")
         print("="*80)
         
         for pfaz_id, info in self.status.items():
             status_icon = {
-                'pending': '⏳',
-                'running': '🔄',
-                'completed': '✅',
-                'failed': '❌',
-                'skipped': '⏭️'
-            }.get(info['status'], '❓')
+                'pending': '[WAIT]',
+                'running': '[RUN]',
+                'completed': '[SUCCESS]',
+                'failed': '[ERROR]',
+                'skipped': '[SKIP]'
+            }.get(info['status'], '[UNKNOWN]')
             
             print(f"{status_icon} {pfaz_id.upper()}: {info['status']:<10} ({info['progress']:>3}%) "
                   f"- Son güncelleme: {info['last_update'] or 'Hiç'}")
@@ -252,7 +252,7 @@ class NuclearPhysicsAIOrchestrator:
             output_path.mkdir(parents=True, exist_ok=True)
         
         logger.info("="*80)
-        logger.info("🚀 NUCLEAR PHYSICS AI ORCHESTRATOR v6.0")
+        logger.info("[START] NUCLEAR PHYSICS AI ORCHESTRATOR v6.0")
         logger.info("="*80)
         logger.info(f"Config: {self.config_path}")
         logger.info(f"Output: {self.output_dir}")
@@ -302,18 +302,18 @@ class NuclearPhysicsAIOrchestrator:
         """
         pfaz_id = 1
         logger.info("\n" + "="*80)
-        logger.info(f"🔵 PFAZ {pfaz_id}: DATASET GENERATION")
+        logger.info(f"[INFO] PFAZ {pfaz_id}: DATASET GENERATION")
         logger.info("="*80)
         
         if mode == 'pass':
-            logger.info("⏭️  PFAZ 1 atlanıyor...")
+            logger.info("[SKIP]  PFAZ 1 atlanıyor...")
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
             return {'status': 'skipped'}
         
         if mode == 'resume':
             status = self.status_manager.get_pfaz_status(f'pfaz_{pfaz_id:02d}')
             if status['status'] != 'running':
-                logger.warning("⚠️  Resume edilecek bir işlem yok, normal çalıştırılıyor...")
+                logger.warning("[WARNING]  Resume edilecek bir işlem yok, normal çalıştırılıyor...")
                 mode = 'run'
         
         try:
@@ -342,12 +342,12 @@ class NuclearPhysicsAIOrchestrator:
             )
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 1 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 1 tamamlandı!")
             
             return results
             
         except Exception as e:
-            logger.error(f"❌ PFAZ 1 başarısız: {e}", exc_info=True)
+            logger.error(f"[ERROR] PFAZ 1 başarısız: {e}", exc_info=True)
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
@@ -359,11 +359,11 @@ class NuclearPhysicsAIOrchestrator:
         """PFAZ 2: AI Model Training"""
         pfaz_id = 2
         logger.info("\n" + "="*80)
-        logger.info(f"🔵 PFAZ {pfaz_id}: AI MODEL TRAINING")
+        logger.info(f"[INFO] PFAZ {pfaz_id}: AI MODEL TRAINING")
         logger.info("="*80)
         
         if mode == 'pass':
-            logger.info("⏭️  PFAZ 2 atlanıyor...")
+            logger.info("[SKIP]  PFAZ 2 atlanıyor...")
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
             return {'status': 'skipped'}
         
@@ -389,12 +389,12 @@ class NuclearPhysicsAIOrchestrator:
             )
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 2 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 2 tamamlandı!")
             
             return results
             
         except Exception as e:
-            logger.error(f"❌ PFAZ 2 başarısız: {e}", exc_info=True)
+            logger.error(f"[ERROR] PFAZ 2 başarısız: {e}", exc_info=True)
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
@@ -406,11 +406,11 @@ class NuclearPhysicsAIOrchestrator:
         """PFAZ 3: ANFIS Training"""
         pfaz_id = 3
         logger.info("\n" + "="*80)
-        logger.info(f"🔵 PFAZ {pfaz_id}: ANFIS TRAINING")
+        logger.info(f"[INFO] PFAZ {pfaz_id}: ANFIS TRAINING")
         logger.info("="*80)
         
         if mode == 'pass':
-            logger.info("⏭️  PFAZ 3 atlanıyor...")
+            logger.info("[SKIP]  PFAZ 3 atlanıyor...")
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
             return {'status': 'skipped'}
         
@@ -435,12 +435,12 @@ class NuclearPhysicsAIOrchestrator:
             )
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 3 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 3 tamamlandı!")
             
             return results
             
         except Exception as e:
-            logger.error(f"❌ PFAZ 3 başarısız: {e}", exc_info=True)
+            logger.error(f"[ERROR] PFAZ 3 başarısız: {e}", exc_info=True)
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
@@ -451,7 +451,7 @@ class NuclearPhysicsAIOrchestrator:
     def run_pfaz_04(self, mode='run', **kwargs):
         """PFAZ 4: Unknown Nuclei Predictions"""
         pfaz_id = 4
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: UNKNOWN NUCLEI PREDICTIONS")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: UNKNOWN NUCLEI PREDICTIONS")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -470,17 +470,17 @@ class NuclearPhysicsAIOrchestrator:
             results = predictor.predict_unknown_nuclei()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 4 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 4 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 4 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 4 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_05(self, mode='run', **kwargs):
         """PFAZ 5: Cross-Model Analysis"""
         pfaz_id = 5
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: CROSS-MODEL ANALYSIS")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: CROSS-MODEL ANALYSIS")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -497,17 +497,17 @@ class NuclearPhysicsAIOrchestrator:
             results = evaluator.evaluate_all_models()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 5 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 5 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 5 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 5 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_06(self, mode='run', **kwargs):
         """PFAZ 6: Final Reporting"""
         pfaz_id = 6
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: FINAL REPORTING")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: FINAL REPORTING")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -521,17 +521,17 @@ class NuclearPhysicsAIOrchestrator:
             results = reporter.generate_all_reports()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 6 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 6 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 6 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 6 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_07(self, mode='run', **kwargs):
         """PFAZ 7: Ensemble & Meta-Models"""
         pfaz_id = 7
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: ENSEMBLE & META-MODELS")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: ENSEMBLE & META-MODELS")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -552,17 +552,17 @@ class NuclearPhysicsAIOrchestrator:
                 )
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 7 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 7 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 7 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 7 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_08(self, mode='run', **kwargs):
         """PFAZ 8: Visualization & Dashboard"""
         pfaz_id = 8
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: VISUALIZATION & DASHBOARD")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: VISUALIZATION & DASHBOARD")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -578,17 +578,17 @@ class NuclearPhysicsAIOrchestrator:
             results = viz_system.generate_all_visualizations()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 8 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 8 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 8 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 8 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_09(self, mode='run', **kwargs):
         """PFAZ 9: AAA2 Control Group Analysis"""
         pfaz_id = 9
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: AAA2 CONTROL GROUP ANALYSIS")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: AAA2 CONTROL GROUP ANALYSIS")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -611,17 +611,17 @@ class NuclearPhysicsAIOrchestrator:
             )
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 9 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 9 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 9 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 9 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_10(self, mode='run', **kwargs):
         """PFAZ 10: Thesis Compilation"""
         pfaz_id = 10
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: THESIS COMPILATION")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: THESIS COMPILATION")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -639,17 +639,17 @@ class NuclearPhysicsAIOrchestrator:
             )
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 10 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 10 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 10 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 10 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_11(self, mode='run', **kwargs):
         """PFAZ 11: Production Deployment"""
         pfaz_id = 11
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: PRODUCTION DEPLOYMENT")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: PRODUCTION DEPLOYMENT")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -665,17 +665,17 @@ class NuclearPhysicsAIOrchestrator:
             results = server.deploy()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 11 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 11 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 11 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 11 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_12(self, mode='run', **kwargs):
         """PFAZ 12: Advanced Analytics"""
         pfaz_id = 12
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: ADVANCED ANALYTICS")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: ADVANCED ANALYTICS")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -693,17 +693,17 @@ class NuclearPhysicsAIOrchestrator:
             results = analytics.run_complete_analysis()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 12 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 12 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 12 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 12 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
     def run_pfaz_13(self, mode='run', **kwargs):
         """PFAZ 13: AutoML Integration"""
         pfaz_id = 13
-        logger.info(f"\n🔵 PFAZ {pfaz_id}: AUTOML INTEGRATION")
+        logger.info(f"\n[INFO] PFAZ {pfaz_id}: AUTOML INTEGRATION")
         
         if mode == 'pass':
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
@@ -719,10 +719,10 @@ class NuclearPhysicsAIOrchestrator:
             results = automl.optimize_all_models()
             
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("✅ PFAZ 13 tamamlandı!")
+            logger.info("[SUCCESS] PFAZ 13 tamamlandı!")
             return results
         except Exception as e:
-            logger.error(f"❌ PFAZ 13 başarısız: {e}")
+            logger.error(f"[ERROR] PFAZ 13 başarısız: {e}")
             self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
             raise
     
@@ -743,7 +743,7 @@ class NuclearPhysicsAIOrchestrator:
             modes = {i: 'run' for i in range(start_from, end_at + 1)}
         
         logger.info("\n" + "="*80)
-        logger.info("🚀 TÜM PFAZ FAZLARI BAŞLATILIYOR")
+        logger.info("[START] TÜM PFAZ FAZLARI BAŞLATILIYOR")
         logger.info("="*80)
         logger.info(f"Aralık: PFAZ {start_from} - PFAZ {end_at}")
         
@@ -758,16 +758,16 @@ class NuclearPhysicsAIOrchestrator:
                     method = getattr(self, method_name)
                     results[pfaz_id] = method(mode=mode)
                 else:
-                    logger.warning(f"⚠️  PFAZ {pfaz_id} metodu bulunamadı!")
+                    logger.warning(f"[WARNING]  PFAZ {pfaz_id} metodu bulunamadı!")
                     self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
             
             except Exception as e:
-                logger.error(f"❌ PFAZ {pfaz_id} başarısız: {e}")
+                logger.error(f"[ERROR] PFAZ {pfaz_id} başarısız: {e}")
                 
                 # Hata durumunda devam etmek istiyor musunuz?
-                response = input("\n⚠️  Devam etmek istiyor musunuz? (E/h): ").lower()
+                response = input("\n[WARNING]  Devam etmek istiyor musunuz? (E/h): ").lower()
                 if response == 'h':
-                    logger.info("⏹️  Kullanıcı tarafından durduruldu")
+                    logger.info("[STOP]  Kullanıcı tarafından durduruldu")
                     break
         
         # Özet
@@ -778,7 +778,7 @@ class NuclearPhysicsAIOrchestrator:
     def interactive_mode(self):
         """İnteraktif mod - Kullanıcı ile etkileşimli"""
         print("\n" + "="*80)
-        print("🎮 İNTERAKTİF MOD")
+        print("[INTERACTIVE] İNTERAKTİF MOD")
         print("="*80)
         
         self.status_manager.print_status()
@@ -796,18 +796,18 @@ class NuclearPhysicsAIOrchestrator:
             choice = input("\nSeçiminiz: ").strip().lower()
             
             if choice == 'exit':
-                print("👋 Çıkış yapılıyor...")
+                print("[EXIT] Çıkış yapılıyor...")
                 break
             
             elif choice == 'status':
                 self.status_manager.print_status()
             
             elif choice == 'reset':
-                confirm = input("⚠️  Tüm durum sıfırlanacak. Emin misiniz? (E/h): ")
+                confirm = input("[WARNING]  Tüm durum sıfırlanacak. Emin misiniz? (E/h): ")
                 if confirm.lower() == 'e':
                     self.status_manager.status = self.status_manager._create_default_status()
                     self.status_manager.save_status()
-                    print("✅ Durum sıfırlandı!")
+                    print("[SUCCESS] Durum sıfırlandı!")
             
             elif choice == 'all':
                 print("\nMod seçin:")
@@ -838,10 +838,10 @@ class NuclearPhysicsAIOrchestrator:
                     method = getattr(self, method_name)
                     method(mode=mode)
                 else:
-                    print(f"❌ PFAZ {pfaz_id} bulunamadı!")
+                    print(f"[ERROR] PFAZ {pfaz_id} bulunamadı!")
             
             else:
-                print("❌ Geçersiz seçim!")
+                print("[ERROR] Geçersiz seçim!")
 
 # ============================================================================
 # COMMAND LINE INTERFACE
@@ -909,7 +909,7 @@ def main():
     print("""
     ╔══════════════════════════════════════════════════════════════════════════╗
     ║                                                                          ║
-    ║   🔬 NUCLEAR PHYSICS AI PROJECT - MAIN ORCHESTRATOR                     ║
+    ║   [CALC] NUCLEAR PHYSICS AI PROJECT - MAIN ORCHESTRATOR                     ║
     ║                                                                          ║
     ║   13 PFAZ Pipeline Management System                                    ║
     ║   Version 6.0.0 - Production Ready                                      ║
@@ -942,7 +942,7 @@ def main():
                 method = getattr(orchestrator, method_name)
                 method(mode=args.mode)
             else:
-                logger.error(f"❌ PFAZ {args.pfaz} bulunamadı!")
+                logger.error(f"[ERROR] PFAZ {args.pfaz} bulunamadı!")
         
         # Tüm fazları çalıştır
         elif args.run_all:
@@ -954,21 +954,21 @@ def main():
         
         # Varsayılan: İnteraktif mod
         else:
-            print("\n💡 İpucu: Kullanım için --help kullanın")
-            print("🎮 İnteraktif mod için: python main.py --interactive")
+            print("\n[TIP] İpucu: Kullanım için --help kullanın")
+            print("[INTERACTIVE] İnteraktif mod için: python main.py --interactive")
             orchestrator.interactive_mode()
     
     except KeyboardInterrupt:
-        logger.info("\n⏹️  Kullanıcı tarafından durduruldu")
+        logger.info("\n[STOP]  Kullanıcı tarafından durduruldu")
         sys.exit(0)
     
     except Exception as e:
-        logger.error(f"\n❌ Kritik hata: {e}", exc_info=True)
+        logger.error(f"\n[ERROR] Kritik hata: {e}", exc_info=True)
         sys.exit(1)
     
     finally:
         logger.info("\n" + "="*80)
-        logger.info("👋 Program sonlandı")
+        logger.info("[EXIT] Program sonlandı")
         logger.info("="*80)
 
 if __name__ == "__main__":

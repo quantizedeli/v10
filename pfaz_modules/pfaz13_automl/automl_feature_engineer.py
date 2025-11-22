@@ -19,7 +19,7 @@ Features:
 6. LaTeX-ready feature tables
 
 Workflow:
-Original 44 features → 200+ candidate features → 50-80 selected features
+Original 44 features -> 200+ candidate features -> 50-80 selected features
 
 Author: Nuclear Physics AI Project
 Date: 2025-10-24
@@ -194,26 +194,26 @@ class AutoMLFeatureEngineer:
         self.original_features = feature_names
         
         # Step 1: Generate candidate features
-        logger.info("→ Step 1: Generating candidate features...")
+        logger.info("-> Step 1: Generating candidate features...")
         X_candidates, candidate_names = self._generate_candidates(X, feature_names)
         logger.info(f"  ✓ Generated {len(candidate_names)} candidate features")
         
         self.candidate_features = candidate_names
         
         # Step 2: Remove low-variance features
-        logger.info("\n→ Step 2: Removing low-variance features...")
+        logger.info("\n-> Step 2: Removing low-variance features...")
         X_filtered, filtered_names = self._filter_low_variance(X_candidates, candidate_names)
         logger.info(f"  ✓ Retained {len(filtered_names)} features (variance > 0.01)")
         
         # Step 3: Remove highly correlated features
-        logger.info("\n→ Step 3: Removing highly correlated features...")
+        logger.info("\n-> Step 3: Removing highly correlated features...")
         X_decorrelated, decorrelated_names = self._remove_high_correlation(
             X_filtered, filtered_names, threshold=0.95
         )
         logger.info(f"  ✓ Retained {len(decorrelated_names)} features (|corr| < 0.95)")
         
         # Step 4: Feature selection
-        logger.info("\n→ Step 4: Feature selection...")
+        logger.info("\n-> Step 4: Feature selection...")
         X_selected, selected_names = self._select_features(
             X_decorrelated, y, decorrelated_names
         )
@@ -222,7 +222,7 @@ class AutoMLFeatureEngineer:
         self.selected_features = selected_names
         
         # Step 5: Export results
-        logger.info("\n→ Step 5: Exporting results...")
+        logger.info("\n-> Step 5: Exporting results...")
         self._export_feature_report(X, y, X_selected, selected_names)
         
         logger.info("\n" + "="*70)
@@ -314,7 +314,7 @@ class AutoMLFeatureEngineer:
                                      feature_names: List[str]) -> Tuple[Optional[np.ndarray], List[str]]:
         """Generate polynomial features (degree 2 or 3)"""
         
-        logger.info(f"  → Generating polynomial features (degree {self.polynomial_degree})...")
+        logger.info(f"  -> Generating polynomial features (degree {self.polynomial_degree})...")
         
         try:
             # Use sklearn PolynomialFeatures for degree 2
@@ -362,7 +362,7 @@ class AutoMLFeatureEngineer:
                                       df: pd.DataFrame) -> Tuple[Optional[np.ndarray], List[str]]:
         """Generate physics-inspired interaction terms"""
         
-        logger.info("  → Generating physics-inspired interactions...")
+        logger.info("  -> Generating physics-inspired interactions...")
         
         interaction_features = []
         interaction_names = []
@@ -394,7 +394,7 @@ class AutoMLFeatureEngineer:
                            feature_names: List[str]) -> Tuple[Optional[np.ndarray], List[str]]:
         """Generate mathematical transforms"""
         
-        logger.info("  → Generating mathematical transforms...")
+        logger.info("  -> Generating mathematical transforms...")
         
         transform_features = []
         transform_names = []

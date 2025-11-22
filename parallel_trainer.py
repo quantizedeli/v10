@@ -35,7 +35,7 @@ class ParallelANFISTrainer:
             self.n_workers = max(1, cpu_count() - 2)
         
         logger.info(f"\n{'='*60}")
-        logger.info(f"🚀 PARALLEL ANFIS TRAINER INITIALIZED")
+        logger.info(f"[START] PARALLEL ANFIS TRAINER INITIALIZED")
         logger.info(f"{'='*60}")
         logger.info(f"   Workers: {self.n_workers}/{cpu_count()} cores")
         logger.info(f"   Maximum mode: {force_maximum}")
@@ -72,7 +72,7 @@ class ParallelANFISTrainer:
             if self._validate_dataset(ds_path):
                 valid_datasets.append(ds_path)
             else:
-                logger.warning(f"⚠️  Invalid dataset: {ds_path.name}")
+                logger.warning(f"[WARNING]  Invalid dataset: {ds_path.name}")
         
         logger.info(f"Valid datasets: {len(valid_datasets)}/{len(dataset_paths)}")
         
@@ -100,7 +100,7 @@ class ParallelANFISTrainer:
             results = list(tqdm(
                 pool.imap(self._train_single_job, jobs),
                 total=len(jobs),
-                desc="🔄 Training ANFIS models",
+                desc="[RUN] Training ANFIS models",
                 unit="job",
                 ncols=100
             ))
@@ -112,7 +112,7 @@ class ParallelANFISTrainer:
         failed = len(results) - successful
         
         logger.info(f"\n{'='*60}")
-        logger.info(f"✅ PARALLEL TRAINING COMPLETED")
+        logger.info(f"[SUCCESS] PARALLEL TRAINING COMPLETED")
         logger.info(f"{'='*60}")
         logger.info(f"   Total jobs: {len(results)}")
         logger.info(f"   Successful: {successful}")
@@ -197,7 +197,7 @@ class ParallelANFISTrainer:
             return result
             
         except Exception as e:
-            logger.error(f"❌ Job failed: {job['dataset_name']} - {job['config']['id']}: {e}")
+            logger.error(f"[ERROR] Job failed: {job['dataset_name']} - {job['config']['id']}: {e}")
             return {
                 'success': False,
                 'dataset_idx': job['dataset_idx'],
@@ -303,6 +303,6 @@ if __name__ == "__main__":
     # Initialize
     trainer = ParallelANFISTrainer(force_maximum=True)
     
-    logger.info("✅ Parallel trainer initialized successfully")
+    logger.info("[SUCCESS] Parallel trainer initialized successfully")
     logger.info(f"Ready to train {len(dataset_paths)} datasets with {len(configs)} configs")
     logger.info(f"Total jobs: {len(dataset_paths) * len(configs)}")

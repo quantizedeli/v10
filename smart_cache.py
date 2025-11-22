@@ -70,7 +70,7 @@ class SmartCache:
         Generate unique cache key from arguments
 
         Hash the function arguments to create a unique key.
-        Same args → same key → cache hit!
+        Same args -> same key -> cache hit!
 
         Args:
             *args: Positional arguments
@@ -94,7 +94,7 @@ class SmartCache:
         Generate cache key for file-based caching
 
         Include file path + modification time.
-        If file changes → different key → cache miss → reload!
+        If file changes -> different key -> cache miss -> reload!
 
         Args:
             file_path: Path to file
@@ -144,7 +144,7 @@ class SmartCache:
         }
         self._save_metadata()
 
-        logger.info(f"💾 Cached dataframe: {key}")
+        logger.info(f"[SAVE] Cached dataframe: {key}")
         logger.info(f"  Size: {cache_file.stat().st_size / 1024:.1f} KB")
 
     def get_cached_dataframe(self, key: str) -> Optional[pd.DataFrame]:
@@ -167,7 +167,7 @@ class SmartCache:
         cache_file = Path(self.metadata[key]['file'])
 
         if not cache_file.exists():
-            logger.warning(f"⚠️ Cache file missing: {cache_file}")
+            logger.warning(f"[WARNING] Cache file missing: {cache_file}")
             del self.metadata[key]
             self._save_metadata()
             return None
@@ -249,7 +249,7 @@ class SmartCache:
         }
         self._save_metadata()
 
-        logger.info(f"💾 Cached array: {key} (shape: {array.shape})")
+        logger.info(f"[SAVE] Cached array: {key} (shape: {array.shape})")
 
     def get_cached_array(self, key: str) -> Optional[np.ndarray]:
         """
@@ -305,7 +305,7 @@ class SmartCache:
         }
         self._save_metadata()
 
-        logger.info(f"💾 Cached object: {key}")
+        logger.info(f"[SAVE] Cached object: {key}")
 
     def get_cached_object(self, key: str) -> Optional[Any]:
         """
@@ -384,7 +384,7 @@ class SmartCache:
         total_size = sum(meta.get('size', 0) for meta in self.metadata.values())
 
         if total_size > self.max_size_bytes:
-            logger.warning(f"⚠️ Cache size exceeded: {total_size / 1024 / 1024:.1f} MB")
+            logger.warning(f"[WARNING] Cache size exceeded: {total_size / 1024 / 1024:.1f} MB")
             self._evict_lru()
 
     def _evict_lru(self):
@@ -519,7 +519,7 @@ def cached(cache_type: str = 'object'):
                 return result  # Cache hit!
 
             # Cache miss - execute function
-            logger.info(f"🔄 Executing: {func.__name__}")
+            logger.info(f"[RUN] Executing: {func.__name__}")
             result = func(*args, **kwargs)
 
             # Cache result

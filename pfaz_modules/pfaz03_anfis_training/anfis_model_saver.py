@@ -56,7 +56,7 @@ class ANFISModelSaver:
         
         saved_files = {}
         
-        # 1. ⚠️ WORKSPACE KAYDI (.mat) - Tüm veriler
+        # 1. [WARNING] WORKSPACE KAYDI (.mat) - Tüm veriler
         workspace_data = {
             'fis_data': model_data.get('fis'),
             'training_error': np.array(model_data.get('training_error', [])),
@@ -76,7 +76,7 @@ class ANFISModelSaver:
         saved_files['workspace'] = str(workspace_file)
         logger.info(f"  ✓ Workspace kaydedildi: {workspace_file.name}")
         
-        # 2. ⚠️ FIS KAYDI (.fis veya .mat) - Sadece FIS yapısı
+        # 2. [WARNING] FIS KAYDI (.fis veya .mat) - Sadece FIS yapısı
         fis_file = output_dir / f'{model_name}_fis.mat'
         sio.savemat(fis_file, {'fis': model_data.get('fis')})
         saved_files['fis'] = str(fis_file)

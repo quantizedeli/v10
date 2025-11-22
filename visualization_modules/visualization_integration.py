@@ -275,7 +275,7 @@ class VisualizationIntegrationManager:
         
         # 1. Robustness
         if 'robustness' in self.project_data and 'robustness' in self.visualizers:
-            logger.info("\n→ Robustness Visualizations")
+            logger.info("\n-> Robustness Visualizations")
             try:
                 data = self.project_data['robustness']
                 self.visualizers['robustness'].plot_perturbation_sensitivity(
@@ -290,7 +290,7 @@ class VisualizationIntegrationManager:
         
         # 2. SHAP
         if 'shap' in self.project_data and 'shap' in self.visualizers:
-            logger.info("\n→ SHAP Visualizations")
+            logger.info("\n-> SHAP Visualizations")
             try:
                 data = self.project_data['shap']
                 self.visualizers['shap'].plot_shap_summary(
@@ -301,7 +301,7 @@ class VisualizationIntegrationManager:
         
         # 3. Anomaly
         if 'anomaly' in self.project_data and 'anomaly' in self.visualizers:
-            logger.info("\n→ Anomaly Analysis")
+            logger.info("\n-> Anomaly Analysis")
             try:
                 data = self.project_data['anomaly']
                 self.visualizers['anomaly'].plot_anomaly_characteristics(
@@ -317,7 +317,7 @@ class VisualizationIntegrationManager:
         
         # 4. Predictions
         if 'predictions' in self.project_data and 'predictions' in self.visualizers:
-            logger.info("\n→ Prediction Visualizations")
+            logger.info("\n-> Prediction Visualizations")
             try:
                 data = self.project_data['predictions']
                 self.visualizers['predictions'].plot_prediction_comparison(
@@ -331,7 +331,7 @@ class VisualizationIntegrationManager:
         
         # 5. Model Comparison
         if 'model_metrics' in self.project_data and 'model_comparison' in self.visualizers:
-            logger.info("\n→ Model Comparison")
+            logger.info("\n-> Model Comparison")
             try:
                 self.visualizers['model_comparison'].plot_model_ranking(self.project_data['model_metrics'])
                 self.visualizers['model_comparison'].plot_parallel_coordinates(self.project_data['model_metrics'])
@@ -340,7 +340,7 @@ class VisualizationIntegrationManager:
         
         # 6. Training Metrics
         if 'training_history' in self.project_data and 'training_metrics' in self.visualizers:
-            logger.info("\n→ Training Metrics")
+            logger.info("\n-> Training Metrics")
             try:
                 self.visualizers['training_metrics'].plot_training_curves(self.project_data['training_history'])
                 self.visualizers['training_metrics'].plot_training_convergence(self.project_data['training_history'])
@@ -349,7 +349,7 @@ class VisualizationIntegrationManager:
         
         # 7. Data Catalog
         if 'datasets_info' in self.project_data and 'data_catalog' in self.visualizers:
-            logger.info("\n→ Data Catalog")
+            logger.info("\n-> Data Catalog")
             try:
                 self.visualizers['data_catalog'].plot_dataset_overview(self.project_data['datasets_info'])
                 if 'datasets_features' in self.project_data:
@@ -361,7 +361,7 @@ class VisualizationIntegrationManager:
         
         # 8. Log Analytics
         if 'logs' in self.project_data and 'log_analytics' in self.visualizers:
-            logger.info("\n→ Log Analytics")
+            logger.info("\n-> Log Analytics")
             try:
                 self.visualizers['log_analytics'].plot_log_statistics(self.project_data['logs'])
                 error_logs = self.project_data['logs'][self.project_data['logs']['level'] == 'ERROR']
@@ -372,7 +372,7 @@ class VisualizationIntegrationManager:
         
         # 9. Production Readiness
         if 'production' in self.project_data and 'production_readiness' in self.visualizers:
-            logger.info("\n→ Production Readiness")
+            logger.info("\n-> Production Readiness")
             try:
                 data = self.project_data['production']
                 self.visualizers['production_readiness'].create_production_readiness_report(

@@ -460,7 +460,7 @@ class CrossModelAnalysisPipeline:
             logger.info(f"{'='*80}")
             
             if target not in self.all_predictions or len(self.all_predictions[target]) == 0:
-                logger.warning(f"⚠️ {target} için tahmin bulunamadı, atlanıyor...")
+                logger.warning(f"[WARNING] {target} için tahmin bulunamadı, atlanıyor...")
                 continue
             
             evaluator = CrossModelEvaluator(self.output_dir / target)
@@ -543,7 +543,7 @@ class CrossModelAnalysisPipeline:
                     # Sütun kontrolü
                     required_cols = ['nucleus', 'experimental', 'predicted']
                     if not all(col in df.columns for col in required_cols):
-                        logger.warning(f"⚠️ {pred_file} gerekli sütunlara sahip değil")
+                        logger.warning(f"[WARNING] {pred_file} gerekli sütunlara sahip değil")
                         continue
                     
                     # Target'a ekle
@@ -704,7 +704,7 @@ def main():
     
     # Başarı mesajı
     logger.info("\n" + "="*80)
-    logger.info("✅ FAZ 5 BAŞARIYLA TAMAMLANDI!")
+    logger.info("[SUCCESS] FAZ 5 BAŞARIYLA TAMAMLANDI!")
     logger.info("="*80)
     logger.info("\nOluşturulan raporlar:")
     logger.info("  1. MASTER_CROSS_MODEL_REPORT.xlsx (Tüm targetler)")

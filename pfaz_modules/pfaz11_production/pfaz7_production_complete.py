@@ -321,7 +321,7 @@ class EnsembleDiversityAnalyzer:
         Returns:
             dict: Diversity metrics
         """
-        logger.info("\n→ Analyzing ensemble diversity...")
+        logger.info("\n-> Analyzing ensemble diversity...")
         
         predictions = np.array(list(predictions_dict.values()))
         
@@ -688,7 +688,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     duration = (datetime.now() - start_time).total_seconds()
     
     logger.info("\n" + "="*80)
-    logger.info("✅ PFAZ 7 PRODUCTION PIPELINE COMPLETE!")
+    logger.info("[SUCCESS] PFAZ 7 PRODUCTION PIPELINE COMPLETE!")
     logger.info("="*80)
     logger.info(f"Duration: {duration:.1f}s")
     logger.info(f"Target: {target}")

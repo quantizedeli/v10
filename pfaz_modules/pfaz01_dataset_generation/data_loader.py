@@ -83,7 +83,7 @@ class NuclearDataLoader:
             for idx, row in removed_parity.iterrows():
                 self._record_removal(row, f"Invalid PARITY ({row['PARITY']})")
             df = df[df['PARITY'].isin([-1, 1])]
-            logger.info(f"  → {len(removed_parity)} çekirdek kaldırıldı (Geçersiz PARITY)")
+            logger.info(f"  -> {len(removed_parity)} çekirdek kaldırıldı (Geçersiz PARITY)")
         
         # 4. A = Z + N kontrolü
         df['A_calculated'] = df['Z'] + df['N']
@@ -92,7 +92,7 @@ class NuclearDataLoader:
             for idx, row in removed_azn.iterrows():
                 self._record_removal(row, f"A≠Z+N (A={row['A']}, Z+N={row['A_calculated']})")
             df = df[df['A'] == df['A_calculated']]
-            logger.info(f"  → {len(removed_azn)} çekirdek kaldırıldı (A≠Z+N)")
+            logger.info(f"  -> {len(removed_azn)} çekirdek kaldırıldı (A≠Z+N)")
         df.drop('A_calculated', axis=1, inplace=True)
         
         # 5. MM=0 kontrolü (Tek-A için)
@@ -102,7 +102,7 @@ class NuclearDataLoader:
             for idx, row in removed_mm0.iterrows():
                 self._record_removal(row, f"MM=0 for odd-A nucleus (physically inconsistent)")
             df = df[~((df['is_odd_A']) & (df['MM'] == 0))]
-            logger.info(f"  → {len(removed_mm0)} çekirdek kaldırıldı (MM=0 tek-A için geçersiz)")
+            logger.info(f"  -> {len(removed_mm0)} çekirdek kaldırıldı (MM=0 tek-A için geçersiz)")
         df.drop('is_odd_A', axis=1, inplace=True)
         
         # 6. Çift-çift kontrol (opsiyonel log)
@@ -111,7 +111,7 @@ class NuclearDataLoader:
             for idx, row in even_even.iterrows():
                 self._record_removal(row, f"Even-even nucleus (Z={row['Z']}, N={row['N']})")
             df = df[~((df['Z'] % 2 == 0) & (df['N'] % 2 == 0))]
-            logger.info(f"  → {len(even_even)} çekirdek kaldırıldı (Çift-çift)")
+            logger.info(f"  -> {len(even_even)} çekirdek kaldırıldı (Çift-çift)")
         
         # 7. NaN kontrolü (kritik sütunlar)
         critical_cols = ['A', 'Z', 'N', 'SPIN', 'PARITY']
@@ -121,9 +121,9 @@ class NuclearDataLoader:
                 nan_cols = row[critical_cols][row[critical_cols].isna()].index.tolist()
                 self._record_removal(row, f"Missing critical data: {', '.join(nan_cols)}")
             df = df[~df[critical_cols].isna().any(axis=1)]
-            logger.info(f"  → {len(removed_nan)} çekirdek kaldırıldı (Kritik sütunlarda NaN)")
+            logger.info(f"  -> {len(removed_nan)} çekirdek kaldırıldı (Kritik sütunlarda NaN)")
         
-        # 8. Ondalık ayırıcı düzeltme (virgül → nokta)
+        # 8. Ondalık ayırıcı düzeltme (virgül -> nokta)
         for col in ['Beta_2', 'MM', 'Q']:
             if col in df.columns and df[col].dtype == 'object':
                 df[col] = df[col].str.replace(',', '.').astype(float)

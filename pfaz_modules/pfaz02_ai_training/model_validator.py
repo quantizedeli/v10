@@ -414,7 +414,7 @@ class RobustnessTester:
             noise_levels: Noise levels (as fraction of std)
         """
         
-        logger.info("\n→ Noise Sensitivity Test")
+        logger.info("\n-> Noise Sensitivity Test")
         
         results = {
             'noise_level': [],
@@ -475,7 +475,7 @@ class RobustnessTester:
             outlier_fractions: Fraction of samples to corrupt
         """
         
-        logger.info("\n→ Outlier Sensitivity Test")
+        logger.info("\n-> Outlier Sensitivity Test")
         
         results = {
             'outlier_fraction': [],
@@ -548,7 +548,7 @@ class RobustnessTester:
         Test each feature's importance by perturbing it
         """
         
-        logger.info("\n→ Feature Perturbation Test")
+        logger.info("\n-> Feature Perturbation Test")
         
         if feature_names is None:
             feature_names = [f'F{i}' for i in range(X_test.shape[1])]
@@ -754,18 +754,18 @@ class ModelValidator:
         logger.info("="*80)
         
         # 1. Cross-Validation
-        logger.info("\n→ CROSS-VALIDATION")
+        logger.info("\n-> CROSS-VALIDATION")
         cv_analyzer = CrossValidationAnalyzer(self.model, self.model_name, self.output_dir)
         cv_results = cv_analyzer.run_cv(X_train, y_train, cv=5)
         
         # 2. Learning Curve
-        logger.info("\n→ LEARNING CURVE")
+        logger.info("\n-> LEARNING CURVE")
         lc_analyzer = LearningCurveAnalyzer(self.model, self.model_name, self.output_dir)
         lc_analyzer.compute_learning_curve(X_train, y_train, cv=5)
         
         # 3. Robustness Tests
         if run_robustness:
-            logger.info("\n→ ROBUSTNESS TESTS")
+            logger.info("\n-> ROBUSTNESS TESTS")
             robustness_tester = RobustnessTester(self.model, self.model_name, self.output_dir / 'robustness')
             
             robustness_tester.test_noise_sensitivity(X_test, y_test)

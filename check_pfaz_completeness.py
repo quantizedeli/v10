@@ -193,7 +193,7 @@ def check_pfaz_completeness(project_dir="/home/user/nucdatav1"):
                 "missing": missing_outputs
             },
             "completion_percentage": completion,
-            "status": "✅ Complete" if completion == 100 else "⚠️ Incomplete"
+            "status": "[SUCCESS] Complete" if completion == 100 else "[WARNING] Incomplete"
         }
 
     return results
@@ -207,20 +207,20 @@ def print_report(results):
     print()
 
     for pfaz_name, data in results.items():
-        status_icon = "✅" if data["completion_percentage"] == 100 else "⚠️"
+        status_icon = "[SUCCESS]" if data["completion_percentage"] == 100 else "[WARNING]"
 
         print(f"{status_icon} {pfaz_name}: {data['description']}")
         print(f"   Completion: {data['completion_percentage']:.1f}%")
 
         # Missing modules
         if data["modules"]["missing"]:
-            print(f"   ❌ Missing modules ({len(data['modules']['missing'])}):")
+            print(f"   [ERROR] Missing modules ({len(data['modules']['missing'])}):")
             for module in data["modules"]["missing"]:
                 print(f"      - {module}")
 
         # Missing outputs
         if data["outputs"]["missing"]:
-            print(f"   ❌ Missing outputs ({len(data['outputs']['missing'])}):")
+            print(f"   [ERROR] Missing outputs ({len(data['outputs']['missing'])}):")
             for output in data["outputs"]["missing"]:
                 print(f"      - {output}")
 
@@ -242,12 +242,12 @@ def print_report(results):
     complete_pfaz = [name for name, data in results.items() if data["completion_percentage"] == 100]
     incomplete_pfaz = [name for name, data in results.items() if data["completion_percentage"] < 100]
 
-    print(f"✅ Complete PFAZ: {len(complete_pfaz)}/{len(results)}")
+    print(f"[SUCCESS] Complete PFAZ: {len(complete_pfaz)}/{len(results)}")
     for pfaz in complete_pfaz:
         print(f"   - {pfaz}")
 
     print()
-    print(f"⚠️ Incomplete PFAZ: {len(incomplete_pfaz)}/{len(results)}")
+    print(f"[WARNING] Incomplete PFAZ: {len(incomplete_pfaz)}/{len(results)}")
     for pfaz in incomplete_pfaz:
         completion = results[pfaz]["completion_percentage"]
         print(f"   - {pfaz} ({completion:.1f}%)")

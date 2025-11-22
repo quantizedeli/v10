@@ -193,7 +193,7 @@ class RealDataIntegrationManager:
         trained_models = {}
         
         for model_type in model_types:
-            logger.info(f"\n→ Training {model_type}...")
+            logger.info(f"\n-> Training {model_type}...")
             
             try:
                 # Create model
@@ -305,7 +305,7 @@ class RealDataIntegrationManager:
         
         # Simple Voting
         if 'simple_voting' in ensemble_methods:
-            logger.info("\n→ Creating Simple Voting...")
+            logger.info("\n-> Creating Simple Voting...")
             result = builder.create_simple_voting(
                 model_ids=model_ids,
                 X_test=X_test,
@@ -315,7 +315,7 @@ class RealDataIntegrationManager:
         
         # Weighted Voting
         if 'weighted_voting_r2' in ensemble_methods:
-            logger.info("\n→ Creating Weighted Voting (R²)...")
+            logger.info("\n-> Creating Weighted Voting (R²)...")
             result = builder.create_weighted_voting(
                 model_ids=model_ids,
                 X_test=X_test,
@@ -326,7 +326,7 @@ class RealDataIntegrationManager:
         
         # Stacking
         if 'stacking_ridge' in ensemble_methods:
-            logger.info("\n→ Creating Stacking (Ridge)...")
+            logger.info("\n-> Creating Stacking (Ridge)...")
             stacker = StackingMetaLearner(
                 meta_model_type='ridge',
                 cv_folds=5,
@@ -464,7 +464,7 @@ def main():
     logger.info("="*80)
     
     # Create mock ANFIS datasets for testing
-    logger.info("\n📊 Creating mock ANFIS datasets...")
+    logger.info("\n[REPORT] Creating mock ANFIS datasets...")
     
     # Create test directory
     test_anfis_dir = Path('/home/claude/test_anfis_data')
@@ -532,7 +532,7 @@ def main():
     report = manager.generate_final_report()
     
     logger.info("\n" + "="*80)
-    logger.info("✅ FAZ 8 TEST COMPLETED!")
+    logger.info("[SUCCESS] FAZ 8 TEST COMPLETED!")
     logger.info("="*80)
     
     return report

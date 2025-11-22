@@ -61,7 +61,7 @@ class AIModelCheckpoint:
         
         saved_files = {}
         
-        # 1. ⚠️ MODEL CHECKPOINT (.pkl veya .h5)
+        # 1. [WARNING] MODEL CHECKPOINT (.pkl veya .h5)
         if model_type in ['RandomForest', 'GradientBoosting', 'XGBoost']:
             # Sklearn/XGBoost modelleri için joblib
             model_file = output_dir / f'{checkpoint_name}_model.pkl'
@@ -93,7 +93,7 @@ class AIModelCheckpoint:
                 saved_files['weights'] = str(weights_file)
                 logger.info(f"  ✓ Weights kaydedildi: {weights_file.name}")
             except Exception as e:
-                logger.warning(f"  ⚠️ Weights kaydedilemedi: {e}")
+                logger.warning(f"  [WARNING] Weights kaydedilemedi: {e}")
         
         # 3. CONFIG INFO (JSON)
         config_info['model_type'] = model_type

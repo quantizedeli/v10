@@ -350,7 +350,7 @@ class AutoMLOptimizer:
         with open(output_path, 'w') as f:
             json.dump(results, f, indent=2)
 
-        logger.info(f"💾 Results saved: {output_path}")
+        logger.info(f"[SAVE] Results saved: {output_path}")
 
 
 # ============================================================================
@@ -373,7 +373,7 @@ def visualize_optimization(study: optuna.Study, output_dir='automl_plots'):
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
 
-    logger.info(f"\n📊 Generating visualizations...")
+    logger.info(f"\n[REPORT] Generating visualizations...")
 
     try:
         # 1. Optimization history

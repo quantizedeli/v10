@@ -98,7 +98,7 @@ class AutoMLVisualizer:
     
     def _load_data(self):
         """Load data from Excel"""
-        logger.info(f"\n→ Loading data from Excel...")
+        logger.info(f"\n-> Loading data from Excel...")
         
         try:
             self.summary = pd.read_excel(self.excel_path, sheet_name='Summary')
@@ -156,7 +156,7 @@ class AutoMLVisualizer:
         - Best R² so far (cumulative best)
         - Moving average
         """
-        logger.info("\n→ Creating optimization history plot...")
+        logger.info("\n-> Creating optimization history plot...")
         
         fig, ax = plt.subplots(figsize=(14, 7))
         
@@ -245,7 +245,7 @@ class AutoMLVisualizer:
             logger.warning("  No parameter importance data available")
             return None
         
-        logger.info("\n→ Creating parameter importance plot...")
+        logger.info("\n-> Creating parameter importance plot...")
         
         fig, ax = plt.subplots(figsize=(12, 8))
         
@@ -301,7 +301,7 @@ class AutoMLVisualizer:
             logger.warning("  No convergence data available")
             return None
         
-        logger.info("\n→ Creating convergence analysis plot...")
+        logger.info("\n-> Creating convergence analysis plot...")
         
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
         
@@ -360,7 +360,7 @@ class AutoMLVisualizer:
             logger.warning("  No R² vs time data available")
             return None
         
-        logger.info("\n→ Creating R² vs time trade-off plot...")
+        logger.info("\n-> Creating R² vs time trade-off plot...")
         
         fig, ax = plt.subplots(figsize=(12, 8))
         
@@ -412,7 +412,7 @@ class AutoMLVisualizer:
         """
         Plot 5: Trial status distribution (Complete/Pruned/Failed)
         """
-        logger.info("\n→ Creating trial status distribution plot...")
+        logger.info("\n-> Creating trial status distribution plot...")
         
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
         
@@ -469,7 +469,7 @@ class AutoMLVisualizer:
         """
         Plot 6: Compare top 5 configurations across metrics
         """
-        logger.info("\n→ Creating best configs comparison plot...")
+        logger.info("\n-> Creating best configs comparison plot...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         axes = axes.flatten()
@@ -531,7 +531,7 @@ class AutoMLVisualizer:
         
         Shows what values were explored
         """
-        logger.info("\n→ Creating hyperparameter distributions plot...")
+        logger.info("\n-> Creating hyperparameter distributions plot...")
         
         # Get hyperparameter columns (start with 'HP_')
         hp_cols = [col for col in self.all_trials.columns if col.startswith('HP_')]
@@ -620,7 +620,7 @@ class AutoMLVisualizer:
         ]
         
         for name, func in plot_functions:
-            logger.info(f"\n→ Generating: {name}")
+            logger.info(f"\n-> Generating: {name}")
             try:
                 path = func()
                 if path:

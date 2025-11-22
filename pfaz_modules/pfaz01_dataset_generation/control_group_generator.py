@@ -128,27 +128,27 @@ class ControlGroupGenerator:
         analysis = {}
         
         # 1. Per-nucleus statistics
-        logger.info("\n→ Computing per-nucleus statistics...")
+        logger.info("\n-> Computing per-nucleus statistics...")
         analysis['nucleus_stats'] = self._compute_nucleus_statistics()
         
         # 2. Per-model statistics
-        logger.info("\n→ Computing per-model statistics...")
+        logger.info("\n-> Computing per-model statistics...")
         analysis['model_stats'] = self._compute_model_statistics()
         
         # 3. Identify problem nuclei
-        logger.info("\n→ Identifying problem nuclei...")
+        logger.info("\n-> Identifying problem nuclei...")
         analysis['problem_nuclei'] = self._identify_problem_nuclei()
         
         # 4. Identify easy nuclei
-        logger.info("\n→ Identifying easy nuclei...")
+        logger.info("\n-> Identifying easy nuclei...")
         analysis['easy_nuclei'] = self._identify_easy_nuclei()
         
         # 5. Property correlation
-        logger.info("\n→ Analyzing property correlations...")
+        logger.info("\n-> Analyzing property correlations...")
         analysis['property_correlation'] = self._analyze_property_correlation()
         
         # 6. Generate reports
-        logger.info("\n→ Generating reports...")
+        logger.info("\n-> Generating reports...")
         self._generate_comprehensive_report(analysis)
         
         logger.info("\n" + "="*80)
@@ -544,5 +544,5 @@ def test_control_group():
 
 if __name__ == "__main__":
     test_control_group()
-    print("\n✅ CONTROL GROUP GENERATOR COMPLETE")
+    print("\n[SUCCESS] CONTROL GROUP GENERATOR COMPLETE")
     print("Location: dataset_generation/control_group_generator.py")

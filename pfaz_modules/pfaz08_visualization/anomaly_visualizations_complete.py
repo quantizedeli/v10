@@ -60,7 +60,7 @@ class AnomalyVisualizationsComplete:
                 Columns: NUCLEUS, A, Z, N, + feature_cols, anomaly_score
             feature_cols: List of feature column names to plot
         """
-        logger.info("\n→ Creating anomaly feature radar charts...")
+        logger.info("\n-> Creating anomaly feature radar charts...")
         
         # Select top anomalies
         top_anomalies = anomaly_data.nlargest(6, 'anomaly_score')
@@ -158,7 +158,7 @@ class AnomalyVisualizationsComplete:
             feature_x: Feature for x-axis
             feature_y: Feature for y-axis
         """
-        logger.info("\n→ Creating outlier detection comparison...")
+        logger.info("\n-> Creating outlier detection comparison...")
         
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
         fig.suptitle(f'Outlier Detection Methods Comparison\n{feature_x} vs {feature_y}', 

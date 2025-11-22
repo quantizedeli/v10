@@ -125,7 +125,7 @@ class AdaptiveLearningStrategy:
       * Min tests: 15
       * Composite threshold: 0.60
       * Std threshold: 0.25
-    - Decision: IF (n≥15 AND avg<0.60) OR std>0.25 → PRUNE
+    - Decision: IF (n≥15 AND avg<0.60) OR std>0.25 -> PRUNE
     - Expected: 30-40% configs pruned
     
     STAGE 2: VALIDATION (Tests 21-50)
@@ -137,8 +137,8 @@ class AdaptiveLearningStrategy:
       * Lookback window: 20 tests
       * Plateau detection: slope < 0.001
     - Decision: 
-      * IF rolling_avg < 0.70 → PRUNE
-      * IF slope < 0.001 AND avg < 0.75 → PLATEAU (stop, not optimal)
+      * IF rolling_avg < 0.70 -> PRUNE
+      * IF slope < 0.001 AND avg < 0.75 -> PLATEAU (stop, not optimal)
     - Expected: 20-30% additional configs pruned
     
     STAGE 3: CONFIRMATION (Tests 51-80)
@@ -148,8 +148,8 @@ class AdaptiveLearningStrategy:
       * Optimal threshold: 0.80
       * Plateau slope: < 0.001
     - Decision:
-      * IF avg ≥ 0.80 AND plateau → OPTIMAL (success!)
-      * IF avg < 0.75 → PRUNE
+      * IF avg ≥ 0.80 AND plateau -> OPTIMAL (success!)
+      * IF avg < 0.75 -> PRUNE
     - Expected: Top 10-20% configs identified
     
     Resource Savings: 40-60% reduction in training time
@@ -693,7 +693,7 @@ class PatternTracker:
 # ============================================================================
 
 if __name__ == "__main__":
-    print("\n✅ ADAPTIVE STRATEGY - FULL COMPREHENSIVE VERSION")
+    print("\n[SUCCESS] ADAPTIVE STRATEGY - FULL COMPREHENSIVE VERSION")
     print("All features from previous discussions included!")
 
 # ==================== EKLEME BAŞI ====================

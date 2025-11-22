@@ -172,7 +172,7 @@ ANFIS'ten örnek bulanık kurallar:
 \end{center}
 
 Bu kural şunu söyler: Ağır, orta-Z, küresel çekirdekler küçük pozitif MM'ye sahip olma 
-eğilimindedir. Bu, kabuk modeli beklentileriyle uyumludur (kapalı kabuklar → düşük MM).
+eğilimindedir. Bu, kabuk modeli beklentileriyle uyumludur (kapalı kabuklar -> düşük MM).
 
 \textbf{Kural 12 (ağırlık: 0.22):}
 \begin{center}
@@ -300,8 +300,8 @@ Deformasyon, QM ile doğrudan ilişkilidir:
 Q \propto Z \cdot R^2 \cdot \beta_2
 \end{equation}
 
-Pozitif $\beta_2$ (prolate) → pozitif QM\\
-Negatif $\beta_2$ (oblate) → negatif QM
+Pozitif $\beta_2$ (prolate) -> pozitif QM\\
+Negatif $\beta_2$ (oblate) -> negatif QM
 
 \textbf{4. Spin ($J$) - 9.7\%}
 
@@ -321,7 +321,7 @@ Bazı teorik olarak önemli özelliklerin düşük SHAP skorları şaşırtıcı
 Parite, kuantum seçim kurallarında önemli olmasına rağmen, ML modelleri için zayıf tahmin 
 gücüne sahiptir. Bu şu sebeplerden olabilir:
 \begin{itemize}
-\item Parite ikili ($\pm 1$) → sınırlı bilgi içeriği
+\item Parite ikili ($\pm 1$) -> sınırlı bilgi içeriği
 \item Diğer özelliklerle yüksek korelasyon (spin, kabuk dolulumu)
 \item Veri setinde dengesiz dağılım (çoğu çekirdek pozitif parite)
 \end{itemize}

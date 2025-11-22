@@ -87,47 +87,47 @@ class ThesisOrchestrator:
         logger.info("="*80)
         
         # PFAZ 0: Configuration
-        logger.info("\n→ PFAZ 0: Configuration")
+        logger.info("\n-> PFAZ 0: Configuration")
         self.results_summary['pfaz0'] = self._collect_pfaz0()
         
         # PFAZ 1: Dataset Generation
-        logger.info("\n→ PFAZ 1: Dataset Generation")
+        logger.info("\n-> PFAZ 1: Dataset Generation")
         self.results_summary['pfaz1'] = self._collect_pfaz1()
         
         # PFAZ 2: AI Training
-        logger.info("\n→ PFAZ 2: AI Training")
+        logger.info("\n-> PFAZ 2: AI Training")
         self.results_summary['pfaz2'] = self._collect_pfaz2()
         
         # PFAZ 3: ANFIS Training
-        logger.info("\n→ PFAZ 3: ANFIS Training")
+        logger.info("\n-> PFAZ 3: ANFIS Training")
         self.results_summary['pfaz3'] = self._collect_pfaz3()
         
         # PFAZ 4: Unknown Predictions
-        logger.info("\n→ PFAZ 4: Unknown Predictions")
+        logger.info("\n-> PFAZ 4: Unknown Predictions")
         self.results_summary['pfaz4'] = self._collect_pfaz4()
         
         # PFAZ 5: Cross-Model Analysis
-        logger.info("\n→ PFAZ 5: Cross-Model Analysis")
+        logger.info("\n-> PFAZ 5: Cross-Model Analysis")
         self.results_summary['pfaz5'] = self._collect_pfaz5()
         
         # PFAZ 6: Final Reporting
-        logger.info("\n→ PFAZ 6: Final Reporting")
+        logger.info("\n-> PFAZ 6: Final Reporting")
         self.results_summary['pfaz6'] = self._collect_pfaz6()
         
         # PFAZ 7: Ensemble Methods
-        logger.info("\n→ PFAZ 7: Ensemble Methods")
+        logger.info("\n-> PFAZ 7: Ensemble Methods")
         self.results_summary['pfaz7'] = self._collect_pfaz7()
         
         # PFAZ 8: Visualization
-        logger.info("\n→ PFAZ 8: Visualization")
+        logger.info("\n-> PFAZ 8: Visualization")
         self.results_summary['pfaz8'] = self._collect_pfaz8()
         
         # PFAZ 9: AAA2 & Monte Carlo
-        logger.info("\n→ PFAZ 9: AAA2 & Monte Carlo")
+        logger.info("\n-> PFAZ 9: AAA2 & Monte Carlo")
         self.results_summary['pfaz9'] = self._collect_pfaz9()
         
         # PFAZ 12: Advanced Analytics
-        logger.info("\n→ PFAZ 12: Advanced Analytics")
+        logger.info("\n-> PFAZ 12: Advanced Analytics")
         self.results_summary['pfaz12'] = self._collect_pfaz12()
         
         # Save summary
@@ -301,7 +301,7 @@ class ThesisOrchestrator:
             self.collect_all_results()
         
         # Generate components
-        logger.info("\n→ Generating thesis components...")
+        logger.info("\n-> Generating thesis components...")
         
         self._generate_preamble()
         self._generate_frontmatter()
@@ -787,7 +787,7 @@ stratejileri ve kapsamlı doğrulama çalışmaları yoluyla ele almaktadır.
         # Content saved to file
         chapter3_file = self.thesis_dir / 'chapters' / '05_yontem.tex'
         
-        logger.info(f"    → Chapter 3 will be comprehensive - creating placeholder")
+        logger.info(f"    -> Chapter 3 will be comprehensive - creating placeholder")
         
         chapter3 = r"""\chapter{Yöntem}
 \label{ch:yontem}
@@ -1022,7 +1022,7 @@ pause
             main_file = self.thesis_dir / 'thesis_main.tex'
             
             for i in range(3):  # Run 3 times for references
-                logger.info(f"\n→ pdflatex run {i+1}/3...")
+                logger.info(f"\n-> pdflatex run {i+1}/3...")
                 result = subprocess.run(
                     ['pdflatex', '-interaction=nonstopmode', str(main_file.name)],
                     cwd=self.thesis_dir,
@@ -1037,7 +1037,7 @@ pause
                     return None
             
             # Run bibtex
-            logger.info("\n→ Running bibtex...")
+            logger.info("\n-> Running bibtex...")
             subprocess.run(
                 ['bibtex', 'thesis_main'],
                 cwd=self.thesis_dir,
@@ -1046,7 +1046,7 @@ pause
             )
             
             # Final pdflatex
-            logger.info("\n→ Final pdflatex run...")
+            logger.info("\n-> Final pdflatex run...")
             subprocess.run(
                 ['pdflatex', '-interaction=nonstopmode', str(main_file.name)],
                 cwd=self.thesis_dir,
@@ -1079,7 +1079,7 @@ pause
     
     def _cleanup_latex_aux_files(self):
         """LaTeX ara dosyalarını temizle"""
-        logger.info("\n→ Cleaning up auxiliary files...")
+        logger.info("\n-> Cleaning up auxiliary files...")
         
         extensions = ['.aux', '.log', '.toc', '.lof', '.lot', '.out', '.bbl', '.blg']
         
@@ -1111,17 +1111,17 @@ def main():
     )
     
     # Collect results
-    print("\n→ Collecting all PFAZ results...")
+    print("\n-> Collecting all PFAZ results...")
     orchestrator.collect_all_results()
     
     # Get author info
-    print("\n→ Author information:")
+    print("\n-> Author information:")
     author = input("  Yazar Adı (Enter = varsayılan): ").strip() or "Yazar Adı"
     supervisor = input("  Danışman Adı (Enter = varsayılan): ").strip() or "Danışman Adı"
     university = input("  Üniversite Adı (Enter = varsayılan): ").strip() or "Üniversite Adı"
     
     # Generate thesis
-    print("\n→ Generating complete thesis...")
+    print("\n-> Generating complete thesis...")
     main_file = orchestrator.generate_complete_thesis(
         author_name=author,
         supervisor_name=supervisor,
@@ -1138,13 +1138,13 @@ def main():
         if pdf_file:
             print(f"\n✓ PDF hazır: {pdf_file}")
         else:
-            print("\n⚠ PDF derlenemedi. Manuel derleme:")
+            print("\n[WARNING] PDF derlenemedi. Manuel derleme:")
             print("  cd output/thesis")
             print("  ./compile.sh  (Linux/Mac)")
             print("  compile.bat   (Windows)")
     
     print("\n" + "="*80)
-    print("✅ PFAZ 10: THESIS ORCHESTRATOR - COMPLETE!")
+    print("[SUCCESS] PFAZ 10: THESIS ORCHESTRATOR - COMPLETE!")
     print("="*80)
     print(f"\nÇıktılar:")
     print(f"  - Main file: {main_file}")

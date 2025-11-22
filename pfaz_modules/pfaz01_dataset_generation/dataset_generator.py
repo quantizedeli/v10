@@ -176,7 +176,7 @@ class DatasetGenerator:
         dataset_count = 0
         
         for target_name, target_cols in targets.items():
-            logger.info(f"\n→ Hedef: {target_name}")
+            logger.info(f"\n-> Hedef: {target_name}")
             
             # Hedef için özellik setlerini belirle
             if target_name == 'Beta_2':
@@ -188,7 +188,7 @@ class DatasetGenerator:
             target_df = self._filter_for_target(df, target_cols)
             
             if len(target_df) == 0:
-                logger.warning(f"  ⚠ {target_name} için veri yok, atlanıyor")
+                logger.warning(f"  [WARNING] {target_name} için veri yok, atlanıyor")
                 continue
             
             for nucleus_count in nucleus_counts:
@@ -219,7 +219,7 @@ class DatasetGenerator:
         self._save_catalog()
 
         # Master çekirdek kataloğu oluştur
-        logger.info("\n→ Master çekirdek kataloğu oluşturuluyor...")
+        logger.info("\n-> Master çekirdek kataloğu oluşturuluyor...")
         try:
             self.distribution_analyzer.create_master_nuclei_catalog(
                 df, self.base_path / 'Master_Nuclei_Catalog.xlsx'
@@ -267,7 +267,7 @@ class DatasetGenerator:
         y = y[mask]
         
         if len(X) < 10:
-            logger.warning(f"  ⚠ Yetersiz veri ({len(X)} örnek), atlanıyor")
+            logger.warning(f"  [WARNING] Yetersiz veri ({len(X)} örnek), atlanıyor")
             return
         
         # Train/Check/Test split
@@ -443,7 +443,7 @@ class DatasetGenerator:
                 analysis, path / 'nuclei_distribution_report.xlsx'
             )
         except Exception as e:
-            logger.warning(f"  ⚠ Dağılım raporu oluşturulamadı: {e}")
+            logger.warning(f"  [WARNING] Dağılım raporu oluşturulamadı: {e}")
     
     def _estimate_total_combinations(self):
         """Toplam kombinasyon sayısını tahmin et"""
@@ -530,7 +530,7 @@ class ControlGroupGenerator:
                     target_control = target_control[target_control[col].notna()]
             
             if len(target_control) == 0:
-                logger.warning(f"  ⚠ {target_name} için kontrol grubu yok")
+                logger.warning(f"  [WARNING] {target_name} için kontrol grubu yok")
                 continue
             
             # Çeşitlilik için stratejik seçim

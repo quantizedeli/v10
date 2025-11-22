@@ -589,12 +589,12 @@ class ParallelAITrainer:
                 training_time=training_time
             )
             
-            logger.info(f"✅ {job.job_id} | R2={metrics['val'].get('r2', 0):.4f} | {training_time:.1f}s")
+            logger.info(f"[SUCCESS] {job.job_id} | R2={metrics['val'].get('r2', 0):.4f} | {training_time:.1f}s")
             
             return result
             
         except Exception as e:
-            logger.error(f"❌ {job.job_id} | Error: {str(e)}")
+            logger.error(f"[ERROR] {job.job_id} | Error: {str(e)}")
             
             result = TrainingResult(
                 job_id=job.job_id,
@@ -965,7 +965,7 @@ def main():
     # Save report
     trainer.save_summary_report()
     
-    print("\n✅ TEST COMPLETED!")
+    print("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

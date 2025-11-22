@@ -2,16 +2,16 @@
 Model Interpretability Module - UPDATED
 SHAP Analysis & Feature Importance FOR ALL MODELS
 
-✅ UPDATED: ANFIS, TensorFlow, Ensemble support added
+[SUCCESS] UPDATED: ANFIS, TensorFlow, Ensemble support added
 
 Özellikler:
 1. SHAP (SHapley Additive exPlanations)
-   - TreeExplainer (RF, GBM, XGBoost) ✅
-   - DeepExplainer (DNN, BNN, PINN) ✅
-   - KernelExplainer (ANFIS, Ensemble) ✅ NEW
-2. Permutation Importance ✅
-3. Feature Importance Rankings ✅
-4. Visualizations ✅
+   - TreeExplainer (RF, GBM, XGBoost) [SUCCESS]
+   - DeepExplainer (DNN, BNN, PINN) [SUCCESS]
+   - KernelExplainer (ANFIS, Ensemble) [SUCCESS] NEW
+2. Permutation Importance [SUCCESS]
+3. Feature Importance Rankings [SUCCESS]
+4. Visualizations [SUCCESS]
 """
 
 import numpy as np
@@ -49,10 +49,10 @@ class UniversalSHAPAnalyzer:
     Universal SHAP Analyzer - Works with ALL model types
     
     Supported:
-    - Tree models (RF, GBM, XGBoost) ✅
-    - Neural networks (DNN, BNN, PINN) ✅
-    - ANFIS (via KernelExplainer) ✅
-    - Ensemble models ✅
+    - Tree models (RF, GBM, XGBoost) [SUCCESS]
+    - Neural networks (DNN, BNN, PINN) [SUCCESS]
+    - ANFIS (via KernelExplainer) [SUCCESS]
+    - Ensemble models [SUCCESS]
     """
     
     def __init__(self, model, model_type, feature_names=None, output_dir='interpretability'):
@@ -103,21 +103,21 @@ class UniversalSHAPAnalyzer:
     
     def _create_tree_explainer(self):
         """TreeExplainer for tree-based models"""
-        logger.info("  → Using TreeExplainer (fast)")
+        logger.info("  -> Using TreeExplainer (fast)")
         return shap.TreeExplainer(self.model)
     
     def _create_deep_explainer(self, X_background):
         """DeepExplainer for neural networks"""
         try:
-            logger.info("  → Using DeepExplainer")
+            logger.info("  -> Using DeepExplainer")
             return shap.DeepExplainer(self.model, X_background)
         except:
-            logger.warning("  → DeepExplainer failed, falling back to KernelExplainer")
+            logger.warning("  -> DeepExplainer failed, falling back to KernelExplainer")
             return self._create_kernel_explainer(X_background)
     
     def _create_kernel_explainer(self, X_background):
         """KernelExplainer - universal but slow"""
-        logger.info("  → Using KernelExplainer (slow but universal)")
+        logger.info("  -> Using KernelExplainer (slow but universal)")
         
         # Create predict function
         def predict_fn(X):
@@ -306,7 +306,7 @@ class InterpretabilityAnalyzer:
     """
     Unified interpretability - UPDATED to support ALL models
     
-    ✅ Now supports:
+    [SUCCESS] Now supports:
     - RF, GBM, XGBoost (TreeExplainer)
     - DNN, BNN, PINN (DeepExplainer)
     - ANFIS (KernelExplainer)
@@ -331,7 +331,7 @@ class InterpretabilityAnalyzer:
                 shap_background_size=100, n_shap_explain=200):
         """
         Complete interpretability analysis
-        ✅ Works with ALL model types now
+        [SUCCESS] Works with ALL model types now
         """
         
         logger.info("\n" + "="*80)
@@ -342,7 +342,7 @@ class InterpretabilityAnalyzer:
         
         # 1. SHAP Analysis (Universal)
         if use_shap and SHAP_AVAILABLE:
-            logger.info("→ SHAP Analysis...")
+            logger.info("-> SHAP Analysis...")
             
             try:
                 self.shap_analyzer = UniversalSHAPAnalyzer(
@@ -378,7 +378,7 @@ class InterpretabilityAnalyzer:
         
         # 2. Permutation Importance (Universal)
         if use_permutation:
-            logger.info("\n→ Permutation Importance...")
+            logger.info("\n-> Permutation Importance...")
             
             try:
                 self.perm_analyzer = PermutationImportanceAnalyzer(
@@ -399,7 +399,7 @@ class InterpretabilityAnalyzer:
                 results['permutation_error'] = str(e)
         
         # 3. Model-specific importance (if available)
-        logger.info("\n→ Model-specific importance...")
+        logger.info("\n-> Model-specific importance...")
         
         if hasattr(self.model, 'feature_importances_'):
             importance = self.model.feature_importances_
@@ -469,7 +469,7 @@ def test_universal_interpretability():
     print("="*80)
     
     if not SHAP_AVAILABLE:
-        print("⚠ SHAP not available, some tests will be skipped")
+        print("[WARNING] SHAP not available, some tests will be skipped")
     
     # Dummy data
     np.random.seed(42)
@@ -518,15 +518,15 @@ def test_universal_interpretability():
     print("="*80)
     
     if 'shap_importance' in results:
-        print("\n✅ SHAP (Universal):")
+        print("\n[SUCCESS] SHAP (Universal):")
         print(results['shap_importance'].head(5)[['Feature', 'SHAP_Importance']])
     
     if 'permutation_importance' in results:
-        print("\n✅ Permutation (Universal):")
+        print("\n[SUCCESS] Permutation (Universal):")
         print(results['permutation_importance'].head(5)[['Feature', 'Importance']])
     
     print("\n✓ Universal interpretability test completed!")
-    print("✅ Now supports: RF, GBM, XGBoost, DNN, BNN, PINN, ANFIS, Ensemble")
+    print("[SUCCESS] Now supports: RF, GBM, XGBoost, DNN, BNN, PINN, ANFIS, Ensemble")
 
 
 if __name__ == "__main__":
@@ -618,22 +618,22 @@ class SHAPAnalyzer:
         if self.model_type in ['RandomForest', 'GradientBoosting', 'XGBoost']:
             # Tree explainer (fast)
             self.explainer = shap.TreeExplainer(self.model)
-            logger.info("  → TreeExplainer kullanılıyor")
+            logger.info("  -> TreeExplainer kullanılıyor")
         
         elif self.model_type == 'DNN':
             # Deep explainer
             try:
                 self.explainer = shap.DeepExplainer(self.model, X_background)
-                logger.info("  → DeepExplainer kullanılıyor")
+                logger.info("  -> DeepExplainer kullanılıyor")
             except:
                 # Fallback to KernelExplainer
-                logger.warning("  → DeepExplainer başarısız, KernelExplainer kullanılıyor")
+                logger.warning("  -> DeepExplainer başarısız, KernelExplainer kullanılıyor")
                 self.explainer = shap.KernelExplainer(self.model.predict, X_background)
         
         else:
             # Kernel explainer (slow but general)
             self.explainer = shap.KernelExplainer(self.model.predict, X_background)
-            logger.info("  → KernelExplainer kullanılıyor (yavaş olabilir)")
+            logger.info("  -> KernelExplainer kullanılıyor (yavaş olabilir)")
         
         logger.info("✓ Explainer hazır")
     
@@ -993,7 +993,7 @@ class InterpretabilityAnalyzer:
         
         # 1. SHAP Analysis
         if use_shap and SHAP_AVAILABLE:
-            logger.info("→ SHAP Analysis başlıyor...")
+            logger.info("-> SHAP Analysis başlıyor...")
             
             try:
                 self.shap_analyzer = SHAPAnalyzer(
@@ -1032,7 +1032,7 @@ class InterpretabilityAnalyzer:
         
         # 2. Permutation Importance
         if use_permutation:
-            logger.info("\n→ Permutation Importance başlıyor...")
+            logger.info("\n-> Permutation Importance başlıyor...")
             
             try:
                 self.perm_analyzer = PermutationImportanceAnalyzer(
@@ -1053,7 +1053,7 @@ class InterpretabilityAnalyzer:
                 results['permutation_error'] = str(e)
         
         # 3. Model-specific Feature Importance
-        logger.info("\n→ Model-specific importance...")
+        logger.info("\n-> Model-specific importance...")
         
         if hasattr(self.model, 'feature_importances_'):
             # Tree-based models
@@ -1151,7 +1151,7 @@ def test_interpretability():
     print("="*80)
     
     if not SHAP_AVAILABLE:
-        print("⚠ SHAP yüklü değil, bazı testler atlanacak")
+        print("[WARNING] SHAP yüklü değil, bazı testler atlanacak")
     
     # Dummy data
     np.random.seed(42)

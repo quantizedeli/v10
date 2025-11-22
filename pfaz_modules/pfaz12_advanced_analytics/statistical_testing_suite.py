@@ -97,7 +97,7 @@ class StatisticalTestingSuite:
         Returns:
             dict with statistic, p_value, significant, effect_size
         """
-        logger.info(f"\n→ Running paired t-test: {model_a_name} vs {model_b_name}")
+        logger.info(f"\n-> Running paired t-test: {model_a_name} vs {model_b_name}")
         
         # Validate inputs
         if len(scores_a) != len(scores_b):
@@ -156,7 +156,7 @@ class StatisticalTestingSuite:
         Returns:
             dict with statistic, p_value, significant, effect_size
         """
-        logger.info(f"\n→ Running Wilcoxon test: {model_a_name} vs {model_b_name}")
+        logger.info(f"\n-> Running Wilcoxon test: {model_a_name} vs {model_b_name}")
         
         # Perform test
         statistic, p_value = stats.wilcoxon(scores_a, scores_b)
@@ -200,7 +200,7 @@ class StatisticalTestingSuite:
         Returns:
             dict with F_statistic, p_value, significant, eta_squared
         """
-        logger.info(f"\n→ Running one-way ANOVA ({len(scores_dict)} models)")
+        logger.info(f"\n-> Running one-way ANOVA ({len(scores_dict)} models)")
         
         model_names = list(scores_dict.keys())
         scores_list = [scores_dict[name] for name in model_names]
@@ -229,7 +229,7 @@ class StatisticalTestingSuite:
         
         # If significant, run post-hoc tests
         if result['significant'] and STATSMODELS_AVAILABLE:
-            logger.info("  → Running post-hoc Tukey HSD...")
+            logger.info("  -> Running post-hoc Tukey HSD...")
             posthoc = self.tukey_hsd_posthoc(scores_dict)
             result['posthoc'] = posthoc
         
@@ -249,7 +249,7 @@ class StatisticalTestingSuite:
         Returns:
             dict with statistic, p_value, significant
         """
-        logger.info(f"\n→ Running Friedman test ({len(scores_dict)} models)")
+        logger.info(f"\n-> Running Friedman test ({len(scores_dict)} models)")
         
         model_names = list(scores_dict.keys())
         scores_list = [scores_dict[name] for name in model_names]
@@ -279,7 +279,7 @@ class StatisticalTestingSuite:
         
         # If significant, run pairwise Wilcoxon with correction
         if result['significant']:
-            logger.info("  → Running pairwise Wilcoxon tests...")
+            logger.info("  -> Running pairwise Wilcoxon tests...")
             pairwise = self.pairwise_wilcoxon(scores_dict)
             result['pairwise'] = pairwise
         
@@ -582,7 +582,7 @@ class StatisticalTestingSuite:
     
     def export_to_excel(self, filename: str = 'statistical_tests.xlsx') -> Path:
         """Export all test results to Excel"""
-        logger.info(f"\n→ Exporting results to {filename}...")
+        logger.info(f"\n-> Exporting results to {filename}...")
         
         try:
             import xlsxwriter

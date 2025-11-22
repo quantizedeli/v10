@@ -242,7 +242,7 @@ class CICDPipelineGenerator:
         self.generate_pre_commit_config()
         
         logger.info("\n" + "="*70)
-        logger.info("✅ CI/CD PIPELINE CONFIGURED")
+        logger.info("[SUCCESS] CI/CD PIPELINE CONFIGURED")
         logger.info("="*70)
         logger.info("\nNext steps:")
         logger.info("1. Commit .github/workflows/ to repository")

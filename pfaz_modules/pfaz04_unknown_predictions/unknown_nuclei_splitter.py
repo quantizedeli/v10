@@ -142,7 +142,7 @@ class UnknownNucleiSplitter:
                     'unknown_file': str(unknown_file)
                 })
                 
-                logger.info(f"✅ Saved: {known_file.name}, {unknown_file.name}")
+                logger.info(f"[SUCCESS] Saved: {known_file.name}, {unknown_file.name}")
                 
             except Exception as e:
                 logger.error(f"Failed to split {dataset_file.name}: {e}")
@@ -152,8 +152,8 @@ class UnknownNucleiSplitter:
         with open(metadata_file, 'w') as f:
             json.dump(self.split_metadata, f, indent=2)
         
-        logger.info(f"\n✅ Metadata saved: {metadata_file}")
-        logger.info(f"✅ Total datasets split: {len(self.split_metadata['datasets'])}")
+        logger.info(f"\n[SUCCESS] Metadata saved: {metadata_file}")
+        logger.info(f"[SUCCESS] Total datasets split: {len(self.split_metadata['datasets'])}")
 
 
 def main():
@@ -187,7 +187,7 @@ def main():
     print("\nSplitting datasets...")
     splitter.split_all_datasets(test_data_dir)
     
-    print("\n✅ TEST COMPLETED!")
+    print("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

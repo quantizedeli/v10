@@ -104,7 +104,7 @@ class CheckpointManager:
         with open(meta_file, 'w') as f:
             json.dump(meta_data, f, indent=2)
 
-        logger.info(f"💾 Checkpoint saved: PFAZ {pfaz_id}")
+        logger.info(f"[SAVE] Checkpoint saved: PFAZ {pfaz_id}")
         logger.info(f"  File: {checkpoint_file.name}")
         logger.info(f"  Size: {meta_data['file_size_kb']:.1f} KB")
         logger.info(f"  Tasks: {len(state.get('completed_tasks', []))} completed")
@@ -130,7 +130,7 @@ class CheckpointManager:
         with open(checkpoint_file, 'rb') as f:
             checkpoint_data = pickle.load(f)
 
-        logger.info(f"📦 Checkpoint loaded: PFAZ {pfaz_id}")
+        logger.info(f"[PACKAGE] Checkpoint loaded: PFAZ {pfaz_id}")
         logger.info(f"  Saved: {checkpoint_data['timestamp']}")
         logger.info(f"  Tasks: {len(checkpoint_data['state'].get('completed_tasks', []))} completed")
 
@@ -150,7 +150,7 @@ class CheckpointManager:
         checkpoint_data = self.load_checkpoint(pfaz_id)
 
         if checkpoint_data is None:
-            logger.info(f"🆕 Starting fresh: PFAZ {pfaz_id}")
+            logger.info(f"[NEW] Starting fresh: PFAZ {pfaz_id}")
             return None
 
         state = checkpoint_data['state']
@@ -305,10 +305,10 @@ def train_models_with_checkpoints(configs: List[Dict],
             )
 
             logger.info(f"✓ Model trained: R²={metrics['r2']:.4f}")
-            logger.info(f"💾 Checkpoint saved ({len(completed_tasks)}/{len(configs)})")
+            logger.info(f"[SAVE] Checkpoint saved ({len(completed_tasks)}/{len(configs)})")
 
         except Exception as e:
-            logger.error(f"❌ Error training model {i}: {e}")
+            logger.error(f"[ERROR] Error training model {i}: {e}")
 
             # Save checkpoint even on error
             checkpoint_manager.save_checkpoint(

@@ -68,7 +68,7 @@ class MasterReportVisualizationsComplete:
             model_performance: DataFrame with columns:
                 Model, Target, R2, RMSE, MAE, Training_Time
         """
-        logger.info("\n→ Creating executive summary dashboard...")
+        logger.info("\n-> Creating executive summary dashboard...")
         
         fig = plt.figure(figsize=(20, 14))
         gs = GridSpec(4, 4, figure=fig, hspace=0.35, wspace=0.35)
@@ -231,7 +231,7 @@ KEY INSIGHTS & RECOMMENDATIONS
   • {int(summary_stats.get('success_rate', 0) * summary_stats.get('total_models', 0) / 100)} models achieved R² > 0.85
   • Robust performance across all nuclear regions
 
-🎯 NEXT STEPS:
+[TARGET] NEXT STEPS:
   1. Deploy best model to production
   2. Unknown nuclei predictions (drip lines, superheavy)
   3. Continuous model monitoring and updates
@@ -265,9 +265,9 @@ KEY INSIGHTS & RECOMMENDATIONS
         """
         Tez için hazır multi-panel kompozit figür
         
-        6 panel: Dataset → Training → Performance → Predictions → Error → Summary
+        6 panel: Dataset -> Training -> Performance -> Predictions -> Error -> Summary
         """
-        logger.info("\n→ Creating thesis-ready composite figure...")
+        logger.info("\n-> Creating thesis-ready composite figure...")
         
         fig = plt.figure(figsize=(16, 20))
         gs = GridSpec(6, 2, figure=fig, hspace=0.4, wspace=0.3)

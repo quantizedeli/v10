@@ -134,7 +134,7 @@ class ReportsVisualizationIntegrationManager:
             builder = ComprehensiveReportsBuilder(str(self.reports_dir))
             
             # Master Excel report
-            logger.info("  → Master Excel Report (15+ sheets)")
+            logger.info("  -> Master Excel Report (15+ sheets)")
             excel_file = builder.create_master_excel_report(
                 results_df, model_metrics, training_history, anomalies, config,
                 save_name='THESIS_MASTER_REPORT'
@@ -142,7 +142,7 @@ class ReportsVisualizationIntegrationManager:
             self.generated_outputs['reports'].append(str(excel_file))
             
             # JSON report
-            logger.info("  → JSON Report")
+            logger.info("  -> JSON Report")
             json_file = builder.create_json_report(
                 results_df, model_metrics, config,
                 save_name='THESIS_REPORT'
@@ -150,12 +150,12 @@ class ReportsVisualizationIntegrationManager:
             self.generated_outputs['reports'].append(str(json_file))
             
             # CSV exports
-            logger.info("  → CSV Exports")
+            logger.info("  -> CSV Exports")
             csv_files = builder.create_csv_exports(results_df, model_metrics)
             self.generated_outputs['reports'].extend([str(f) for f in csv_files])
             
             # HTML report
-            logger.info("  → HTML Summary Report")
+            logger.info("  -> HTML Summary Report")
             html_file = builder.create_html_summary_report(
                 results_df, model_metrics,
                 save_name='THESIS_SUMMARY'
@@ -163,7 +163,7 @@ class ReportsVisualizationIntegrationManager:
             self.generated_outputs['reports'].append(str(html_file))
             
         except ImportError:
-            logger.warning("  ⚠ Reports module not available")
+            logger.warning("  [WARNING] Reports module not available")
     
     def _export_data(self, results_df, model_metrics, predictions):
         """Veri export'ları"""
@@ -210,22 +210,22 @@ class ReportsVisualizationIntegrationManager:
             
             # Prediction data
             if 'r2' in results_df.columns and predictions:
-                logger.info("  → Prediction Visualizations")
+                logger.info("  -> Prediction Visualizations")
                 y_true = np.random.randn(100)  # Simulated
                 viz_manager.add_prediction_data(y_true, predictions, 'Target')
             
             # Model metrics
-            logger.info("  → Model Comparison Visualizations")
+            logger.info("  -> Model Comparison Visualizations")
             viz_manager.add_model_metrics(model_metrics)
             
             # Training history
             if training_history:
-                logger.info("  → Training Metrics Visualizations")
+                logger.info("  -> Training Metrics Visualizations")
                 viz_manager.add_training_history(training_history)
             
             # Anomalies
             if anomalies is not None and len(anomalies) > 0:
-                logger.info("  → Anomaly Analysis Visualizations")
+                logger.info("  -> Anomaly Analysis Visualizations")
                 # viz_manager.add_anomaly_data(...)
             
             # Generate all
@@ -235,18 +235,18 @@ class ReportsVisualizationIntegrationManager:
             logger.info("  ✓ All visualizations generated")
             
         except ImportError:
-            logger.warning("  ⚠ Visualization module not available")
+            logger.warning("  [WARNING] Visualization module not available")
     
     def _create_thesis_sections(self, results_df, model_metrics, training_history):
         """Tez bölümleri için özel çıktılar"""
         
-        logger.info("  → Creating Methodology Section")
+        logger.info("  -> Creating Methodology Section")
         self._create_methodology_section(training_history, model_metrics)
         
-        logger.info("  → Creating Results Section")
+        logger.info("  -> Creating Results Section")
         self._create_results_section(results_df, model_metrics)
         
-        logger.info("  → Creating Analysis Section")
+        logger.info("  -> Creating Analysis Section")
         self._create_analysis_section(results_df)
     
     def _create_methodology_section(self, training_history, model_metrics):
@@ -391,7 +391,7 @@ class ReportsVisualizationIntegrationManager:
 
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-## 📁 Directory Structure
+## [FOLDER] Directory Structure
 
 ```
 thesis_complete/
@@ -417,7 +417,7 @@ thesis_complete/
 
 ```
 
-## 📊 Reports (raporlar/)
+## [REPORT] Reports (raporlar/)
 
 ### 1. Master Excel Report (THESIS_MASTER_REPORT_*.xlsx)
 - **Sheet 1**: Özet (Summary)
@@ -449,7 +449,7 @@ Sunumlar ve hızlı inceleme için
 - top_performers.csv
 - errors_summary.csv
 
-## 🎨 Visualizations (visualizations/)
+## [DESIGN] Visualizations (visualizations/)
 
 - **Prediction Visualizations**: Tahmin karşılaştırması, residual analizi
 - **Model Comparison**: Ranking, parallel coordinates
@@ -457,7 +457,7 @@ Sunumlar ve hızlı inceleme için
 - **Anomaly Analysis**: Clustering, patterns
 - **Report Visualizations**: Quality metrics, timelines
 
-## 📈 Key Statistics
+## [CHART] Key Statistics
 
 - **Total Experiments**: {len(self.generated_outputs.get('reports', []))}
 - **Reports Generated**: {len(self.generated_outputs.get('reports', []))}
@@ -484,7 +484,7 @@ Use files in `reports/Analysis/`:
 - Quality metrics
 - Statistical analysis
 
-## 💾 File Sizes
+## [SAVE] File Sizes
 
 All reports are optimized for:
 - Easy sharing (< 100 MB total)

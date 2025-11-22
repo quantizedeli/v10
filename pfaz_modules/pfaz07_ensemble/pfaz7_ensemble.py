@@ -261,7 +261,7 @@ class EnsemblePipeline:
         duration = (datetime.now() - start).total_seconds()
         
         logger.info("\n" + "="*80)
-        logger.info("✅ PFAZ 7 TAMAMLANDI")
+        logger.info("[SUCCESS] PFAZ 7 TAMAMLANDI")
         logger.info("="*80)
         logger.info(f"Süre: {duration:.1f} saniye")
         logger.info(f"Analiz edilen target: {len(self.ensemble_results)}")

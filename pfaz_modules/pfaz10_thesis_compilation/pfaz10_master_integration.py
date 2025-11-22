@@ -223,7 +223,7 @@ class MasterThesisIntegration:
     
     def _step1_collect_all_data(self) -> Dict:
         """Step 1: Collect all data from previous phases"""
-        logger.info("→ Scanning for PFAZ results...")
+        logger.info("-> Scanning for PFAZ results...")
         
         # Scan for PFAZ phase files
         pfaz_files = list(self.project_dir.glob('pfaz*.py'))
@@ -261,7 +261,7 @@ class MasterThesisIntegration:
     
     def _step2_generate_content(self) -> Dict:
         """Step 2: Generate all chapter content"""
-        logger.info("→ Generating chapter content...")
+        logger.info("-> Generating chapter content...")
         
         chapters_generated = []
         
@@ -314,7 +314,7 @@ Nuclear physics and machine learning.
     
     def _step3_integrate_figures(self) -> Dict:
         """Step 3: Integrate all figures"""
-        logger.info("→ Integrating figures...")
+        logger.info("-> Integrating figures...")
         
         # Copy figures from visualization directory
         figures_copied = 0
@@ -336,7 +336,7 @@ Nuclear physics and machine learning.
     
     def _step4_generate_tables(self) -> Dict:
         """Step 4: Generate LaTeX tables from Excel"""
-        logger.info("→ Generating tables from Excel reports...")
+        logger.info("-> Generating tables from Excel reports...")
         
         tables_generated = 0
         
@@ -399,7 +399,7 @@ Nuclear physics and machine learning.
     
     def _step5_create_bibliography(self) -> Dict:
         """Step 5: Create bibliography"""
-        logger.info("→ Creating bibliography...")
+        logger.info("-> Creating bibliography...")
         
         # Import bibliography manager
         try:
@@ -441,7 +441,7 @@ Nuclear physics and machine learning.
     
     def _step6_generate_main_document(self) -> Dict:
         """Step 6: Generate main LaTeX document"""
-        logger.info("→ Generating main thesis document...")
+        logger.info("-> Generating main thesis document...")
         
         main_content = self._create_main_latex_content()
         
@@ -525,7 +525,7 @@ pdflatex thesis_main.tex
     
     def _step7_quality_checks(self) -> Dict:
         """Step 7: Perform quality checks"""
-        logger.info("→ Running quality checks...")
+        logger.info("-> Running quality checks...")
         
         checks = {
             'main_file_exists': (self.output_dir / 'thesis_main.tex').exists(),
@@ -547,7 +547,7 @@ pdflatex thesis_main.tex
     
     def _step8_compile_pdf(self) -> Dict:
         """Step 8: Compile LaTeX to PDF"""
-        logger.info("→ Compiling PDF...")
+        logger.info("-> Compiling PDF...")
         
         try:
             import os

@@ -50,7 +50,7 @@ def faz7_ensemble_pipeline():
     # =========================================================================
     # STEP 0: Prepare Mock Data & Models
     # =========================================================================
-    logger.info("\n📊 STEP 0: PREPARING DATA & MODELS")
+    logger.info("\n[REPORT] STEP 0: PREPARING DATA & MODELS")
     logger.info("-"*80)
     
     # Mock data
@@ -96,7 +96,7 @@ def faz7_ensemble_pipeline():
     # =========================================================================
     # STEP 1: Voting Ensembles
     # =========================================================================
-    logger.info("\n🎯 STEP 1: VOTING ENSEMBLES")
+    logger.info("\n[TARGET] STEP 1: VOTING ENSEMBLES")
     logger.info("-"*80)
     
     # Initialize ensemble builder
@@ -113,7 +113,7 @@ def faz7_ensemble_pipeline():
         )
     
     # 1.1. Simple Voting
-    logger.info("\n→ Creating Simple Voting Ensemble...")
+    logger.info("\n-> Creating Simple Voting Ensemble...")
     result_simple = voting_builder.create_simple_voting(
         model_ids=list(base_models.keys()),
         X_test=X_test,
@@ -122,7 +122,7 @@ def faz7_ensemble_pipeline():
     voting_builder.save_ensemble(result_simple, 'SimpleVoting')
     
     # 1.2. Weighted Voting (R²)
-    logger.info("\n→ Creating Weighted Voting Ensemble (R² optimization)...")
+    logger.info("\n-> Creating Weighted Voting Ensemble (R² optimization)...")
     result_weighted_r2 = voting_builder.create_weighted_voting(
         model_ids=list(base_models.keys()),
         X_test=X_test,
@@ -132,7 +132,7 @@ def faz7_ensemble_pipeline():
     voting_builder.save_ensemble(result_weighted_r2, 'WeightedVoting_R2')
     
     # 1.3. Weighted Voting (RMSE)
-    logger.info("\n→ Creating Weighted Voting Ensemble (RMSE optimization)...")
+    logger.info("\n-> Creating Weighted Voting Ensemble (RMSE optimization)...")
     result_weighted_rmse = voting_builder.create_weighted_voting(
         model_ids=list(base_models.keys()),
         X_test=X_test,
@@ -142,7 +142,7 @@ def faz7_ensemble_pipeline():
     voting_builder.save_ensemble(result_weighted_rmse, 'WeightedVoting_RMSE')
     
     # 1.4. Weighted Voting (Inverse Error)
-    logger.info("\n→ Creating Weighted Voting Ensemble (Inverse Error)...")
+    logger.info("\n-> Creating Weighted Voting Ensemble (Inverse Error)...")
     result_weighted_inv = voting_builder.create_weighted_voting(
         model_ids=list(base_models.keys()),
         X_test=X_test,
@@ -151,7 +151,7 @@ def faz7_ensemble_pipeline():
     )
     voting_builder.save_ensemble(result_weighted_inv, 'WeightedVoting_InvError')
     
-    logger.info("\n✅ VOTING ENSEMBLES COMPLETED")
+    logger.info("\n[SUCCESS] VOTING ENSEMBLES COMPLETED")
     
     # =========================================================================
     # STEP 2: Stacking Ensembles
@@ -162,7 +162,7 @@ def faz7_ensemble_pipeline():
     stacking_results = []
     
     # 2.1. Stacking with Ridge meta-model
-    logger.info("\n→ Creating Stacking Ensemble (Ridge meta-model)...")
+    logger.info("\n-> Creating Stacking Ensemble (Ridge meta-model)...")
     stacker_ridge = StackingMetaLearner(meta_model_type='ridge', cv_folds=5)
     
     for model_id, model in base_models.items():
@@ -175,7 +175,7 @@ def faz7_ensemble_pipeline():
     stacking_results.append(result_stacking_ridge)
     
     # 2.2. Stacking with Lasso meta-model
-    logger.info("\n→ Creating Stacking Ensemble (Lasso meta-model)...")
+    logger.info("\n-> Creating Stacking Ensemble (Lasso meta-model)...")
     stacker_lasso = StackingMetaLearner(meta_model_type='lasso', cv_folds=5)
     
     for model_id, model in base_models.items():
@@ -188,7 +188,7 @@ def faz7_ensemble_pipeline():
     stacking_results.append(result_stacking_lasso)
     
     # 2.3. Stacking with RF meta-model
-    logger.info("\n→ Creating Stacking Ensemble (RF meta-model)...")
+    logger.info("\n-> Creating Stacking Ensemble (RF meta-model)...")
     stacker_rf = StackingMetaLearner(meta_model_type='rf', cv_folds=5)
     
     for model_id, model in base_models.items():
@@ -201,7 +201,7 @@ def faz7_ensemble_pipeline():
     stacking_results.append(result_stacking_rf)
     
     # 2.4. Stacking with GBM meta-model
-    logger.info("\n→ Creating Stacking Ensemble (GBM meta-model)...")
+    logger.info("\n-> Creating Stacking Ensemble (GBM meta-model)...")
     stacker_gbm = StackingMetaLearner(meta_model_type='gbm', cv_folds=5)
     
     for model_id, model in base_models.items():
@@ -213,12 +213,12 @@ def faz7_ensemble_pipeline():
     stacker_gbm.save_stacking_model('Stacking_GBM')
     stacking_results.append(result_stacking_gbm)
     
-    logger.info("\n✅ STACKING ENSEMBLES COMPLETED")
+    logger.info("\n[SUCCESS] STACKING ENSEMBLES COMPLETED")
     
     # =========================================================================
     # STEP 3: Evaluate All Ensembles
     # =========================================================================
-    logger.info("\n📊 STEP 3: COMPREHENSIVE EVALUATION")
+    logger.info("\n[REPORT] STEP 3: COMPREHENSIVE EVALUATION")
     logger.info("-"*80)
     
     evaluator = EnsembleEvaluator('output/final_ensemble_evaluation')
@@ -244,7 +244,7 @@ def faz7_ensemble_pipeline():
     # Generate final report
     final_report = evaluator.generate_final_report()
     
-    logger.info("\n✅ EVALUATION COMPLETED")
+    logger.info("\n[SUCCESS] EVALUATION COMPLETED")
     
     # =========================================================================
     # STEP 4: Summary & Recommendations
@@ -254,34 +254,34 @@ def faz7_ensemble_pipeline():
     logger.info("="*80)
     
     logger.info(f"\n📋 ENSEMBLE METHODS TESTED: {len(final_report['all_results'])}")
-    logger.info(f"\n✅ BEST ENSEMBLE:")
+    logger.info(f"\n[SUCCESS] BEST ENSEMBLE:")
     logger.info(f"   Name: {best_ensemble['name']}")
     logger.info(f"   Method: {best_ensemble['method']}")
     logger.info(f"   R² = {best_ensemble['r2']:.4f}")
     logger.info(f"   RMSE = {best_ensemble['rmse']:.4f}")
     logger.info(f"   MAE = {best_ensemble['mae']:.4f}")
     
-    logger.info(f"\n📊 TOP 3 ENSEMBLES:")
+    logger.info(f"\n[REPORT] TOP 3 ENSEMBLES:")
     top3 = sorted(final_report['all_results'], key=lambda x: x['r2'], reverse=True)[:3]
     for i, result in enumerate(top3):
         logger.info(f"   {i+1}. {result['name']}: R²={result['r2']:.4f}, RMSE={result['rmse']:.4f}")
     
-    logger.info(f"\n💡 RECOMMENDATIONS:")
+    logger.info(f"\n[TIP] RECOMMENDATIONS:")
     if best_ensemble['method'] == 'stacking':
-        logger.info(f"   → Stacking with {best_ensemble['meta_model_type']} meta-model performed best")
-        logger.info(f"   → Use this for production predictions")
-        logger.info(f"   → Meta-model successfully learned from base model predictions")
+        logger.info(f"   -> Stacking with {best_ensemble['meta_model_type']} meta-model performed best")
+        logger.info(f"   -> Use this for production predictions")
+        logger.info(f"   -> Meta-model successfully learned from base model predictions")
     else:
-        logger.info(f"   → {best_ensemble['method']} performed best")
-        logger.info(f"   → Simpler ensemble methods may be sufficient")
+        logger.info(f"   -> {best_ensemble['method']} performed best")
+        logger.info(f"   -> Simpler ensemble methods may be sufficient")
     
-    logger.info(f"\n📁 OUTPUT FILES:")
-    logger.info(f"   → output/voting_ensembles/")
-    logger.info(f"   → output/stacking_models/")
-    logger.info(f"   → output/final_ensemble_evaluation/")
+    logger.info(f"\n[FOLDER] OUTPUT FILES:")
+    logger.info(f"   -> output/voting_ensembles/")
+    logger.info(f"   -> output/stacking_models/")
+    logger.info(f"   -> output/final_ensemble_evaluation/")
     
     logger.info("\n" + "="*80)
-    logger.info("🎉 FAZ 7 COMPLETED SUCCESSFULLY!")
+    logger.info("[COMPLETE] FAZ 7 COMPLETED SUCCESSFULLY!")
     logger.info("="*80)
     
     return {
@@ -297,7 +297,7 @@ def main():
         results = faz7_ensemble_pipeline()
         return results
     except Exception as e:
-        logger.error(f"\n❌ ERROR in FAZ 7 pipeline: {str(e)}")
+        logger.error(f"\n[ERROR] ERROR in FAZ 7 pipeline: {str(e)}")
         raise
 
 
