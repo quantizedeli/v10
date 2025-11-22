@@ -16,7 +16,23 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from utils.file_io_utils import read_nuclear_data
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging with UTF-8 encoding to handle Turkish characters
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+# Set UTF-8 encoding for stdout if possible (for Windows compatibility)
+if sys.stdout.encoding != 'utf-8':
+    try:
+        import codecs
+        sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    except (AttributeError, OSError):
+        # If we can't set UTF-8, just continue - ASCII-safe messages will work
+        pass
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,7 +74,7 @@ class NuclearDataLoader:
     def _clean_data(self, df):
         """
         Veriyi temizle ve geçersiz satırları kaydet
-        
+
         Temizlik kuralları:
         1. NUMERIC COLUMNS: A, Z, N, SPIN, PARITY, MM, Q sayısal olmalı
         2. PARITY: {-1, +1} olmalı
@@ -66,83 +82,115 @@ class NuclearDataLoader:
         4. MM=0 RULE: Tek-A çekirdekler için MM=0 fiziksel olarak tutarsız
         5. EVEN-EVEN EXCLUSION: Çift-çift çekirdekler veri setinde yok
         """
-        df_original = df.copy()
         initial_count = len(df)
-        
+
         logger.info("\n" + "="*70)
         logger.info("VERİ TEMİZLEME BAŞLIYOR")
         logger.info("="*70)
-        
-        # 1. Sütun isimlerini düzenle (boşluk temizle)
+
+        # 1. Sütun isimlerini normalize et (boşluk temizle)
         df.columns = df.columns.str.strip()
-        
-        # 2. Numeric conversion
+        logger.info("  -> Sütun isimleri normalize edildi")
+
+        # 2. String temizleme - ÖNCE numeric conversion'dan ÖNCE yapılmalı!
+        # Ondalık ayırıcı düzeltme (virgül -> nokta) ve unicode minus işareti düzeltme
+        string_cols = ['Beta_2', 'MM', 'Q', 'SPIN', 'P_FACTOR']
+        for col in string_cols:
+            if col in df.columns and df[col].dtype == 'object':
+                # Virgül -> nokta
+                df[col] = df[col].astype(str).str.replace(',', '.')
+                # Unicode minus (U+2212) -> ASCII minus (-)
+                df[col] = df[col].str.replace('\u2212', '-')
+                # 'nan' string değerlerini temizle
+                df[col] = df[col].replace('nan', np.nan)
+
+        logger.info("  -> String cleaning tamamlandi (virgul->nokta, unicode minus->ASCII)")
+
+        # 3. Numeric conversion - string temizlemeden SONRA
         numeric_cols = ['A', 'Z', 'N', 'SPIN', 'PARITY', 'P_FACTOR', 'Beta_2', 'MM', 'Q']
+        conversion_warnings = []
+
         for col in numeric_cols:
             if col in df.columns:
+                original_values = df[col].copy()
                 df[col] = pd.to_numeric(df[col], errors='coerce')
-        
-        # 3. PARITY kontrolü
-        removed_parity = df[~df['PARITY'].isin([-1, 1])].copy()
-        if len(removed_parity) > 0:
-            for idx, row in removed_parity.iterrows():
-                self._record_removal(row, f"Invalid PARITY ({row['PARITY']})")
-            df = df[df['PARITY'].isin([-1, 1])]
-            logger.info(f"  -> {len(removed_parity)} çekirdek kaldırıldı (Geçersiz PARITY)")
-        
-        # 4. A = Z + N kontrolü
-        df['A_calculated'] = df['Z'] + df['N']
-        removed_azn = df[df['A'] != df['A_calculated']].copy()
-        if len(removed_azn) > 0:
-            for idx, row in removed_azn.iterrows():
-                self._record_removal(row, f"A≠Z+N (A={row['A']}, Z+N={row['A_calculated']})")
-            df = df[df['A'] == df['A_calculated']]
-            logger.info(f"  -> {len(removed_azn)} çekirdek kaldırıldı (A≠Z+N)")
-        df.drop('A_calculated', axis=1, inplace=True)
-        
-        # 5. MM=0 kontrolü (Tek-A için)
-        df['is_odd_A'] = df['A'] % 2 == 1
-        removed_mm0 = df[(df['is_odd_A']) & (df['MM'] == 0)].copy()
-        if len(removed_mm0) > 0:
-            for idx, row in removed_mm0.iterrows():
-                self._record_removal(row, f"MM=0 for odd-A nucleus (physically inconsistent)")
-            df = df[~((df['is_odd_A']) & (df['MM'] == 0))]
-            logger.info(f"  -> {len(removed_mm0)} çekirdek kaldırıldı (MM=0 tek-A için geçersiz)")
-        df.drop('is_odd_A', axis=1, inplace=True)
-        
-        # 6. Çift-çift kontrol (opsiyonel log)
-        even_even = df[(df['Z'] % 2 == 0) & (df['N'] % 2 == 0)].copy()
-        if len(even_even) > 0:
-            for idx, row in even_even.iterrows():
-                self._record_removal(row, f"Even-even nucleus (Z={row['Z']}, N={row['N']})")
-            df = df[~((df['Z'] % 2 == 0) & (df['N'] % 2 == 0))]
-            logger.info(f"  -> {len(even_even)} çekirdek kaldırıldı (Çift-çift)")
-        
-        # 7. NaN kontrolü (kritik sütunlar)
+
+                # Non-numeric değerleri logla
+                non_numeric_mask = pd.to_numeric(original_values, errors='coerce').isna() & original_values.notna()
+                if non_numeric_mask.any():
+                    non_numeric_count = non_numeric_mask.sum()
+                    example_value = original_values[non_numeric_mask].iloc[0] if non_numeric_count > 0 else None
+                    conversion_warnings.append((col, non_numeric_count, example_value))
+
+        # Conversion uyarılarını göster
+        for col, count, example in conversion_warnings:
+            logger.warning(f"  -> '{col}' sütununda {count} non-numeric değer NaN'a dönüştürüldü")
+            if example:
+                logger.warning(f"     Örnek: '{example}'")
+
+        # 4. PARITY kontrolü
+        if 'PARITY' in df.columns:
+            removed_parity = df[~df['PARITY'].isin([-1, 1])].copy()
+            if len(removed_parity) > 0:
+                for idx, row in removed_parity.iterrows():
+                    self._record_removal(row, f"Invalid PARITY ({row['PARITY']})")
+                df = df[df['PARITY'].isin([-1, 1])]
+                logger.info(f"  -> {len(removed_parity)} çekirdek kaldırıldı (Geçersiz PARITY)")
+
+        # 5. A = Z + N kontrolü
+        if all(col in df.columns for col in ['A', 'Z', 'N']):
+            df['A_calculated'] = df['Z'] + df['N']
+            removed_azn = df[df['A'] != df['A_calculated']].copy()
+            if len(removed_azn) > 0:
+                for idx, row in removed_azn.iterrows():
+                    self._record_removal(row, f"A≠Z+N (A={row['A']}, Z+N={row['A_calculated']})")
+                df = df[df['A'] == df['A_calculated']]
+                logger.info(f"  -> {len(removed_azn)} çekirdek kaldırıldı (A≠Z+N)")
+            df.drop('A_calculated', axis=1, inplace=True)
+
+        # 6. MM=0 kontrolü (Tek-A için) - sadece MM sütunu varsa
+        if all(col in df.columns for col in ['A', 'MM']):
+            df['is_odd_A'] = df['A'] % 2 == 1
+            removed_mm0 = df[(df['is_odd_A']) & (df['MM'] == 0)].copy()
+            if len(removed_mm0) > 0:
+                for idx, row in removed_mm0.iterrows():
+                    self._record_removal(row, f"MM=0 for odd-A nucleus (physically inconsistent)")
+                df = df[~((df['is_odd_A']) & (df['MM'] == 0))]
+                logger.info(f"  -> {len(removed_mm0)} çekirdek kaldırıldı (MM=0 tek-A için geçersiz)")
+            df.drop('is_odd_A', axis=1, inplace=True)
+
+        # 7. Çift-çift kontrol (opsiyonel log)
+        if all(col in df.columns for col in ['Z', 'N']):
+            even_even = df[(df['Z'] % 2 == 0) & (df['N'] % 2 == 0)].copy()
+            if len(even_even) > 0:
+                for idx, row in even_even.iterrows():
+                    self._record_removal(row, f"Even-even nucleus (Z={row['Z']}, N={row['N']})")
+                df = df[~((df['Z'] % 2 == 0) & (df['N'] % 2 == 0))]
+                logger.info(f"  -> {len(even_even)} çekirdek kaldırıldı (Çift-çift)")
+
+        # 8. NaN kontrolü (kritik sütunlar)
         critical_cols = ['A', 'Z', 'N', 'SPIN', 'PARITY']
-        removed_nan = df[df[critical_cols].isna().any(axis=1)].copy()
-        if len(removed_nan) > 0:
-            for idx, row in removed_nan.iterrows():
-                nan_cols = row[critical_cols][row[critical_cols].isna()].index.tolist()
-                self._record_removal(row, f"Missing critical data: {', '.join(nan_cols)}")
-            df = df[~df[critical_cols].isna().any(axis=1)]
-            logger.info(f"  -> {len(removed_nan)} çekirdek kaldırıldı (Kritik sütunlarda NaN)")
-        
-        # 8. Ondalık ayırıcı düzeltme (virgül -> nokta)
-        for col in ['Beta_2', 'MM', 'Q']:
-            if col in df.columns and df[col].dtype == 'object':
-                df[col] = df[col].str.replace(',', '.').astype(float)
-        
+        existing_critical_cols = [col for col in critical_cols if col in df.columns]
+
+        if existing_critical_cols:
+            removed_nan = df[df[existing_critical_cols].isna().any(axis=1)].copy()
+            if len(removed_nan) > 0:
+                for idx, row in removed_nan.iterrows():
+                    nan_cols = row[existing_critical_cols][row[existing_critical_cols].isna()].index.tolist()
+                    self._record_removal(row, f"Missing critical data: {', '.join(nan_cols)}")
+                df = df[~df[existing_critical_cols].isna().any(axis=1)]
+                logger.info(f"  -> {len(removed_nan)} çekirdek kaldırıldı (Kritik sütunlarda NaN)")
+
         final_count = len(df)
         removed_count = initial_count - final_count
-        
+
         logger.info("="*70)
         logger.info(f"TEMİZLEME TAMAMLANDI")
-        logger.info(f"  Başlangıç: {initial_count} çekirdek")
-        logger.info(f"  Kalan: {final_count} çekirdek")
-        logger.info(f"  Kaldırılan: {removed_count} çekirdek ({removed_count/initial_count*100:.1f}%)")
+        logger.info(f"  Baslangic: {initial_count} cekirdek")
+        logger.info(f"  Kalan: {final_count} cekirdek")
+        logger.info(f"  Kaldirilan: {removed_count} cekirdek ({removed_count/initial_count*100:.1f}%)")
         logger.info("="*70 + "\n")
-        
+
         return df
     
     def _record_removal(self, row, reason):
