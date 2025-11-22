@@ -190,14 +190,20 @@ class ANFISParallelTrainerV2:
             raise ValueError(f"Unsupported file format: {data_file.suffix}")
 
         # DATA CLEANING
+        logger.info(f"Initial data shape: {df.shape}")
+        logger.info(f"Columns: {list(df.columns)}")
+
         df = df.replace('unknown', np.nan)
         df = df.replace('Unknown', np.nan)
         df = df.replace('UNKNOWN', np.nan)
 
-        # Fix Unicode minus signs
+        # Fix Unicode minus signs and other string issues
         for col in df.columns:
             if df[col].dtype == 'object':
                 df[col] = df[col].astype(str).str.replace('−', '-', regex=False)
+                df[col] = df[col].replace('nan', np.nan)
+                df[col] = df[col].replace('', np.nan)
+                df[col] = df[col].replace('NaN', np.nan)
 
         # Identify target columns
         target_cols = []
@@ -206,22 +212,37 @@ class ANFISParallelTrainerV2:
                 target_cols.append(col)
 
         if not target_cols:
-            raise ValueError(f"No target columns found in {data_file}")
+            logger.error(f"Available columns: {list(df.columns)}")
+            raise ValueError(f"No target columns (MM, Q, Beta_2) found in {data_file}")
+
+        logger.info(f"Target columns: {target_cols}")
 
         # Features
         feature_cols = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
+        logger.info(f"Feature columns ({len(feature_cols)}): {feature_cols[:5]}...")
 
         # Convert to numeric
         all_numeric_cols = feature_cols + target_cols
         for col in all_numeric_cols:
             if col in df.columns:
+                before_count = df[col].notna().sum()
                 df[col] = pd.to_numeric(df[col], errors='coerce')
+                after_count = df[col].notna().sum()
+                if before_count != after_count:
+                    logger.warning(f"Column {col}: {before_count - after_count} values became NaN during conversion")
+
+        # Check NaN counts before dropping
+        nan_counts = df[all_numeric_cols].isna().sum()
+        logger.info(f"NaN counts per column:\n{nan_counts[nan_counts > 0]}")
 
         # Drop NaN
         df_clean = df[all_numeric_cols].dropna()
 
         if len(df_clean) == 0:
-            raise ValueError(f"No valid data after cleaning in {data_file}")
+            logger.error(f"All {len(df)} rows were dropped during cleaning!")
+            logger.error(f"NaN summary:\n{df[all_numeric_cols].isna().sum()}")
+            logger.error(f"Sample of original data:\n{df.head()}")
+            raise ValueError(f"No valid data after cleaning in {data_file}. Check data file format and values.")
 
         logger.info(f"Data cleaning: {len(df)} -> {len(df_clean)} samples")
 
