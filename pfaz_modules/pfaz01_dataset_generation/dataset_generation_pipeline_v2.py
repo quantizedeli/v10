@@ -611,7 +611,8 @@ class DatasetGenerationPipelineV2:
                 'target': dataset['metadata']['target'],
                 'n_nuclei': dataset['metadata']['n_nuclei'],
                 'n_features': dataset['metadata']['n_features'],
-                'data_file': str(dataset['data_file'])
+                'data_file_csv': str(dataset['data_file_csv']),
+                'data_file_mat': str(dataset['data_file_mat'])
             })
         
         # Save master metadata
