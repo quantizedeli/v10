@@ -35,6 +35,7 @@ warnings.filterwarnings('ignore')
 # Sklearn
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from sklearn.impute import SimpleImputer
 
 # XGBoost (optional)
 try:
@@ -152,13 +153,13 @@ class BaseAITrainer:
             else:
                 raise FileNotFoundError(f"No data file found in {dataset_path}")
 
-        # Load data
+        # Load data with UTF-8 encoding to handle special characters (e.g., µ, ±)
         if data_file.suffix == '.csv':
-            df = pd.read_csv(data_file)
+            df = pd.read_csv(data_file, encoding='utf-8')
         elif data_file.suffix == '.xlsx':
             df = pd.read_excel(data_file)
         elif data_file.suffix == '.tsv':
-            df = pd.read_csv(data_file, sep='\t')
+            df = pd.read_csv(data_file, sep='\t', encoding='utf-8')
         else:
             raise ValueError(f"Unsupported file format: {data_file.suffix}")
 
@@ -181,11 +182,20 @@ class BaseAITrainer:
                 df[col] = df[col].replace('NaN', np.nan)
 
         # 3. Identify feature and target columns
-        # Assume target columns are: MM, Q, Beta_2, or combinations
+        # Map simplified names to possible actual column names
+        target_map = {
+            'MM': ['MM', 'MAGNETIC MOMENT [µ]', 'MAGNETIC MOMENT [μ]'],
+            'Q': ['Q', 'QM', 'QUADRUPOLE MOMENT [Q]'],
+            'Beta_2': ['Beta_2', 'BETA_2']
+        }
+
         target_cols = []
-        for col in ['MM', 'Q', 'Beta_2']:
-            if col in df.columns:
-                target_cols.append(col)
+        for simple_name, possible_names in target_map.items():
+            for col_name in possible_names:
+                if col_name in df.columns:
+                    target_cols.append(col_name)
+                    logger.info(f"Found target: {simple_name} -> {col_name}")
+                    break
 
         if not target_cols:
             logger.error(f"Available columns: {list(df.columns)}")
@@ -235,29 +245,55 @@ class BaseAITrainer:
                 if before_count != after_count:
                     logger.warning(f"Column {col}: {before_count - after_count} values became NaN during conversion")
 
-        # 6. Check NaN counts before dropping
+        # 6. Check NaN counts before handling
         nan_counts = df[all_numeric_cols].isna().sum()
         if nan_counts.sum() > 0:
             logger.info(f"NaN counts per column:\n{nan_counts[nan_counts > 0]}")
 
-        # 7. Drop rows with NaN values in SELECTED features or targets
-        df_clean = df[all_numeric_cols].dropna()
+        # 7. Handle NaN values using imputation strategy
+        # First, drop rows where TARGET has NaN (we cannot train without target values)
+        df_with_targets = df[all_numeric_cols].copy()
+        initial_count = len(df_with_targets)
 
-        if len(df_clean) == 0:
-            logger.error(f"All {len(df)} rows were dropped during cleaning!")
-            logger.error(f"NaN summary:\n{df[all_numeric_cols].isna().sum()}")
-            logger.error(f"Sample of original data:\n{df.head()}")
-            raise ValueError(f"No valid data after cleaning in {data_file}. Check data file format and values.")
+        # Drop rows with NaN in target columns
+        df_with_targets = df_with_targets.dropna(subset=target_cols)
+        rows_dropped_for_target = initial_count - len(df_with_targets)
 
-        logger.info(f"Data cleaning: {len(df)} -> {len(df_clean)} samples ({len(df)-len(df_clean)} removed)")
+        if rows_dropped_for_target > 0:
+            logger.info(f"Dropped {rows_dropped_for_target} rows with NaN in target columns")
+
+        if len(df_with_targets) == 0:
+            logger.error(f"All {initial_count} rows were dropped due to NaN in targets!")
+            logger.error(f"NaN summary:\n{df[target_cols].isna().sum()}")
+            raise ValueError(f"No valid data after dropping NaN targets in {data_file}")
+
+        # For features: use median imputation for remaining NaN values
+        feature_nan_count = df_with_targets[feature_cols].isna().sum().sum()
+        if feature_nan_count > 0:
+            logger.info(f"Imputing {feature_nan_count} NaN values in features using median strategy")
+            imputer = SimpleImputer(strategy='median')
+            df_with_targets[feature_cols] = imputer.fit_transform(df_with_targets[feature_cols])
+            logger.info(f"Imputation complete. Remaining NaN in features: {df_with_targets[feature_cols].isna().sum().sum()}")
+
+        # Final cleaning summary
+        logger.info(f"Data cleaning: {initial_count} -> {len(df_with_targets)} samples ({rows_dropped_for_target} removed due to NaN targets)")
 
         # Extract features and targets
-        X = df_clean[feature_cols].values
-        y = df_clean[target_cols].values
+        X = df_with_targets[feature_cols].values
+        y = df_with_targets[target_cols].values
 
         # Ensure data types are correct
         X = X.astype(np.float32)
         y = y.astype(np.float32)
+
+        # Final validation: check for any remaining NaN
+        if np.isnan(X).any():
+            nan_features = [feature_cols[i] for i in range(len(feature_cols)) if np.isnan(X[:, i]).any()]
+            logger.error(f"NaN still present in features after imputation: {nan_features}")
+            raise ValueError(f"NaN values still present in features after imputation")
+        if np.isnan(y).any():
+            logger.error(f"NaN still present in targets after cleaning")
+            raise ValueError(f"NaN values still present in targets after cleaning")
 
         # Split into train/val/test (70/15/15)
         n_total = len(X)

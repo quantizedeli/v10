@@ -180,24 +180,24 @@ class DatasetGenerationPipelineV2:
         if not self.source_data_path.exists():
             raise FileNotFoundError(f"Source data not found: {self.source_data_path}")
         
-        # Detect file format and load
+        # Detect file format and load with UTF-8 encoding
         if self.source_data_path.suffix == '.csv':
-            self.raw_data = pd.read_csv(self.source_data_path)
+            self.raw_data = pd.read_csv(self.source_data_path, encoding='utf-8')
         elif self.source_data_path.suffix in ['.xlsx', '.xls']:
             self.raw_data = pd.read_excel(self.source_data_path)
         elif self.source_data_path.suffix == '.tsv':
-            self.raw_data = pd.read_csv(self.source_data_path, sep='\t')
+            self.raw_data = pd.read_csv(self.source_data_path, sep='\t', encoding='utf-8')
         elif self.source_data_path.suffix == '.txt':
             # Try to detect delimiter automatically for .txt files
             # First try tab-delimited, then comma, then whitespace
             try:
-                self.raw_data = pd.read_csv(self.source_data_path, sep='\t')
+                self.raw_data = pd.read_csv(self.source_data_path, sep='\t', encoding='utf-8')
             except:
                 try:
-                    self.raw_data = pd.read_csv(self.source_data_path, sep=',')
+                    self.raw_data = pd.read_csv(self.source_data_path, sep=',', encoding='utf-8')
                 except:
                     # Last resort: whitespace-delimited
-                    self.raw_data = pd.read_csv(self.source_data_path, delim_whitespace=True)
+                    self.raw_data = pd.read_csv(self.source_data_path, delim_whitespace=True, encoding='utf-8')
         else:
             raise ValueError(f"Unsupported file format: {self.source_data_path.suffix}")
         
