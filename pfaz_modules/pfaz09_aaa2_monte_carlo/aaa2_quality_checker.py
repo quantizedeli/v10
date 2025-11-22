@@ -10,6 +10,11 @@ import numpy as np
 from pathlib import Path
 import logging
 from datetime import datetime
+import sys
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from utils.file_io_utils import read_nuclear_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -52,7 +57,7 @@ class AAA2DataQualityChecker:
         
         # 1. Dosyayı yükle
         logger.info("\n1. Dosya yükleniyor...")
-        df = pd.read_csv(filepath, sep='\t', encoding='utf-8')
+        df = read_nuclear_data(filepath, encoding='utf-8')
         df.columns = df.columns.str.strip()
         
         logger.info(f"   [OK] Toplam satır: {len(df)}")

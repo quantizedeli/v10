@@ -27,6 +27,12 @@ from typing import Dict, List, Tuple, Optional
 import warnings
 import time
 from tqdm import tqdm
+import sys
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from utils.file_io_utils import read_nuclear_data
+
 warnings.filterwarnings('ignore')
 
 # Plotting
@@ -489,7 +495,7 @@ class AAA2ControlGroupAnalyzerComplete:
             self.aaa2_df = pd.read_csv(self.pfaz01_output_path)
         elif self.aaa2_txt_path.exists():
             logger.info(f"-> Loading raw AAA2: {self.aaa2_txt_path}")
-            self.aaa2_df = pd.read_csv(self.aaa2_txt_path, sep='\t', encoding='utf-8')
+            self.aaa2_df = read_nuclear_data(self.aaa2_txt_path, encoding='utf-8')
         else:
             raise FileNotFoundError("AAA2 data not found")
         
