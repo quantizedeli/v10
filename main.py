@@ -455,9 +455,8 @@ class NuclearPhysicsAIOrchestrator:
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
 
             config = self.config['pfaz_config'][pfaz_id]
-            results = trainer.train_all_anfis_models(
-                n_configs=config.get('n_configs', 8),
-                use_matlab=config.get('use_matlab', False)
+            results = trainer.train_all_anfis_parallel(
+                n_configs=config.get('n_configs', 8)
             )
 
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
