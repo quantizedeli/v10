@@ -183,10 +183,17 @@ class BaseAITrainer:
 
         # 3. Identify feature and target columns based on dataset name
         # Map simplified names to possible actual column names
+        # IMPORTANT: These are REAL experimental values from aaa2.txt, not theoretical predictions
+        # - Beta_2: Real deformation parameter (from experimental data)
+        # - Beta_2_estimated: Theoretical estimate (excluded as feature to prevent leakage)
+        # - MM/MAGNETIC MOMENT: Real magnetic moment (from experimental data)
+        # - schmidt_moment: Theoretical estimate (excluded as feature to prevent leakage)
+        # - Q/QUADRUPOLE MOMENT: Real quadrupole moment (from experimental data)
+        # - Q0_intrinsic: Theoretical estimate (excluded as feature to prevent leakage)
         target_map = {
             'MM': ['MM', 'MAGNETIC MOMENT [µ]', 'MAGNETIC MOMENT [μ]'],
             'Q': ['Q', 'QM', 'QUADRUPOLE MOMENT [Q]'],
-            'Beta_2': ['Beta_2', 'BETA_2']
+            'Beta_2': ['Beta_2', 'BETA_2']  # Real experimental Beta_2, NOT Beta_2_estimated
         }
 
         # Determine which targets to use based on dataset name
@@ -242,16 +249,35 @@ class BaseAITrainer:
             all_possible_features = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
 
             # CRITICAL: Prevent data leakage - exclude theoretical predictions of targets
-            # If target is Beta_2, exclude Beta_2_estimated and Q0_intrinsic
-            # If target is MM, exclude schmidt_moment
-            # If target is Q, exclude Q0_intrinsic
+            # These features are direct theoretical calculations/estimates of the targets
+            # Using them would give artificially high R² scores
             leakage_features = []
+
             if 'Beta_2' in requested_targets:
-                leakage_features.extend(['Beta_2_estimated', 'Q0_intrinsic'])
+                # Beta_2_estimated: direct theoretical estimate of Beta_2
+                # Q0_intrinsic: intrinsic quadrupole moment, calculated from Beta_2_estimated
+                # rotational_param: depends on deformation
+                # moment_of_inertia: calculated from deformation
+                # E_2plus: first excited 2+ state energy, related to deformation
+                # vib_frequency: vibrational frequency, related to deformation
+                leakage_features.extend([
+                    'Beta_2_estimated',  # Direct estimate
+                    'Q0_intrinsic',      # Derived from Beta_2
+                    'rotational_param',  # Deformation-dependent
+                    'moment_of_inertia', # Deformation-dependent
+                    'E_2plus',           # Deformation-dependent
+                    'vib_frequency'      # Deformation-dependent
+                ])
+
             if 'MM' in requested_targets:
+                # schmidt_moment: theoretical magnetic moment prediction
                 leakage_features.extend(['schmidt_moment'])
+
             if 'Q' in requested_targets:
-                leakage_features.extend(['Q0_intrinsic'])
+                # Q0_intrinsic: intrinsic quadrupole moment (theoretical)
+                # Note: If Beta_2 is also a target, Q0_intrinsic is already excluded
+                if 'Q0_intrinsic' not in leakage_features:
+                    leakage_features.append('Q0_intrinsic')
 
             # Remove leakage features
             if leakage_features:
@@ -722,24 +748,43 @@ class ParallelAITrainer:
                             dataset_paths: List[Path]) -> List[TrainingJob]:
         """
         Create training jobs for all combinations
-        
+
         Args:
             model_types: List of model types (e.g., ['RF', 'XGBoost', 'DNN'])
             configs: List of training configurations
             dataset_paths: List of dataset directories
-        
+
         Returns:
             List of TrainingJob objects
         """
         jobs = []
-        
+        skipped_dnn_jobs = 0
+
         for dataset_path in dataset_paths:
+            # Extract number of nuclei from dataset name
+            dataset_name = dataset_path.name
+            nuclei_count = None
+
+            # Try to extract nuclei count from dataset name (e.g., "MM_100nuclei", "Beta_2_75nuclei")
+            import re
+            match = re.search(r'(\d+)nuclei', dataset_name)
+            if match:
+                nuclei_count = int(match.group(1))
+            elif 'ALL' in dataset_name:
+                nuclei_count = 999  # Assume ALL has enough data for DNN
+
             for model_type in model_types:
+                # SKIP DNN for small datasets (< 100 nuclei)
+                if model_type == 'DNN' and nuclei_count is not None and nuclei_count < 100:
+                    logger.info(f"Skipping DNN for {dataset_name}: only {nuclei_count} nuclei (DNN requires 100+)")
+                    skipped_dnn_jobs += len(configs)
+                    continue
+
                 for config in configs:
                     job_id = f"{dataset_path.name}_{model_type}_{config['id']}"
-                    
+
                     output_dir = self.output_dir / dataset_path.name / model_type / config['id']
-                    
+
                     job = TrainingJob(
                         job_id=job_id,
                         model_type=model_type,
@@ -748,14 +793,16 @@ class ParallelAITrainer:
                         dataset_name=dataset_path.name,
                         output_dir=output_dir
                     )
-                    
+
                     jobs.append(job)
-        
+
         logger.info(f"Created {len(jobs)} training jobs")
         logger.info(f"  Datasets: {len(dataset_paths)}")
         logger.info(f"  Model types: {len(model_types)}")
         logger.info(f"  Configs per model: {len(configs)}")
-        
+        if skipped_dnn_jobs > 0:
+            logger.info(f"  Skipped {skipped_dnn_jobs} DNN jobs (small datasets < 100 nuclei)")
+
         return jobs
     
     def train_single_job(self, job: TrainingJob) -> TrainingResult:
