@@ -752,8 +752,25 @@ class ParallelAITrainer:
         """
         jobs = []
         skipped_dnn_jobs = 0
+        skipped_datasets = 0
 
         for dataset_path in dataset_paths:
+            # CRITICAL: Check if dataset actually exists with required files
+            if not dataset_path.exists():
+                logger.warning(f"Skipping {dataset_path.name}: directory not found")
+                skipped_datasets += 1
+                continue
+
+            # Check for required split files (train/val/test)
+            has_train = (dataset_path / "train.xlsx").exists() or (dataset_path / "train.csv").exists()
+            has_val = (dataset_path / "val.xlsx").exists() or (dataset_path / "val.csv").exists()
+            has_test = (dataset_path / "test.xlsx").exists() or (dataset_path / "test.csv").exists()
+
+            if not (has_train and has_val and has_test):
+                logger.warning(f"Skipping {dataset_path.name}: missing train/val/test files (train={has_train}, val={has_val}, test={has_test})")
+                skipped_datasets += 1
+                continue
+
             # Extract number of nuclei from dataset name
             dataset_name = dataset_path.name
             nuclei_count = None
@@ -790,9 +807,12 @@ class ParallelAITrainer:
                     jobs.append(job)
 
         logger.info(f"Created {len(jobs)} training jobs")
-        logger.info(f"  Datasets: {len(dataset_paths)}")
+        logger.info(f"  Datasets requested: {len(dataset_paths)}")
+        logger.info(f"  Datasets valid: {len(dataset_paths) - skipped_datasets}")
         logger.info(f"  Model types: {len(model_types)}")
         logger.info(f"  Configs per model: {len(configs)}")
+        if skipped_datasets > 0:
+            logger.warning(f"  Skipped {skipped_datasets} datasets (missing or incomplete)")
         if skipped_dnn_jobs > 0:
             logger.info(f"  Skipped {skipped_dnn_jobs} DNN jobs (small datasets < 100 nuclei)")
 
