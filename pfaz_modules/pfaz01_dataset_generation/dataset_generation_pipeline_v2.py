@@ -471,7 +471,7 @@ class DatasetGenerationPipelineV2:
                 return [target]  # Fallback to original name
 
     def _create_single_dataset(self, source_df: pd.DataFrame, target: str, n_nuclei: int) -> Optional[Dict]:
-        """Tek bir dataset oluştur"""
+        """Tek bir dataset oluştur ve train/val/test olarak böl"""
 
         # Handle 'ALL' case
         if n_nuclei == 'ALL':
@@ -490,34 +490,88 @@ class DatasetGenerationPipelineV2:
 
         # All columns except target columns are features
         feature_cols = [col for col in sampled_df.columns if col not in target_cols and col != 'NUCLEUS']
-        
+
         # Create dataset directory
         dataset_dir = self.output_base_dir / dataset_name
         dataset_dir.mkdir(parents=True, exist_ok=True)
-        
-        # [SUCCESS] Save dataset as CSV
-        dataset_file_csv = dataset_dir / f"{dataset_name}.csv"
-        sampled_df.to_csv(dataset_file_csv, index=False)
-        
-        # [SUCCESS] Save dataset as MAT (MATLAB format)
-        dataset_file_mat = dataset_dir / f"{dataset_name}.mat"
-        self._save_as_mat(sampled_df, dataset_file_mat, feature_cols, target_cols)
-        
-        # Create metadata
+
+        # CRITICAL: Split into train/val/test (70/15/15) with fixed seed
+        # This ensures ALL models use the SAME train/val/test split for fair comparison
+        n_total = len(sampled_df)
+        n_train = int(0.7 * n_total)
+        n_val = int(0.15 * n_total)
+        # n_test = remaining
+
+        # Shuffle with fixed seed for reproducibility
+        split_seed = hash(f"split_{target}_{n_nuclei}") % (2**32)
+        shuffled_df = sampled_df.sample(frac=1.0, random_state=split_seed).reset_index(drop=True)
+
+        train_df = shuffled_df[:n_train]
+        val_df = shuffled_df[n_train:n_train+n_val]
+        test_df = shuffled_df[n_train+n_val:]
+
+        logger.info(f"  Split: Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")
+
+        # Save train/val/test splits in MULTIPLE FORMATS: CSV, Excel (.xlsx), MAT
+        # Excel requested for easier viewing/editing in Excel
+        split_files = {}
+
+        for split_name, split_df in [('train', train_df), ('val', val_df), ('test', test_df)]:
+            # CSV format
+            csv_file = dataset_dir / f"{split_name}.csv"
+            split_df.to_csv(csv_file, index=False, encoding='utf-8')
+
+            # Excel format (.xlsx)
+            xlsx_file = dataset_dir / f"{split_name}.xlsx"
+            split_df.to_excel(xlsx_file, index=False, engine='openpyxl')
+
+            # MATLAB format (.mat)
+            mat_file = dataset_dir / f"{split_name}.mat"
+            self._save_as_mat(split_df, mat_file, feature_cols, target_cols)
+
+            split_files[split_name] = {
+                'csv': csv_file,
+                'xlsx': xlsx_file,
+                'mat': mat_file,
+                'n_samples': len(split_df)
+            }
+
+        logger.info(f"  [SUCCESS] Saved train/val/test in CSV, Excel, and MAT formats")
+
+        # Create metadata with split information
         metadata = {
             'dataset_name': dataset_name,
             'target': target,
             'target_columns': target_cols,
-            'n_nuclei': actual_n,
+            'n_nuclei_total': actual_n,
             'n_features': len(feature_cols),
             'feature_columns': feature_cols,
-            'data_file_csv': str(dataset_file_csv),
-            'data_file_mat': str(dataset_file_mat),
             'creation_timestamp': datetime.now().isoformat(),
+            'split_info': {
+                'split_ratio': '70/15/15',
+                'train': {
+                    'n_samples': split_files['train']['n_samples'],
+                    'csv': str(split_files['train']['csv']),
+                    'xlsx': str(split_files['train']['xlsx']),
+                    'mat': str(split_files['train']['mat'])
+                },
+                'val': {
+                    'n_samples': split_files['val']['n_samples'],
+                    'csv': str(split_files['val']['csv']),
+                    'xlsx': str(split_files['val']['xlsx']),
+                    'mat': str(split_files['val']['mat'])
+                },
+                'test': {
+                    'n_samples': split_files['test']['n_samples'],
+                    'csv': str(split_files['test']['csv']),
+                    'xlsx': str(split_files['test']['xlsx']),
+                    'mat': str(split_files['test']['mat'])
+                }
+            },
             'statistics': {
-                'A_range': [int(sampled_df['A'].min()), int(sampled_df['A'].max())],
-                'Z_range': [int(sampled_df['Z'].min()), int(sampled_df['Z'].max())],
-                'N_range': [int(sampled_df['N'].min()), int(sampled_df['N'].max())]
+                'A_range': [int(shuffled_df['A'].min()), int(shuffled_df['A'].max())],
+                'Z_range': [int(shuffled_df['Z'].min()), int(shuffled_df['Z'].max())],
+                'N_range': [int(shuffled_df['N'].min()), int(shuffled_df['N'].max())]
             }
         }
         
@@ -548,15 +602,16 @@ class DatasetGenerationPipelineV2:
         metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
         with open(metadata_file, 'w') as f:
             json.dump(metadata, f, indent=2)
-        
+
         return {
             'dataset_name': dataset_name,
             'dataset_dir': dataset_dir,
-            'data_file_csv': dataset_file_csv,
-            'data_file_mat': dataset_file_mat,
+            'split_files': split_files,
+            'data_file_csv': split_files['train']['csv'],  # Keep for backward compatibility
+            'data_file_mat': split_files['train']['mat'],  # Keep for backward compatibility
             'metadata_file': metadata_file,
             'metadata': metadata,
-            'data': sampled_df
+            'data': shuffled_df  # Full shuffled data
         }
     
     def _save_as_mat(self, df: pd.DataFrame, filepath: Path, feature_cols: List[str], target_cols: List[str]):
@@ -609,9 +664,10 @@ class DatasetGenerationPipelineV2:
             master_metadata['datasets'].append({
                 'name': dataset['dataset_name'],
                 'target': dataset['metadata']['target'],
-                'n_nuclei': dataset['metadata']['n_nuclei'],
+                'n_nuclei_total': dataset['metadata']['n_nuclei_total'],
                 'n_features': dataset['metadata']['n_features'],
-                'data_file': str(dataset['data_file'])
+                'data_file_csv': str(dataset['data_file_csv']),
+                'data_file_mat': str(dataset['data_file_mat'])
             })
         
         # Save master metadata
@@ -640,13 +696,17 @@ class DatasetGenerationPipelineV2:
             summary_data.append({
                 'Dataset_Name': meta['dataset_name'],
                 'Target': meta['target'],
-                'N_Nuclei': meta['n_nuclei'],
+                'N_Nuclei_Total': meta['n_nuclei_total'],
+                'N_Train': meta['split_info']['train']['n_samples'],
+                'N_Val': meta['split_info']['val']['n_samples'],
+                'N_Test': meta['split_info']['test']['n_samples'],
                 'N_Features': meta['n_features'],
                 'A_Min': meta['statistics']['A_range'][0],
                 'A_Max': meta['statistics']['A_range'][1],
                 'Z_Min': meta['statistics']['Z_range'][0],
                 'Z_Max': meta['statistics']['Z_range'][1],
-                'Data_File': str(dataset['data_file'])
+                'Train_CSV': str(dataset['split_files']['train']['csv'].name),
+                'Train_Excel': str(dataset['split_files']['train']['xlsx'].name)
             })
         
         summary_df = pd.DataFrame(summary_data)

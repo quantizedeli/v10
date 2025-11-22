@@ -134,34 +134,55 @@ class BaseAITrainer:
         logger.info("No specific feature set detected, using adaptive selection")
         return None
 
-    def load_dataset(self, dataset_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Load dataset from path"""
+    def load_dataset(self, dataset_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Load dataset from path with pre-split train/val/test files
 
-        # Try different file formats
-        data_file = None
-        for ext in ['.csv', '.xlsx', '.tsv']:
-            potential_file = dataset_path / f"{dataset_path.name}{ext}"
-            if potential_file.exists():
-                data_file = potential_file
-                break
+        NEW STRUCTURE (from PFAZ 1):
+        dataset_path/
+            ├── train.csv / train.xlsx
+            ├── val.csv / val.xlsx
+            └── test.csv / test.xlsx
 
-        if data_file is None:
-            # Try finding any data file
-            csv_files = list(dataset_path.glob('*.csv'))
-            if csv_files:
-                data_file = csv_files[0]
+        Returns:
+            X_train, y_train, X_val, y_val, X_test, y_test
+        """
+
+        # Check for train/val/test split files
+        # Try Excel first (preferred), then CSV
+        split_files = {}
+        for split_name in ['train', 'val', 'test']:
+            # Try .xlsx first
+            xlsx_file = dataset_path / f"{split_name}.xlsx"
+            csv_file = dataset_path / f"{split_name}.csv"
+
+            if xlsx_file.exists():
+                split_files[split_name] = xlsx_file
+            elif csv_file.exists():
+                split_files[split_name] = csv_file
             else:
-                raise FileNotFoundError(f"No data file found in {dataset_path}")
+                raise FileNotFoundError(f"Missing {split_name} file in {dataset_path}")
 
-        # Load data with UTF-8 encoding to handle special characters (e.g., µ, ±)
-        if data_file.suffix == '.csv':
-            df = pd.read_csv(data_file, encoding='utf-8')
-        elif data_file.suffix == '.xlsx':
-            df = pd.read_excel(data_file)
-        elif data_file.suffix == '.tsv':
-            df = pd.read_csv(data_file, sep='\t', encoding='utf-8')
-        else:
-            raise ValueError(f"Unsupported file format: {data_file.suffix}")
+        logger.info(f"Loading pre-split dataset from: {dataset_path}")
+        logger.info(f"  Train: {split_files['train'].name}")
+        logger.info(f"  Val: {split_files['val'].name}")
+        logger.info(f"  Test: {split_files['test'].name}")
+
+        # Load each split
+        splits = {}
+        for split_name, file_path in split_files.items():
+            if file_path.suffix == '.xlsx':
+                df = pd.read_excel(file_path)
+            elif file_path.suffix == '.csv':
+                df = pd.read_csv(file_path, encoding='utf-8')
+            else:
+                raise ValueError(f"Unsupported file format: {file_path.suffix}")
+
+            splits[split_name] = df
+            logger.info(f"  Loaded {split_name}: {len(df)} samples")
+
+        # Process train split to determine columns (same logic for all splits)
+        df = splits['train']
 
         # DATA CLEANING - Fix invalid values
         logger.info(f"Initial data shape: {df.shape}")
@@ -181,25 +202,59 @@ class BaseAITrainer:
                 df[col] = df[col].replace('', np.nan)
                 df[col] = df[col].replace('NaN', np.nan)
 
-        # 3. Identify feature and target columns
+        # 3. Identify feature and target columns based on dataset name
         # Map simplified names to possible actual column names
+        # IMPORTANT: These are REAL experimental values from aaa2.txt, not theoretical predictions
+        # - Beta_2: Real deformation parameter (from experimental data)
+        # - Beta_2_estimated: Theoretical estimate (excluded as feature to prevent leakage)
+        # - MM/MAGNETIC MOMENT: Real magnetic moment (from experimental data)
+        # - schmidt_moment: Theoretical estimate (excluded as feature to prevent leakage)
+        # - Q/QUADRUPOLE MOMENT: Real quadrupole moment (from experimental data)
+        # - Q0_intrinsic: Theoretical estimate (excluded as feature to prevent leakage)
         target_map = {
             'MM': ['MM', 'MAGNETIC MOMENT [µ]', 'MAGNETIC MOMENT [μ]'],
             'Q': ['Q', 'QM', 'QUADRUPOLE MOMENT [Q]'],
-            'Beta_2': ['Beta_2', 'BETA_2']
+            'Beta_2': ['Beta_2', 'BETA_2']  # Real experimental Beta_2, NOT Beta_2_estimated
         }
 
+        # Determine which targets to use based on dataset name
+        dataset_name = dataset_path.name
+        requested_targets = []
+
+        if 'MM_QM' in dataset_name or 'MM-QM' in dataset_name:
+            # Both MM and Q targets
+            requested_targets = ['MM', 'Q']
+        elif 'MM' in dataset_name:
+            # Only MM target
+            requested_targets = ['MM']
+        elif 'QM' in dataset_name or '_Q_' in dataset_name:
+            # Only Q target
+            requested_targets = ['Q']
+        elif 'Beta_2' in dataset_name or 'BETA_2' in dataset_name:
+            # Only Beta_2 target
+            requested_targets = ['Beta_2']
+        else:
+            # Default: try to find any available target
+            logger.warning(f"Could not determine target from dataset name '{dataset_name}', using all available targets")
+            requested_targets = list(target_map.keys())
+
+        logger.info(f"Dataset: {dataset_name} -> Requested targets: {requested_targets}")
+
+        # Find actual column names for requested targets
         target_cols = []
-        for simple_name, possible_names in target_map.items():
-            for col_name in possible_names:
-                if col_name in df.columns:
-                    target_cols.append(col_name)
-                    logger.info(f"Found target: {simple_name} -> {col_name}")
-                    break
+        for simple_name in requested_targets:
+            if simple_name in target_map:
+                for col_name in target_map[simple_name]:
+                    if col_name in df.columns:
+                        target_cols.append(col_name)
+                        logger.info(f"Found target: {simple_name} -> {col_name}")
+                        break
+                else:
+                    logger.warning(f"Target '{simple_name}' requested but not found in data columns")
 
         if not target_cols:
             logger.error(f"Available columns: {list(df.columns)}")
-            raise ValueError(f"No target columns (MM, Q, Beta_2) found in {data_file}")
+            raise ValueError(f"No target columns found for {requested_targets} in {data_file}")
 
         logger.info(f"Target columns: {target_cols}")
 
@@ -213,6 +268,42 @@ class BaseAITrainer:
         else:
             # ALL dataseti için: NaN oranı %50'den az olan özellikleri kullan
             all_possible_features = [col for col in df.columns if col not in target_cols and col != 'NUCLEUS']
+
+            # CRITICAL: Prevent data leakage - exclude theoretical predictions of targets
+            # These features are direct theoretical calculations/estimates of the targets
+            # Using them would give artificially high R² scores
+            leakage_features = []
+
+            if 'Beta_2' in requested_targets:
+                # Beta_2_estimated: direct theoretical estimate of Beta_2
+                # Q0_intrinsic: intrinsic quadrupole moment, calculated from Beta_2_estimated
+                # rotational_param: depends on deformation
+                # moment_of_inertia: calculated from deformation
+                # E_2plus: first excited 2+ state energy, related to deformation
+                # vib_frequency: vibrational frequency, related to deformation
+                leakage_features.extend([
+                    'Beta_2_estimated',  # Direct estimate
+                    'Q0_intrinsic',      # Derived from Beta_2
+                    'rotational_param',  # Deformation-dependent
+                    'moment_of_inertia', # Deformation-dependent
+                    'E_2plus',           # Deformation-dependent
+                    'vib_frequency'      # Deformation-dependent
+                ])
+
+            if 'MM' in requested_targets:
+                # schmidt_moment: theoretical magnetic moment prediction
+                leakage_features.extend(['schmidt_moment'])
+
+            if 'Q' in requested_targets:
+                # Q0_intrinsic: intrinsic quadrupole moment (theoretical)
+                # Note: If Beta_2 is also a target, Q0_intrinsic is already excluded
+                if 'Q0_intrinsic' not in leakage_features:
+                    leakage_features.append('Q0_intrinsic')
+
+            # Remove leakage features
+            if leakage_features:
+                all_possible_features = [col for col in all_possible_features if col not in leakage_features]
+                logger.info(f"Excluded {len(leakage_features)} features to prevent data leakage: {leakage_features}")
 
             # Convert to numeric first
             for col in all_possible_features:
@@ -247,79 +338,51 @@ class BaseAITrainer:
             logger.info(f"Selected features: {feature_cols[:10]}...")
 
         if len(feature_cols) == 0:
-            raise ValueError(f"No valid features after filtering in {data_file}")
+            raise ValueError(f"No valid features after filtering in {dataset_path}")
 
-        # 5. Convert to numeric
-        all_numeric_cols = feature_cols + target_cols
-        for col in all_numeric_cols:
-            if col in df.columns:
-                before_count = df[col].notna().sum()
-                df[col] = pd.to_numeric(df[col], errors='coerce')
-                after_count = df[col].notna().sum()
-                if before_count != after_count:
-                    logger.warning(f"Column {col}: {before_count - after_count} values became NaN during conversion")
+        # 5-7. Process each split with same pipeline
+        # Train imputer on train set, apply to val and test
+        from sklearn.impute import SimpleImputer
+        imputer = SimpleImputer(strategy='median')
 
-        # 6. Check NaN counts before handling
-        nan_counts = df[all_numeric_cols].isna().sum()
-        if nan_counts.sum() > 0:
-            logger.info(f"NaN counts per column:\n{nan_counts[nan_counts > 0]}")
+        processed_splits = {}
 
-        # 7. Handle NaN values using imputation strategy
-        # First, drop rows where TARGET has NaN (we cannot train without target values)
-        df_with_targets = df[all_numeric_cols].copy()
-        initial_count = len(df_with_targets)
+        for split_name in ['train', 'val', 'test']:
+            df_split = splits[split_name].copy()
 
-        # Drop rows with NaN in target columns
-        df_with_targets = df_with_targets.dropna(subset=target_cols)
-        rows_dropped_for_target = initial_count - len(df_with_targets)
+            # Convert to numeric
+            all_numeric_cols = feature_cols + target_cols
+            for col in all_numeric_cols:
+                if col in df_split.columns:
+                    df_split[col] = pd.to_numeric(df_split[col], errors='coerce')
 
-        if rows_dropped_for_target > 0:
-            logger.info(f"Dropped {rows_dropped_for_target} rows with NaN in target columns")
+            # Drop rows with NaN targets
+            df_clean = df_split[all_numeric_cols].dropna(subset=target_cols)
 
-        if len(df_with_targets) == 0:
-            logger.error(f"All {initial_count} rows were dropped due to NaN in targets!")
-            logger.error(f"NaN summary:\n{df[target_cols].isna().sum()}")
-            raise ValueError(f"No valid data after dropping NaN targets in {data_file}")
+            # Impute features
+            if split_name == 'train':
+                # Fit imputer on train
+                df_clean[feature_cols] = imputer.fit_transform(df_clean[feature_cols])
+            else:
+                # Transform val/test with train imputer
+                df_clean[feature_cols] = imputer.transform(df_clean[feature_cols])
 
-        # For features: use median imputation for remaining NaN values
-        feature_nan_count = df_with_targets[feature_cols].isna().sum().sum()
-        if feature_nan_count > 0:
-            logger.info(f"Imputing {feature_nan_count} NaN values in features using median strategy")
-            imputer = SimpleImputer(strategy='median')
-            df_with_targets[feature_cols] = imputer.fit_transform(df_with_targets[feature_cols])
-            logger.info(f"Imputation complete. Remaining NaN in features: {df_with_targets[feature_cols].isna().sum().sum()}")
+            # Extract X, y
+            X = df_clean[feature_cols].values.astype(np.float32)
+            y = df_clean[target_cols].values.astype(np.float32)
 
-        # Final cleaning summary
-        logger.info(f"Data cleaning: {initial_count} -> {len(df_with_targets)} samples ({rows_dropped_for_target} removed due to NaN targets)")
+            processed_splits[split_name] = (X, y)
+            logger.info(f"  Processed {split_name}: {len(X)} samples")
 
-        # Extract features and targets
-        X = df_with_targets[feature_cols].values
-        y = df_with_targets[target_cols].values
+        X_train, y_train = processed_splits['train']
+        X_val, y_val = processed_splits['val']
+        X_test, y_test = processed_splits['test']
 
-        # Ensure data types are correct
-        X = X.astype(np.float32)
-        y = y.astype(np.float32)
+        # DNN warning for small datasets
+        if self.model_type == 'DNN' and len(X_train) < 70:
+            logger.warning(f"[WARNING] Only {len(X_train)} train samples! DNNs need 100+ for good performance")
 
-        # Final validation: check for any remaining NaN
-        if np.isnan(X).any():
-            nan_features = [feature_cols[i] for i in range(len(feature_cols)) if np.isnan(X[:, i]).any()]
-            logger.error(f"NaN still present in features after imputation: {nan_features}")
-            raise ValueError(f"NaN values still present in features after imputation")
-        if np.isnan(y).any():
-            logger.error(f"NaN still present in targets after cleaning")
-            raise ValueError(f"NaN values still present in targets after cleaning")
-
-        # Split into train/val/test (70/15/15)
-        n_total = len(X)
-        n_train = int(0.7 * n_total)
-        n_val = int(0.15 * n_total)
-
-        X_train = X[:n_train]
-        y_train = y[:n_train]
-        X_val = X[n_train:n_train+n_val]
-        y_val = y[n_train:n_train+n_val]
-        X_test = X[n_train+n_val:]
-        y_test = y[n_train+n_val:]
+        logger.info(f"Final: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
 
         return X_train, y_train, X_val, y_val, X_test, y_test
     
@@ -506,17 +569,25 @@ class DNNTrainer(BaseAITrainer):
     
     def train(self, X_train, y_train, X_val, y_val) -> Dict:
         """Train DNN"""
-        
+
         batch_size = self.config.get('batch_size', 32)
         epochs = self.config.get('epochs', 100)
         early_stopping_patience = self.config.get('early_stopping_patience', 15)
-        
+
         logger.info(f"Training DNN: batch_size={batch_size}, epochs={epochs}")
-        
+
+        # CRITICAL: Scale features for neural networks
+        from sklearn.preprocessing import StandardScaler
+        self.scaler = StandardScaler()
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_val_scaled = self.scaler.transform(X_val)
+
+        logger.info(f"Features scaled using StandardScaler (mean=0, std=1)")
+
         # Build model
         input_dim = X_train.shape[1]
         output_dim = y_train.shape[1] if y_train.ndim > 1 else 1
-        
+
         self.model = self.build_model(input_dim, output_dim)
         
         # Callbacks
@@ -536,20 +607,20 @@ class DNNTrainer(BaseAITrainer):
         # Train
         start_time = time.time()
         history = self.model.fit(
-            X_train, y_train,
-            validation_data=(X_val, y_val),
+            X_train_scaled, y_train,
+            validation_data=(X_val_scaled, y_val),
             batch_size=batch_size,
             epochs=epochs,
             callbacks=[early_stop, reduce_lr],
             verbose=0
         )
         training_time = time.time() - start_time
-        
+
         self.history = history.history
-        
+
         # Evaluate
-        y_train_pred = self.model.predict(X_train, verbose=0)
-        y_val_pred = self.model.predict(X_val, verbose=0)
+        y_train_pred = self.model.predict(X_train_scaled, verbose=0)
+        y_val_pred = self.model.predict(X_val_scaled, verbose=0)
         
         train_metrics = self.calculate_metrics(y_train, y_train_pred)
         val_metrics = self.calculate_metrics(y_val, y_val_pred)
@@ -560,8 +631,18 @@ class DNNTrainer(BaseAITrainer):
             'training_time': training_time,
             'epochs_trained': len(history.history['loss'])
         }
-        
+
         return metrics
+
+    def predict(self, X):
+        """Make predictions with feature scaling"""
+        if self.model is None:
+            raise ValueError("Model not trained yet")
+        if not hasattr(self, 'scaler'):
+            raise ValueError("Scaler not fitted yet")
+
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict(X_scaled, verbose=0)
 
 
 # ============================================================================
@@ -652,24 +733,43 @@ class ParallelAITrainer:
                             dataset_paths: List[Path]) -> List[TrainingJob]:
         """
         Create training jobs for all combinations
-        
+
         Args:
             model_types: List of model types (e.g., ['RF', 'XGBoost', 'DNN'])
             configs: List of training configurations
             dataset_paths: List of dataset directories
-        
+
         Returns:
             List of TrainingJob objects
         """
         jobs = []
-        
+        skipped_dnn_jobs = 0
+
         for dataset_path in dataset_paths:
+            # Extract number of nuclei from dataset name
+            dataset_name = dataset_path.name
+            nuclei_count = None
+
+            # Try to extract nuclei count from dataset name (e.g., "MM_100nuclei", "Beta_2_75nuclei")
+            import re
+            match = re.search(r'(\d+)nuclei', dataset_name)
+            if match:
+                nuclei_count = int(match.group(1))
+            elif 'ALL' in dataset_name:
+                nuclei_count = 999  # Assume ALL has enough data for DNN
+
             for model_type in model_types:
+                # SKIP DNN for small datasets (< 100 nuclei)
+                if model_type == 'DNN' and nuclei_count is not None and nuclei_count < 100:
+                    logger.info(f"Skipping DNN for {dataset_name}: only {nuclei_count} nuclei (DNN requires 100+)")
+                    skipped_dnn_jobs += len(configs)
+                    continue
+
                 for config in configs:
                     job_id = f"{dataset_path.name}_{model_type}_{config['id']}"
-                    
+
                     output_dir = self.output_dir / dataset_path.name / model_type / config['id']
-                    
+
                     job = TrainingJob(
                         job_id=job_id,
                         model_type=model_type,
@@ -678,14 +778,16 @@ class ParallelAITrainer:
                         dataset_name=dataset_path.name,
                         output_dir=output_dir
                     )
-                    
+
                     jobs.append(job)
-        
+
         logger.info(f"Created {len(jobs)} training jobs")
         logger.info(f"  Datasets: {len(dataset_paths)}")
         logger.info(f"  Model types: {len(model_types)}")
         logger.info(f"  Configs per model: {len(configs)}")
-        
+        if skipped_dnn_jobs > 0:
+            logger.info(f"  Skipped {skipped_dnn_jobs} DNN jobs (small datasets < 100 nuclei)")
+
         return jobs
     
     def train_single_job(self, job: TrainingJob) -> TrainingResult:
