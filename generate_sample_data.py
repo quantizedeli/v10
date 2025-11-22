@@ -289,7 +289,7 @@ def main():
     generate_sample_visualizations(viz_dir)
 
     print("\n" + "="*80)
-    print("✓ SAMPLE DATA GENERATION COMPLETE!")
+    print("[OK] SAMPLE DATA GENERATION COMPLETE!")
     print("="*80)
     print(f"\nReports directory: {reports_dir} ({len(list(reports_dir.glob('*')))} files)")
     print(f"Visualizations: {viz_dir} ({len(list(viz_dir.glob('*.png')))} files)")

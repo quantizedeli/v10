@@ -209,13 +209,13 @@ class DatasetGenerator:
                                         dataset_count += 1
                                         
                                         if dataset_count % 50 == 0:
-                                            logger.info(f"  ✓ {dataset_count} veri seti oluşturuldu")
+                                            logger.info(f"  [OK] {dataset_count} veri seti oluşturuldu")
                                     
                                     except Exception as e:
-                                        logger.error(f"  ✗ Hata: {e}")
+                                        logger.error(f"  [FAIL] Hata: {e}")
                                         continue
         
-        logger.info(f"\n✓ Toplam {dataset_count} veri seti oluşturuldu")
+        logger.info(f"\n[OK] Toplam {dataset_count} veri seti oluşturuldu")
         self._save_catalog()
 
         # Master çekirdek kataloğu oluştur
@@ -224,9 +224,9 @@ class DatasetGenerator:
             self.distribution_analyzer.create_master_nuclei_catalog(
                 df, self.base_path / 'Master_Nuclei_Catalog.xlsx'
             )
-            logger.info("✓ Master çekirdek kataloğu oluşturuldu")
+            logger.info("[OK] Master çekirdek kataloğu oluşturuldu")
         except Exception as e:
-            logger.error(f"✗ Master katalog hatası: {e}")
+            logger.error(f"[FAIL] Master katalog hatası: {e}")
     
     def _generate_single_dataset(self, df, target_name, target_cols,
                                 nucleus_count, scenario_name, split_ratios,
@@ -496,7 +496,7 @@ class DatasetGenerator:
             }
             pd.DataFrame(summary).to_excel(writer, sheet_name='Summary', index=False)
         
-        logger.info(f"✓ Veri seti kataloğu kaydedildi: {output_path}")
+        logger.info(f"[OK] Veri seti kataloğu kaydedildi: {output_path}")
 
 
 class ControlGroupGenerator:
@@ -540,7 +540,7 @@ class ControlGroupGenerator:
             output_path = Path('ANFIS_Datasets') / f'Control_Group_{target_name}.xlsx'
             selected.to_excel(output_path, index=False)
             
-            logger.info(f"  ✓ {target_name}: {len(selected)} nükleus")
+            logger.info(f"  [OK] {target_name}: {len(selected)} nükleus")
     
     def _select_diverse_control_group(self, df, max_size=100):
         """Çeşitli kontrol grubu seç"""
@@ -621,7 +621,7 @@ def main():
         sampling_methods=['random']
     )
     
-    print("\n✓ Test tamamlandı")
+    print("\n[OK] Test tamamlandı")
 
 
 if __name__ == "__main__":

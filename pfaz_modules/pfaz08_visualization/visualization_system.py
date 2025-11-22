@@ -92,7 +92,7 @@ class UnifiedVisualizationManager:
         self._create_summary_dashboard(project_results)
         
         logger.info("\n" + "="*80)
-        logger.info("✓ ALL VISUALIZATIONS COMPLETED")
+        logger.info("[OK] ALL VISUALIZATIONS COMPLETED")
         logger.info("="*80)
     
     def _create_ai_visualizations(self, ai_results):
@@ -185,7 +185,7 @@ class UnifiedVisualizationManager:
         plt.savefig(dash_dir / 'project_dashboard.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Dashboard: {dash_dir / 'project_dashboard.png'}")
+        logger.info(f"[OK] Dashboard: {dash_dir / 'project_dashboard.png'}")
     
     def _plot_ai_vs_anfis(self, results, viz_dir):
         """AI vs ANFIS comparison"""
@@ -366,11 +366,11 @@ def test_unified_visualization():
     viz_manager = UnifiedVisualizationManager(output_dir='test_unified_viz')
     viz_manager.create_all_visualizations(project_results)
     
-    print("\n✓ Unified visualization test tamamlandı!")
+    print("\n[OK] Unified visualization test tamamlandı!")
     print(f"  Output: test_unified_viz/")
 
 
 if __name__ == "__main__":
     test_unified_visualization()
-    print("\n✓ Visualization System UPDATED (16/17)")
+    print("\n[OK] Visualization System UPDATED (16/17)")
     print("  Location: visualization/visualization_system.py")

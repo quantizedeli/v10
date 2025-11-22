@@ -158,7 +158,7 @@ class TheoreticalCalculationsManager:
         df['S_n_approx'] = 8.0 + 0.5 * (df['N'] - df['Z']) / df['A']  # Approximate
         df['S_p_approx'] = 8.0 - 0.5 * (df['N'] - df['Z']) / df['A']  # Approximate
         
-        logger.info(f"  ✓ SEMF: 11 özellik eklendi")
+        logger.info(f"  [OK] SEMF: 11 özellik eklendi")
         return df
     
     def _calculate_shell_model(self, df):
@@ -207,7 +207,7 @@ class TheoreticalCalculationsManager:
                                   (df['N_magic_dist'] == 0)) & 
                                  (df['is_doubly_magic'] == 0)).astype(int)
         
-        logger.info(f"  ✓ Shell Model: 11 özellik eklendi")
+        logger.info(f"  [OK] Shell Model: 11 özellik eklendi")
         return df
     
     def _calculate_deformation(self, df):
@@ -251,7 +251,7 @@ class TheoreticalCalculationsManager:
         # Rotational parameter
         df['rotational_param'] = (HBAR_C**2) / (2 * 0.5 * 1.2**2 * df['A']**(5/3))
         
-        logger.info(f"  ✓ Deformation: 4 özellik eklendi")
+        logger.info(f"  [OK] Deformation: 4 özellik eklendi")
         return df
     
     def _calculate_schmidt_moments(self, df):
@@ -303,7 +303,7 @@ class TheoreticalCalculationsManager:
             df['schmidt_deviation'] = abs(df['MM'] - df['schmidt_moment'])
             df['schmidt_quenching'] = df['MM'] / df['schmidt_moment'].replace(0, np.nan)
         
-        logger.info(f"  ✓ Schmidt: 1-3 özellik eklendi")
+        logger.info(f"  [OK] Schmidt: 1-3 özellik eklendi")
         return df
     
     def _calculate_collective_model(self, df):
@@ -329,7 +329,7 @@ class TheoreticalCalculationsManager:
         
         df['nucleus_collective_type'] = df.apply(classify_nucleus_type, axis=1)
         
-        logger.info(f"  ✓ Collective Model: 4 özellik eklendi")
+        logger.info(f"  [OK] Collective Model: 4 özellik eklendi")
         return df
     
     def _calculate_woods_saxon(self, df):
@@ -345,7 +345,7 @@ class TheoreticalCalculationsManager:
         # Fermi energy (approximate)
         df['fermi_energy'] = 33.0 * (df['A'] ** (2/3)) / (r0**2 * df['A'])
         
-        logger.info(f"  ✓ Woods-Saxon: 2 özellik eklendi")
+        logger.info(f"  [OK] Woods-Saxon: 2 özellik eklendi")
         return df
     
     def _calculate_nilsson(self, df):
@@ -360,7 +360,7 @@ class TheoreticalCalculationsManager:
         # Oscillator frequency
         df.loc[deformed_mask, 'nilsson_omega'] = 41.0 / (df.loc[deformed_mask, 'A'] ** (1/3))
         
-        logger.info(f"  ✓ Nilsson: 2 özellik eklendi (sadece deformed nuclei)")
+        logger.info(f"  [OK] Nilsson: 2 özellik eklendi (sadece deformed nuclei)")
         return df
     
     def _estimate_beta2(self, Z, N):
@@ -403,7 +403,7 @@ class TheoreticalCalculationsManager:
         with open(report_file, 'w') as f:
             json.dump(report, f, indent=2)
         
-        logger.info(f"\n✓ Hesaplama raporu kaydedildi: {report_file}")
+        logger.info(f"\n[OK] Hesaplama raporu kaydedildi: {report_file}")
 
 
 # Global constants (imported from constants.py)

@@ -73,7 +73,7 @@ class BootstrapConfidenceIntervals:
         
         self.results = {}
         
-        logger.info(f"✓ BootstrapCI initialized (n={n_bootstrap}, CI={confidence_level*100}%)")
+        logger.info(f"[OK] BootstrapCI initialized (n={n_bootstrap}, CI={confidence_level*100}%)")
     
     # ========================================================================
     # BASIC BOOTSTRAP
@@ -464,7 +464,7 @@ class BootstrapConfidenceIntervals:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -532,7 +532,7 @@ class BootstrapConfidenceIntervals:
                 }])
                 comp_data.to_excel(writer, sheet_name='Model_Comparison', index=False)
         
-        logger.info(f"  ✓ Exported to: {filepath}")
+        logger.info(f"  [OK] Exported to: {filepath}")
         return filepath
 
 
@@ -581,4 +581,4 @@ if __name__ == "__main__":
     # Export
     bootstrap.export_to_excel()
     
-    logger.info("\n✓ Testing complete! Check test_bootstrap_results/")
+    logger.info("\n[OK] Testing complete! Check test_bootstrap_results/")

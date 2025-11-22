@@ -80,10 +80,10 @@ class AutoInstaller:
             try:
                 importlib.import_module(import_name)
                 installed.append(package)
-                print(f"✓ {package}")
+                print(f"[OK] {package}")
             except ImportError:
                 missing.append(package)
-                print(f"✗ {package} - YÜKLENMESİ GEREKİYOR")
+                print(f"[FAIL] {package} - YÜKLENMESİ GEREKİYOR")
         
         if missing:
             print(f"\n[WARNING]  {len(missing)} eksik kütüphane bulundu!")
@@ -97,9 +97,9 @@ class AutoInstaller:
                         subprocess.check_call([
                             sys.executable, "-m", "pip", "install", package, "-q"
                         ])
-                        print(f"✓ {package} başarıyla yüklendi")
+                        print(f"[OK] {package} başarıyla yüklendi")
                     except Exception as e:
-                        print(f"✗ {package} yüklenemedi: {e}")
+                        print(f"[FAIL] {package} yüklenemedi: {e}")
                 print("\n[SUCCESS] Kütüphane yükleme tamamlandı!")
                 print("[RUN] Lütfen programı yeniden başlatın...")
                 sys.exit(0)

@@ -44,7 +44,7 @@ class EnsembleEvaluator:
         
         self.results = []  # Tüm ensemble sonuçları
         
-        logger.info(f"✓ EnsembleEvaluator initialized")
+        logger.info(f"[OK] EnsembleEvaluator initialized")
         logger.info(f"  Output directory: {self.output_dir}")
     
     def add_ensemble_result(self, 
@@ -86,7 +86,7 @@ class EnsembleEvaluator:
         
         self.results.append(result)
         
-        logger.info(f"✓ Added ensemble: {ensemble_name}")
+        logger.info(f"[OK] Added ensemble: {ensemble_name}")
         logger.info(f"  Method: {result['method']}")
         logger.info(f"  R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
     
@@ -125,7 +125,7 @@ class EnsembleEvaluator:
         # Save Excel
         excel_path = self.output_dir / 'ensemble_comparison.xlsx'
         df.to_excel(excel_path, index=False)
-        logger.info(f"\n✓ Comparison table saved: {excel_path}")
+        logger.info(f"\n[OK] Comparison table saved: {excel_path}")
         
         return df
     
@@ -249,7 +249,7 @@ class EnsembleEvaluator:
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Visualization saved: {plot_path}")
+        logger.info(f"[OK] Visualization saved: {plot_path}")
     
     def visualize_predictions(self, ensemble_name: Optional[str] = None):
         """
@@ -319,7 +319,7 @@ class EnsembleEvaluator:
         plt.savefig(plot_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Prediction visualization saved: {plot_path}")
+        logger.info(f"[OK] Prediction visualization saved: {plot_path}")
     
     def generate_final_report(self) -> Dict:
         """
@@ -369,7 +369,7 @@ class EnsembleEvaluator:
         with open(report_path, 'w') as f:
             json.dump(report, f, indent=2)
         
-        logger.info(f"\n✓ Final report saved: {report_path}")
+        logger.info(f"\n[OK] Final report saved: {report_path}")
         
         logger.info(f"\n{'='*60}")
         logger.info(f"ENSEMBLE EVALUATION COMPLETED!")

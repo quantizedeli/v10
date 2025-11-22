@@ -46,7 +46,7 @@ class EnsemblePipeline:
                     if pred_file.exists():
                         df = pd.read_csv(pred_file)
                         predictions[model_dir.name] = df
-                        logger.info(f"  ✓ {model_dir.name}: {len(df)} tahmin")
+                        logger.info(f"  [OK] {model_dir.name}: {len(df)} tahmin")
         
         # ANFIS models
         anfis_dir = self.trained_models_dir / 'ANFIS'
@@ -57,10 +57,10 @@ class EnsemblePipeline:
                     if pred_file.exists():
                         df = pd.read_csv(pred_file)
                         predictions[f'ANFIS_{config_dir.name}'] = df
-                        logger.info(f"  ✓ ANFIS_{config_dir.name}: {len(df)} tahmin")
+                        logger.info(f"  [OK] ANFIS_{config_dir.name}: {len(df)} tahmin")
         
         self.base_predictions[target] = predictions
-        logger.info(f"\n✓ Toplam {len(predictions)} model yüklendi")
+        logger.info(f"\n[OK] Toplam {len(predictions)} model yüklendi")
         return predictions
     
     def create_simple_voting(self, target='MM'):
@@ -214,9 +214,9 @@ class EnsemblePipeline:
                 df = pd.DataFrame(data)
                 df = df.sort_values('R²', ascending=False)
                 df.to_excel(writer, sheet_name=f'{target}_Comparison', index=False)
-                logger.info(f"  ✓ {target}_Comparison sheet")
+                logger.info(f"  [OK] {target}_Comparison sheet")
         
-        logger.info(f"\n✓ Excel: {report_file}")
+        logger.info(f"\n[OK] Excel: {report_file}")
         return report_file
     
     def run_complete_pipeline(self, targets=['MM', 'QM', 'MM_QM', 'Beta_2']):

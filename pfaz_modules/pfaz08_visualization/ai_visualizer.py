@@ -50,7 +50,7 @@ class AIVisualizer:
         plt.savefig(self.output_dir / f'{model_name}_learning_curves.png', dpi=300)
         plt.close()
         
-        logger.info(f"✓ Learning curves: {model_name}")
+        logger.info(f"[OK] Learning curves: {model_name}")
     
     def plot_feature_importance_comparison(self, importances_dict):
         """Compare feature importance across models"""
@@ -75,7 +75,7 @@ class AIVisualizer:
         plt.savefig(self.output_dir / 'feature_importance_comparison.png', dpi=300)
         plt.close()
         
-        logger.info("✓ Feature importance comparison")
+        logger.info("[OK] Feature importance comparison")
     
     def plot_residuals_advanced(self, y_true, y_pred, model_name):
         """Advanced residual analysis"""
@@ -133,8 +133,8 @@ class AIVisualizer:
         plt.savefig(self.output_dir / f'{model_name}_residuals_advanced.png', dpi=300)
         plt.close()
         
-        logger.info(f"✓ Advanced residuals: {model_name}")
+        logger.info(f"[OK] Advanced residuals: {model_name}")
 
 
 if __name__ == "__main__":
-    print("✓ AI Visualizer modülü hazır - visualization/ai_visualizer.py")
+    print("[OK] AI Visualizer modülü hazır - visualization/ai_visualizer.py")

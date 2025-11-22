@@ -53,7 +53,7 @@ class AdvancedExcelFormatter:
             self._add_borders(ws)
             
         wb.save(excel_file)
-        logger.info(f"✓ Workbook formatted: {excel_file}")
+        logger.info(f"[OK] Workbook formatted: {excel_file}")
     
     def add_conditional_formatting(self, excel_file, sheet_name, range_str, rule_type='colorscale'):
         """
@@ -86,7 +86,7 @@ class AdvancedExcelFormatter:
         ws.conditional_formatting.add(range_str, rule)
         wb.save(excel_file)
         
-        logger.info(f"✓ Conditional formatting added: {sheet_name}!{range_str}")
+        logger.info(f"[OK] Conditional formatting added: {sheet_name}!{range_str}")
     
     def add_data_validation(self, excel_file, sheet_name, range_str, validation_list):
         """Add dropdown list validation"""
@@ -99,7 +99,7 @@ class AdvancedExcelFormatter:
         dv.add(range_str)
         
         wb.save(excel_file)
-        logger.info(f"✓ Data validation added: {sheet_name}!{range_str}")
+        logger.info(f"[OK] Data validation added: {sheet_name}!{range_str}")
     
     def _format_headers(self, ws):
         """Format header row"""
@@ -153,7 +153,7 @@ class AdvancedExcelFormatter:
 
 
 if __name__ == "__main__":
-    print("✓ Excel Formatter modülü hazır - reporting/excel_formatter.py")
+    print("[OK] Excel Formatter modülü hazır - reporting/excel_formatter.py")
 
 # ==================== EKLEME BAŞI ====================
 class ExcelFormatter:

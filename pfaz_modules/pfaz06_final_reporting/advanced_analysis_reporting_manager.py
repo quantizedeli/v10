@@ -152,7 +152,7 @@ class AdvancedAnalysisReportingManager:
             # Feature importance
             importance = np.abs(shap_values.values).mean(axis=0)
             
-            logger.info(f"  ✓ SHAP values hesaplandı ({len(shap_values)} sample)")
+            logger.info(f"  [OK] SHAP values hesaplandı ({len(shap_values)} sample)")
             
             return {
                 'status': 'success',
@@ -412,7 +412,7 @@ class AdvancedAnalysisReportingManager:
         with open(report_file, 'w') as f:
             json.dump(results, f, indent=2)
         
-        logger.info(f"\n✓ İleri analiz raporu kaydedildi: {report_file}")
+        logger.info(f"\n[OK] İleri analiz raporu kaydedildi: {report_file}")
         
         # Excel özet
         self._create_excel_summary(model_name, results, report_dir)
@@ -453,7 +453,7 @@ class AdvancedAnalysisReportingManager:
                         writer, sheet_name='Feature_Clustering', index=False
                     )
             
-            logger.info(f"  ✓ Excel özeti kaydedildi")
+            logger.info(f"  [OK] Excel özeti kaydedildi")
         except Exception as e:
             logger.warning(f"  [WARNING] Excel oluşturma hatası: {e}")
     
@@ -493,7 +493,7 @@ class AdvancedAnalysisReportingManager:
         output_path = self.output_dir / output_file
         df.to_excel(output_path, index=False)
         
-        logger.info(f"\n✓ Nihai özet rapor kaydedildi: {output_path}")
+        logger.info(f"\n[OK] Nihai özet rapor kaydedildi: {output_path}")
 
 
 def main():
@@ -525,7 +525,7 @@ def main():
     # Final summary
     manager.generate_final_summary_report()
     
-    print("\n✓ Test tamamlandı!")
+    print("\n[OK] Test tamamlandı!")
 
 
 if __name__ == "__main__":

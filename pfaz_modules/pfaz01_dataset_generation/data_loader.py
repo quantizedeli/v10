@@ -35,7 +35,7 @@ class NuclearDataLoader:
         # Veriyi oku
         df = pd.read_csv(filepath, sep='\t', encoding='utf-8')
         
-        logger.info(f"✓ Ham veri yüklendi: {len(df)} satır")
+        logger.info(f"[OK] Ham veri yüklendi: {len(df)} satır")
         
         # Temizlik işlemleri
         df_cleaned = self._clean_data(df)
@@ -43,7 +43,7 @@ class NuclearDataLoader:
         # Temizlenmiş veriyi kaydet
         output_file = self.output_dir / 'cleaned_nuclear_data.csv'
         df_cleaned.to_csv(output_file, index=False)
-        logger.info(f"✓ Temizlenmiş veri kaydedildi: {output_file}")
+        logger.info(f"[OK] Temizlenmiş veri kaydedildi: {output_file}")
         
         # Ayıklanan çekirdekleri kaydet
         self._save_removed_nuclei()
@@ -160,7 +160,7 @@ class NuclearDataLoader:
     def _save_removed_nuclei(self):
         """Ayıklanan çekirdekleri Excel'e kaydet"""
         if not self.removed_nuclei:
-            logger.info("✓ Ayıklanan çekirdek yok")
+            logger.info("[OK] Ayıklanan çekirdek yok")
             return
         
         df_removed = pd.DataFrame(self.removed_nuclei)
@@ -180,7 +180,7 @@ class NuclearDataLoader:
                 z_summary = df_removed.groupby('Z').size().reset_index(name='Count')
                 z_summary.to_excel(writer, sheet_name='By_Proton_Number', index=False)
         
-        logger.info(f"✓ Ayıklanan çekirdekler kaydedildi: {output_file}")
+        logger.info(f"[OK] Ayıklanan çekirdekler kaydedildi: {output_file}")
         logger.info(f"  Toplam: {len(self.removed_nuclei)} çekirdek")
         
         # En yaygın nedenleri göster
@@ -234,7 +234,7 @@ def main():
     # İstatistikleri göster
     stats = loader.get_data_statistics(df)
     
-    print("\n✓ Data loading test completed")
+    print("\n[OK] Data loading test completed")
     print(f"  Cleaned data: {len(df)} nuclei")
     print(f"  Removed: {len(loader.removed_nuclei)} nuclei")
 

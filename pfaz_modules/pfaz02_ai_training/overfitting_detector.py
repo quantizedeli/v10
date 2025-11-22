@@ -374,7 +374,7 @@ class OverfittingDetector:
         severity = analysis['severity']
         
         if severity == 'extreme':
-            suggestions.append("🔴 CRITICAL: Extreme overfitting detected!")
+            suggestions.append("[ERROR] CRITICAL: Extreme overfitting detected!")
             suggestions.append("-> Reduce model complexity significantly")
             suggestions.append("-> Increase dropout rates")
             suggestions.append("-> Use stronger regularization (L1/L2)")
@@ -395,7 +395,7 @@ class OverfittingDetector:
             suggestions.append("-> Try batch normalization")
         
         elif severity == 'mild':
-            suggestions.append("🟢 Mild overfitting - generally acceptable")
+            suggestions.append("[OK] Mild overfitting - generally acceptable")
             suggestions.append("-> Monitor in production")
             suggestions.append("-> Consider ensemble methods")
         

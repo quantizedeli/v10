@@ -140,14 +140,14 @@ class RealDataIntegrationManager:
                 self.datasets[dataset_id] = dataset_info
                 loaded_datasets.append(dataset_id)
                 
-                logger.info(f"  ✓ Loaded: {dataset_id}")
+                logger.info(f"  [OK] Loaded: {dataset_id}")
                 logger.info(f"    Features: {len(feature_cols)}, Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
             
             except Exception as e:
-                logger.error(f"  ✗ Error loading {dataset_path.name}: {str(e)}")
+                logger.error(f"  [FAIL] Error loading {dataset_path.name}: {str(e)}")
                 continue
         
-        logger.info(f"\n✓ Loaded {len(loaded_datasets)} datasets successfully")
+        logger.info(f"\n[OK] Loaded {len(loaded_datasets)} datasets successfully")
         
         return {
             'target': target,
@@ -237,13 +237,13 @@ class RealDataIntegrationManager:
                 trained_models[model_id] = model_info
                 self.trained_models[model_id] = model_info
                 
-                logger.info(f"  ✓ {model_type}: R²={r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}")
+                logger.info(f"  [OK] {model_type}: R²={r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}")
             
             except Exception as e:
-                logger.error(f"  ✗ Error training {model_type}: {str(e)}")
+                logger.error(f"  [FAIL] Error training {model_type}: {str(e)}")
                 continue
         
-        logger.info(f"\n✓ Trained {len(trained_models)} models on {dataset_id}")
+        logger.info(f"\n[OK] Trained {len(trained_models)} models on {dataset_id}")
         
         return trained_models
     
@@ -351,7 +351,7 @@ class RealDataIntegrationManager:
         
         self.ensemble_results[dataset_id] = ensemble_results
         
-        logger.info(f"\n✓ Created {len(ensemble_results)} ensembles for {dataset_id}")
+        logger.info(f"\n[OK] Created {len(ensemble_results)} ensembles for {dataset_id}")
         
         return ensemble_results
     
@@ -392,7 +392,7 @@ class RealDataIntegrationManager:
         # Save
         save_path = self.output_dir / 'all_ensembles_comparison.xlsx'
         df.to_excel(save_path, index=False)
-        logger.info(f"\n✓ Comparison saved: {save_path}")
+        logger.info(f"\n[OK] Comparison saved: {save_path}")
         
         return df
     
@@ -452,7 +452,7 @@ class RealDataIntegrationManager:
         with open(report_path, 'w') as f:
             json.dump(report, f, indent=2)
         
-        logger.info(f"\n✓ Report saved: {report_path}")
+        logger.info(f"\n[OK] Report saved: {report_path}")
         
         return report
 
@@ -503,7 +503,7 @@ def main():
         df_test['MM'] = y_test
         df_test.to_csv(test_anfis_dir / f"{dataset_id}_test.csv", index=False)
     
-    logger.info(f"✓ Created 3 mock datasets in {test_anfis_dir}")
+    logger.info(f"[OK] Created 3 mock datasets in {test_anfis_dir}")
     
     # Initialize manager
     manager = RealDataIntegrationManager(

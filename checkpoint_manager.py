@@ -50,7 +50,7 @@ class CheckpointManager:
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"✓ Checkpoint Manager initialized: {self.checkpoint_dir}")
+        logger.info(f"[OK] Checkpoint Manager initialized: {self.checkpoint_dir}")
 
     def save_checkpoint(self,
                        pfaz_id: int,
@@ -304,7 +304,7 @@ def train_models_with_checkpoints(configs: List[Dict],
                 description=f"Training {target}, {len(completed_tasks)}/{len(configs)} models"
             )
 
-            logger.info(f"✓ Model trained: R²={metrics['r2']:.4f}")
+            logger.info(f"[OK] Model trained: R²={metrics['r2']:.4f}")
             logger.info(f"[SAVE] Checkpoint saved ({len(completed_tasks)}/{len(configs)})")
 
         except Exception as e:
@@ -329,7 +329,7 @@ def train_models_with_checkpoints(configs: List[Dict],
             raise  # Re-raise to stop execution
 
     logger.info(f"\n{'='*70}")
-    logger.info(f"✓ TRAINING COMPLETE: {len(completed_tasks)}/{len(configs)} models")
+    logger.info(f"[OK] TRAINING COMPLETE: {len(completed_tasks)}/{len(configs)} models")
     logger.info(f"{'='*70}")
 
     # Delete checkpoint after successful completion
@@ -368,7 +368,7 @@ def cli_resume_training():
     elif args.resume and args.pfaz:
         state = cm.resume_from_checkpoint(args.pfaz)
         if state:
-            print(f"\n✓ Ready to resume PFAZ {args.pfaz}")
+            print(f"\n[OK] Ready to resume PFAZ {args.pfaz}")
             print(f"  Next task: {state.get('current_task', 0)}")
             print(f"  Completed: {len(state.get('completed_tasks', []))} tasks")
         else:
@@ -376,7 +376,7 @@ def cli_resume_training():
 
     elif args.delete and args.pfaz:
         cm.delete_checkpoint(args.pfaz)
-        print(f"✓ Checkpoint deleted: PFAZ {args.pfaz}")
+        print(f"[OK] Checkpoint deleted: PFAZ {args.pfaz}")
 
     else:
         parser.print_help()

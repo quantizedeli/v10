@@ -59,7 +59,7 @@ class SmartCache:
         self.metadata_file = self.cache_dir / 'cache_metadata.json'
         self.metadata = self._load_metadata()
 
-        logger.info(f"✓ Smart Cache initialized: {self.cache_dir}")
+        logger.info(f"[OK] Smart Cache initialized: {self.cache_dir}")
         logger.info(f"  Max size: {max_size_mb} MB")
 
         # Clean old caches on startup
@@ -180,7 +180,7 @@ class SmartCache:
         self.metadata[key]['last_accessed'] = time.time()
         self._save_metadata()
 
-        logger.info(f"⚡ Cache HIT: {key}")
+        logger.info(f"[FAST] Cache HIT: {key}")
 
         return df
 
@@ -212,7 +212,7 @@ class SmartCache:
             return cache_key, df  # Cache hit!
 
         # Cache miss - load file
-        logger.info(f"📂 Loading dataset: {file_path}")
+        logger.info(f"[OPEN] Loading dataset: {file_path}")
 
         if file_path.suffix == '.txt':
             df = pd.read_csv(file_path, sep='\t')
@@ -278,7 +278,7 @@ class SmartCache:
         self.metadata[key]['last_accessed'] = time.time()
         self._save_metadata()
 
-        logger.info(f"⚡ Cache HIT: {key}")
+        logger.info(f"[FAST] Cache HIT: {key}")
 
         return array
 
@@ -335,7 +335,7 @@ class SmartCache:
         self.metadata[key]['last_accessed'] = time.time()
         self._save_metadata()
 
-        logger.info(f"⚡ Cache HIT: {key}")
+        logger.info(f"[FAST] Cache HIT: {key}")
 
         return obj
 

@@ -195,9 +195,9 @@ class AutoMLANFISOptimizer:
             logger.info("-> Initializing MATLAB engine...")
             try:
                 self.matlab_eng = matlab.engine.start_matlab()
-                logger.info("  ✓ MATLAB engine started")
+                logger.info("  [OK] MATLAB engine started")
             except Exception as e:
-                logger.error(f"  ✗ MATLAB engine failed: {e}")
+                logger.error(f"  [FAIL] MATLAB engine failed: {e}")
                 self.use_matlab = False
         
         # Logging
@@ -212,7 +212,7 @@ class AutoMLANFISOptimizer:
         self.best_score = -np.inf
         self.best_fis = None
         
-        logger.info(f"✓ AutoMLANFISOptimizer initialized")
+        logger.info(f"[OK] AutoMLANFISOptimizer initialized")
         logger.info(f"  MATLAB: {'Available' if self.use_matlab else 'Unavailable (using sklearn)'}")
         logger.info(f"  Trials: {n_trials}")
     
@@ -581,7 +581,7 @@ class AutoMLANFISOptimizer:
         
         training_time = time.time() - start_time
         
-        logger.info(f"  ✓ Final ANFIS trained in {training_time:.1f}s")
+        logger.info(f"  [OK] Final ANFIS trained in {training_time:.1f}s")
         
         self.best_fis = fis
         return fis
@@ -703,7 +703,7 @@ if __name__ == "__main__":
         objective='r2'
     )
     
-    logger.info("\n✓ ANFIS optimization complete!")
+    logger.info("\n[OK] ANFIS optimization complete!")
     logger.info(f"  Best R²: {result['best_score']:.4f}")
     logger.info(f"  Best config: {result['best_config']}")
     

@@ -51,7 +51,7 @@ class LogAnalyticsVisualizationsComplete:
     def __init__(self, output_dir='visualizations/log_analytics_complete'):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"✓ LogAnalyticsVisualizationsComplete initialized: {self.output_dir}")
+        logger.info(f"[OK] LogAnalyticsVisualizationsComplete initialized: {self.output_dir}")
     
     def plot_training_progress_timeline(self,
                                        log_data: pd.DataFrame,
@@ -191,7 +191,7 @@ class LogAnalyticsVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_error_warning_analysis(self,
@@ -294,7 +294,7 @@ class LogAnalyticsVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_module_activity_heatmap(self,
@@ -362,7 +362,7 @@ class LogAnalyticsVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_performance_over_time(self,
@@ -482,7 +482,7 @@ class LogAnalyticsVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_resource_usage_monitoring(self,
@@ -573,7 +573,7 @@ class LogAnalyticsVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def generate_all_log_analytics_plots(self,
@@ -594,21 +594,21 @@ class LogAnalyticsVisualizationsComplete:
                 path = self.plot_training_progress_timeline(log_data)
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed timeline: {e}")
+                logger.error(f"  [FAIL] Failed timeline: {e}")
             
             # 2. Error/warning analysis
             try:
                 path = self.plot_error_warning_analysis(log_data)
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed error analysis: {e}")
+                logger.error(f"  [FAIL] Failed error analysis: {e}")
             
             # 3. Module activity heatmap
             try:
                 path = self.plot_module_activity_heatmap(log_data)
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed heatmap: {e}")
+                logger.error(f"  [FAIL] Failed heatmap: {e}")
         
         # 4. Performance over time
         if metrics_log is not None:
@@ -616,7 +616,7 @@ class LogAnalyticsVisualizationsComplete:
                 path = self.plot_performance_over_time(metrics_log)
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed performance: {e}")
+                logger.error(f"  [FAIL] Failed performance: {e}")
         
         # 5. Resource monitoring
         if resource_log is not None:
@@ -624,10 +624,10 @@ class LogAnalyticsVisualizationsComplete:
                 path = self.plot_resource_usage_monitoring(resource_log)
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed resource: {e}")
+                logger.error(f"  [FAIL] Failed resource: {e}")
         
         logger.info("\n" + "="*70)
-        logger.info(f"✓ LOG ANALYTICS VISUALIZATIONS COMPLETE: {len(generated_plots)}/5")
+        logger.info(f"[OK] LOG ANALYTICS VISUALIZATIONS COMPLETE: {len(generated_plots)}/5")
         logger.info("="*70)
         
         return generated_plots
@@ -705,4 +705,4 @@ if __name__ == "__main__":
         resource_log=resource_log
     )
     
-    logger.info("\n✓ Test complete! Check test_output/log_analytics/")
+    logger.info("\n[OK] Test complete! Check test_output/log_analytics/")

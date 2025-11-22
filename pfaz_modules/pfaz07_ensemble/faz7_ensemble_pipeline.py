@@ -72,7 +72,7 @@ def faz7_ensemble_pipeline():
     y_val = target_function(X_val) + np.random.randn(n_val) * 0.5
     y_test = target_function(X_test) + np.random.randn(n_test) * 0.5
     
-    logger.info(f"✓ Data prepared:")
+    logger.info(f"[OK] Data prepared:")
     logger.info(f"  Train: {n_train} samples")
     logger.info(f"  Val: {n_val} samples")
     logger.info(f"  Test: {n_test} samples")
@@ -91,7 +91,7 @@ def faz7_ensemble_pipeline():
         'MLP': MLPRegressor(hidden_layer_sizes=(32, 16), max_iter=500, random_state=42).fit(X_train, y_train)
     }
     
-    logger.info(f"✓ Base models trained: {len(base_models)}")
+    logger.info(f"[OK] Base models trained: {len(base_models)}")
     
     # =========================================================================
     # STEP 1: Voting Ensembles
@@ -253,7 +253,7 @@ def faz7_ensemble_pipeline():
     logger.info("FAZ 7: FINAL SUMMARY & RECOMMENDATIONS")
     logger.info("="*80)
     
-    logger.info(f"\n📋 ENSEMBLE METHODS TESTED: {len(final_report['all_results'])}")
+    logger.info(f"\n[LIST] ENSEMBLE METHODS TESTED: {len(final_report['all_results'])}")
     logger.info(f"\n[SUCCESS] BEST ENSEMBLE:")
     logger.info(f"   Name: {best_ensemble['name']}")
     logger.info(f"   Method: {best_ensemble['method']}")

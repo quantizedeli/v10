@@ -299,7 +299,7 @@ class NucleiDistributionAnalyzer:
                 ])
                 deform_regions_df.to_excel(writer, sheet_name='Deformation_Regions', index=False)
 
-        logger.info(f"✓ Distribution report saved: {save_path}")
+        logger.info(f"[OK] Distribution report saved: {save_path}")
 
     def create_master_nuclei_catalog(self, df_full: pd.DataFrame, output_path: Path):
         """
@@ -356,7 +356,7 @@ class NucleiDistributionAnalyzer:
                     sheet_name = sheet_name[:31]
                 element_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-        logger.info(f"✓ Master nuclei catalog saved: {output_path}")
+        logger.info(f"[OK] Master nuclei catalog saved: {output_path}")
 
     def _get_nucleus_type(self, Z: int, N: int) -> str:
         """Çekirdek tipini belirle"""
@@ -408,7 +408,7 @@ def main():
     analyzer.create_distribution_report(analysis, Path('test_output/test_report.xlsx'))
     analyzer.create_master_nuclei_catalog(test_df, Path('test_output/master_catalog.xlsx'))
 
-    print("\n✓ Test completed!")
+    print("\n[OK] Test completed!")
 
 
 if __name__ == "__main__":

@@ -175,7 +175,7 @@ class AutoMLTrialLogger:
         self.best_trial: Optional[AutoMLTrialRecord] = None
         self.best_val_r2: float = -np.inf
         
-        logger.info(f"✓ AutoMLTrialLogger initialized: {self.output_dir}")
+        logger.info(f"[OK] AutoMLTrialLogger initialized: {self.output_dir}")
     
     def start_optimization(self, 
                           model_type: str,
@@ -530,7 +530,7 @@ class AutoMLTrialLogger:
             # Sheet 12: LaTeX Tables
             self._create_latex_tables_sheet(writer, header_format)
         
-        logger.info(f"  ✓ Exported: {filepath}")
+        logger.info(f"  [OK] Exported: {filepath}")
         return filepath
     
     def _create_summary_sheet(self, writer, header_format):
@@ -1013,4 +1013,4 @@ if __name__ == "__main__":
     # Export to Excel
     trial_logger.export_to_excel('automl_test_report.xlsx')
     
-    logger.info("\n✓ Testing complete! Check test_automl_logs/")
+    logger.info("\n[OK] Testing complete! Check test_automl_logs/")

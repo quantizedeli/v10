@@ -55,8 +55,8 @@ class AAA2DataQualityChecker:
         df = pd.read_csv(filepath, sep='\t', encoding='utf-8')
         df.columns = df.columns.str.strip()
         
-        logger.info(f"   ✓ Toplam satır: {len(df)}")
-        logger.info(f"   ✓ Sütunlar: {list(df.columns)}")
+        logger.info(f"   [OK] Toplam satır: {len(df)}")
+        logger.info(f"   [OK] Sütunlar: {list(df.columns)}")
         
         # 2. Eksik değer kontrolü
         logger.info("\n2. Eksik değer kontrolü...")
@@ -265,10 +265,10 @@ class AAA2DataQualityChecker:
             'parity_negative': (df['PARITY'] == -1).sum() if 'PARITY' in df.columns else 0,
         }
         
-        logger.info(f"   ✓ Toplam çekirdek: {stats['total_nuclei']}")
-        logger.info(f"   ✓ A aralığı: {stats['A_range']}")
-        logger.info(f"   ✓ MM mevcut: {stats['mm_available']} ({stats['mm_available']/stats['total_nuclei']*100:.1f}%)")
-        logger.info(f"   ✓ QM mevcut: {stats['qm_available']} ({stats['qm_available']/stats['total_nuclei']*100:.1f}%)")
+        logger.info(f"   [OK] Toplam çekirdek: {stats['total_nuclei']}")
+        logger.info(f"   [OK] A aralığı: {stats['A_range']}")
+        logger.info(f"   [OK] MM mevcut: {stats['mm_available']} ({stats['mm_available']/stats['total_nuclei']*100:.1f}%)")
+        logger.info(f"   [OK] QM mevcut: {stats['qm_available']} ({stats['qm_available']/stats['total_nuclei']*100:.1f}%)")
         
         return stats
     
@@ -317,7 +317,7 @@ class AAA2DataQualityChecker:
             # Sheet 11: Tam veri
             df.to_excel(writer, sheet_name='Full_Data', index=False)
         
-        logger.info(f"   ✓ Excel raporu kaydedildi: {report_path}")
+        logger.info(f"   [OK] Excel raporu kaydedildi: {report_path}")
         return report_path
 
 

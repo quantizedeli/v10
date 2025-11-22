@@ -74,7 +74,7 @@ class StatisticalTestingSuite:
         
         self.results = {}
         
-        logger.info(f"✓ StatisticalTestingSuite initialized (α={alpha})")
+        logger.info(f"[OK] StatisticalTestingSuite initialized (α={alpha})")
     
     # ========================================================================
     # PAIRED TESTS (Two Models)
@@ -619,7 +619,7 @@ class StatisticalTestingSuite:
                     sheet_name = test_name[:31]
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
         
-        logger.info(f"  ✓ Exported to: {filepath}")
+        logger.info(f"  [OK] Exported to: {filepath}")
         return filepath
     
     def _flatten_dict(self, d: Dict, parent_key: str = '', sep: str = '_') -> Dict:
@@ -680,4 +680,4 @@ if __name__ == "__main__":
     # Export
     suite.export_to_excel()
     
-    logger.info("\n✓ Testing complete! Check test_statistical_results/")
+    logger.info("\n[OK] Testing complete! Check test_statistical_results/")

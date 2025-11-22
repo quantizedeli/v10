@@ -41,7 +41,7 @@ class TrainingTimeout:
     def start(self):
         """Timer başlat"""
         self.start_time = time.time()
-        logger.info(f"⏱️  Training timeout: {self.max_time}s ({self.max_time/60:.1f} min)")
+        logger.info(f"[TIMER]  Training timeout: {self.max_time}s ({self.max_time/60:.1f} min)")
     
     def check(self) -> bool:
         """Timeout kontrolü"""
@@ -433,7 +433,7 @@ class CheckpointManager:
         with open(checkpoint_path, 'rb') as f:
             checkpoint = pickle.load(f)
         
-        logger.info(f"📂 Loaded checkpoint: {checkpoint_path.name}")
+        logger.info(f"[OPEN] Loaded checkpoint: {checkpoint_path.name}")
         return checkpoint
 
 

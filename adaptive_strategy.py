@@ -348,7 +348,7 @@ class AdaptiveLearningStrategy:
                 if is_plateau:
                     stats['status'] = 'optimal'
                     self.optimal_configs.append(config_key)
-                    logger.info(f"  ✓ OPTIMAL CONFIG FOUND: {config_key} (avg={avg_score:.4f})")
+                    logger.info(f"  [OK] OPTIMAL CONFIG FOUND: {config_key} (avg={avg_score:.4f})")
                     self.skipped_count += 1
                     return False, f"Stage 3: Optimal! (avg={avg_score:.4f})"
         
@@ -473,7 +473,7 @@ class AdaptiveLearningStrategy:
         # Generate Excel report
         self._generate_excel_report(stats)
         
-        logger.info(f"✓ Comprehensive report: {self.output_dir}")
+        logger.info(f"[OK] Comprehensive report: {self.output_dir}")
         
         return stats
     
@@ -583,7 +583,7 @@ class AdaptiveLearningStrategy:
             
             pd.DataFrame(config_data).to_excel(writer, sheet_name='All_Configs', index=False)
         
-        logger.info(f"✓ Excel report: {excel_file}")
+        logger.info(f"[OK] Excel report: {excel_file}")
 
 
 # ============================================================================
@@ -685,7 +685,7 @@ class PatternTracker:
                 print(f"   Composite: {stats['composite_mean']:.4f}")
                 print(f"   Count: {stats['count']}")
         
-        logger.info(f"✓ Pattern analysis: {json_file}")
+        logger.info(f"[OK] Pattern analysis: {json_file}")
 
 
 # ============================================================================

@@ -79,7 +79,7 @@ class ThesisCompilationSystem:
         self.figures_registry = []
         self.tables_registry = []
         
-        logger.info("✓ Thesis Compilation System initialized")
+        logger.info("[OK] Thesis Compilation System initialized")
         logger.info(f"  Thesis directory: {self.thesis_dir}")
     
     def collect_all_results(self) -> Dict:
@@ -103,7 +103,7 @@ class ThesisCompilationSystem:
         }
         
         self.results_summary = collected
-        logger.info(f"✓ Results collected successfully")
+        logger.info(f"[OK] Results collected successfully")
         
         return collected
     
@@ -129,7 +129,7 @@ class ThesisCompilationSystem:
         except Exception as e:
             logger.warning(f"Could not load dataset catalog: {e}")
         
-        logger.info(f"  ✓ Dataset info: {dataset_info['total_nuclei']} nuclei, {dataset_info['features_count']} features")
+        logger.info(f"  [OK] Dataset info: {dataset_info['total_nuclei']} nuclei, {dataset_info['features_count']} features")
         return dataset_info
     
     def _collect_model_performance(self) -> Dict:
@@ -174,7 +174,7 @@ class ThesisCompilationSystem:
         except Exception as e:
             logger.warning(f"Could not load all performance metrics: {e}")
         
-        logger.info(f"  ✓ Collected performance for {len(performance['ai_models'])} AI models, "
+        logger.info(f"  [OK] Collected performance for {len(performance['ai_models'])} AI models, "
                    f"{len(performance['anfis_models'])} ANFIS configs")
         
         return performance
@@ -191,7 +191,7 @@ class ThesisCompilationSystem:
         }
         
         # Implementation would load actual training logs
-        logger.info(f"  ✓ Training results collected")
+        logger.info(f"  [OK] Training results collected")
         return training_results
     
     def _collect_cross_model_analysis(self) -> Dict:
@@ -208,7 +208,7 @@ class ThesisCompilationSystem:
         except Exception as e:
             logger.warning(f"Could not load cross-model analysis: {e}")
         
-        logger.info(f"  ✓ Cross-model analysis collected")
+        logger.info(f"  [OK] Cross-model analysis collected")
         return cross_model
     
     def _collect_ensemble_results(self) -> Dict:
@@ -230,7 +230,7 @@ class ThesisCompilationSystem:
         except Exception as e:
             logger.warning(f"Could not load ensemble results: {e}")
         
-        logger.info(f"  ✓ Ensemble results collected")
+        logger.info(f"  [OK] Ensemble results collected")
         return ensemble
     
     def _collect_visualizations(self) -> List[Dict]:
@@ -250,7 +250,7 @@ class ThesisCompilationSystem:
                 visualizations.append(fig_info)
                 self.figures_registry.append(fig_info)
         
-        logger.info(f"  ✓ Found {len(visualizations)} visualizations")
+        logger.info(f"  [OK] Found {len(visualizations)} visualizations")
         return visualizations
     
     def generate_complete_thesis(self, 
@@ -392,7 +392,7 @@ Finally, I express my deepest gratitude to my family for their unconditional lov
         with open(frontmatter_file, 'w', encoding='utf-8') as f:
             f.write(title_page + abstract + acknowledgments)
         
-        logger.info(f"  ✓ Frontmatter saved: {frontmatter_file.name}")
+        logger.info(f"  [OK] Frontmatter saved: {frontmatter_file.name}")
     
     def _generate_default_abstract(self) -> str:
         """Generate default abstract from results"""
@@ -506,7 +506,7 @@ The main contributions of this work include:
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Chapter 1 saved: {chapter_file.name}")
+        logger.info(f"  [OK] Chapter 1 saved: {chapter_file.name}")
     
     def _generate_chapter_literature_review(self):
         """Generate Chapter 2: Literature Review"""
@@ -611,7 +611,7 @@ ensemble learning strategies, and comprehensive validation studies.
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Chapter 2 saved: {chapter_file.name}")
+        logger.info(f"  [OK] Chapter 2 saved: {chapter_file.name}")
     
     def _generate_chapter_methodology(self):
         """Generate Chapter 3: Methodology"""
@@ -925,7 +925,7 @@ Training time: ~48 hours for complete pipeline (PFAZ 0-9).
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Chapter 3 saved: {chapter_file.name}")
+        logger.info(f"  [OK] Chapter 3 saved: {chapter_file.name}")
     
     def _generate_chapter_results(self):
         """Generate Chapter 4: Results"""
@@ -1271,7 +1271,7 @@ Key achievements:
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Chapter 4 saved: {chapter_file.name}")
+        logger.info(f"  [OK] Chapter 4 saved: {chapter_file.name}")
     
     def _generate_chapter_discussion(self):
         """Generate Chapter 5: Discussion"""
@@ -1568,7 +1568,7 @@ ensemble learning, interpretability analysis — transfers across domains.
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Chapter 5 saved: {chapter_file.name}")
+        logger.info(f"  [OK] Chapter 5 saved: {chapter_file.name}")
     
     def _generate_chapter_conclusions(self):
         """Generate Chapter 6: Conclusions"""
@@ -1875,7 +1875,7 @@ as to discover new ways of thinking about them.''} \\
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Chapter 6 saved: {chapter_file.name}")
+        logger.info(f"  [OK] Chapter 6 saved: {chapter_file.name}")
     
     def _generate_appendices(self):
         """Generate appendices"""
@@ -1980,7 +1980,7 @@ SHAP & SHapley Additive exPlanations \\
         with open(appendices_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Appendices saved: {appendices_file.name}")
+        logger.info(f"  [OK] Appendices saved: {appendices_file.name}")
     
     def _generate_bibliography(self):
         """Generate bibliography file"""
@@ -2109,7 +2109,7 @@ SHAP & SHapley Additive exPlanations \\
         with open(bib_file, 'w', encoding='utf-8') as f:
             f.write(bib_content)
         
-        logger.info(f"  ✓ Bibliography saved: {bib_file.name}")
+        logger.info(f"  [OK] Bibliography saved: {bib_file.name}")
     
     def _generate_main_thesis_file(self) -> Path:
         """Generate main thesis LaTeX file that includes all chapters"""
@@ -2245,7 +2245,7 @@ SHAP & SHapley Additive exPlanations \\
         with open(main_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"  ✓ Main thesis file saved: {main_file.name}")
+        logger.info(f"  [OK] Main thesis file saved: {main_file.name}")
         return main_file
     
     def _copy_figures(self):
@@ -2265,7 +2265,7 @@ SHAP & SHapley Additive exPlanations \\
             except Exception as e:
                 logger.warning(f"  Could not copy {fig_file.name}: {e}")
         
-        logger.info(f"  ✓ Copied {figures_copied} figures")
+        logger.info(f"  [OK] Copied {figures_copied} figures")
     
     def _generate_compilation_script(self):
         """Generate script to compile LaTeX to PDF"""
@@ -2287,7 +2287,7 @@ pdflatex -interaction=nonstopmode thesis_main.tex
 # Cleanup auxiliary files
 rm -f *.aux *.log *.out *.toc *.lof *.lot *.bbl *.blg
 
-echo "✓ Compilation complete: thesis_main.pdf"
+echo "[OK] Compilation complete: thesis_main.pdf"
 """
         
         bash_file = self.thesis_dir / 'compile.sh'
@@ -2319,7 +2319,7 @@ pause
         with open(bat_file, 'w') as f:
             f.write(bat_script)
         
-        logger.info(f"  ✓ Compilation scripts saved")
+        logger.info(f"  [OK] Compilation scripts saved")
         logger.info(f"    Linux/Mac: ./compile.sh")
         logger.info(f"    Windows: compile.bat")
     
@@ -2442,7 +2442,7 @@ def main():
     if compile_pdf.lower() == 'y':
         pdf_file = thesis_system.compile_to_pdf(cleanup=True)
         if pdf_file:
-            print(f"\n✓ Thesis PDF ready: {pdf_file}")
+            print(f"\n[OK] Thesis PDF ready: {pdf_file}")
     else:
         print("\nTo compile manually:")
         print("  cd output/thesis")

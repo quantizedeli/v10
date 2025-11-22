@@ -64,7 +64,7 @@ class ReportsVisualizationIntegrationManager:
             'metadata': {}
         }
         
-        logger.info("✓ Reports-Visualization Integration Manager initialized")
+        logger.info("[OK] Reports-Visualization Integration Manager initialized")
     
     def generate_complete_thesis_output(self,
                                        results_df: pd.DataFrame,
@@ -117,7 +117,7 @@ class ReportsVisualizationIntegrationManager:
         duration = (datetime.now() - start_time).total_seconds()
         
         logger.info("\n" + "="*80)
-        logger.info("✓ THESIS OUTPUT GENERATION COMPLETED")
+        logger.info("[OK] THESIS OUTPUT GENERATION COMPLETED")
         logger.info("="*80)
         logger.info(f"Duration: {duration:.1f} seconds ({duration/60:.1f} minutes)")
         logger.info(f"Output directory: {self.output_dir}")
@@ -172,7 +172,7 @@ class ReportsVisualizationIntegrationManager:
         results_file = self.data_dir / 'results_all.parquet'
         results_df.to_parquet(results_file)
         self.generated_outputs['data_exports'].append(str(results_file))
-        logger.info(f"  ✓ Results exported: {results_file.name}")
+        logger.info(f"  [OK] Results exported: {results_file.name}")
         
         # Model metrics
         metrics_file = self.data_dir / 'model_metrics.json'
@@ -186,7 +186,7 @@ class ReportsVisualizationIntegrationManager:
                 }
             json.dump(metrics_clean, f, indent=2)
         self.generated_outputs['data_exports'].append(str(metrics_file))
-        logger.info(f"  ✓ Metrics exported: {metrics_file.name}")
+        logger.info(f"  [OK] Metrics exported: {metrics_file.name}")
         
         # Predictions (if available)
         if predictions:
@@ -195,7 +195,7 @@ class ReportsVisualizationIntegrationManager:
                 if isinstance(preds, np.ndarray):
                     pd.DataFrame({'prediction': preds}).to_csv(pred_file, index=False)
                 self.generated_outputs['data_exports'].append(str(pred_file))
-            logger.info(f"  ✓ Predictions exported: {len(predictions)} models")
+            logger.info(f"  [OK] Predictions exported: {len(predictions)} models")
     
     def _generate_visualizations(self, results_df, model_metrics, training_history,
                                 predictions, anomalies, feature_importance):
@@ -232,7 +232,7 @@ class ReportsVisualizationIntegrationManager:
             viz_manager.generate_all_visualizations()
             viz_manager.generate_html_report("Thesis Comprehensive Analysis")
             
-            logger.info("  ✓ All visualizations generated")
+            logger.info("  [OK] All visualizations generated")
             
         except ImportError:
             logger.warning("  [WARNING] Visualization module not available")
@@ -272,7 +272,7 @@ class ReportsVisualizationIntegrationManager:
         with open(meta_file, 'w') as f:
             json.dump(methodology, f, indent=2)
         
-        logger.info(f"    ✓ Methodology metadata: {meta_file.name}")
+        logger.info(f"    [OK] Methodology metadata: {meta_file.name}")
     
     def _create_results_section(self, results_df, model_metrics):
         """Sonuçlar bölümü için çıktılar"""
@@ -299,7 +299,7 @@ class ReportsVisualizationIntegrationManager:
             results_clean = self._clean_numpy_types(results)
             json.dump(results_clean, f, indent=2)
         
-        logger.info(f"    ✓ Results metadata: {meta_file.name}")
+        logger.info(f"    [OK] Results metadata: {meta_file.name}")
     
     def _create_analysis_section(self, results_df):
         """Analiz bölümü için çıktılar"""
@@ -327,7 +327,7 @@ class ReportsVisualizationIntegrationManager:
         with open(meta_file, 'w') as f:
             json.dump(analysis, f, indent=2)
         
-        logger.info(f"    ✓ Analysis metadata: {meta_file.name}")
+        logger.info(f"    [OK] Analysis metadata: {meta_file.name}")
     
     def _create_tracking_metadata(self, start_time):
         """Genel tracking metadata"""
@@ -352,7 +352,7 @@ class ReportsVisualizationIntegrationManager:
             json.dump(metadata, f, indent=2)
         
         self.generated_outputs['metadata'] = metadata
-        logger.info(f"✓ Metadata saved: {meta_file.name}")
+        logger.info(f"[OK] Metadata saved: {meta_file.name}")
     
     def _get_directory_structure(self) -> Dict:
         """Dizin yapısını al"""
@@ -491,7 +491,7 @@ All reports are optimized for:
 - Quick loading
 - High-quality graphics (300 DPI)
 
-## 🔗 References
+## [LINK] References
 
 All data and visualizations are linked and cross-referenced for consistency.
 
@@ -505,7 +505,7 @@ All data and visualizations are linked and cross-referenced for consistency.
         with open(readme_file, 'w') as f:
             f.write(readme_content)
         
-        logger.info(f"✓ README created: {readme_file.name}")
+        logger.info(f"[OK] README created: {readme_file.name}")
         
         return readme_file
 
@@ -543,7 +543,7 @@ def main():
     # README
     manager.create_thesis_readme()
     
-    logger.info("\n✓ Test completed!")
+    logger.info("\n[OK] Test completed!")
 
 
 if __name__ == "__main__":

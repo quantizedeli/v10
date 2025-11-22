@@ -142,7 +142,7 @@ class HyperparameterTuner:
         # Best parameters
         self.best_params = self.study.best_params
         
-        logger.info(f"\n✓ Tuning tamamlandı!")
+        logger.info(f"\n[OK] Tuning tamamlandı!")
         logger.info(f"Best R² Score: {self.study.best_value:.4f}")
         logger.info(f"Best Parameters: {self.best_params}")
         
@@ -179,7 +179,7 @@ class HyperparameterTuner:
         with open(self.output_dir / 'summary.json', 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"✓ Sonuçlar kaydedildi: {self.output_dir}")
+        logger.info(f"[OK] Sonuçlar kaydedildi: {self.output_dir}")
     
     def plot_optimization_history(self):
         """Plot optimization history"""
@@ -211,7 +211,7 @@ class HyperparameterTuner:
             fig4 = plot_slice(self.study)
             fig4.write_html(str(self.output_dir / 'slice_plot.html'))
             
-            logger.info(f"✓ Grafikler kaydedildi: {self.output_dir}")
+            logger.info(f"[OK] Grafikler kaydedildi: {self.output_dir}")
             
         except Exception as e:
             logger.warning(f"Grafik oluşturma hatası: {e}")
@@ -504,17 +504,17 @@ class UnifiedTuner:
                     'n_trials': len(tuner.study.trials)
                 }
                 
-                logger.info(f"✓ {model_name} tuning tamamlandı")
+                logger.info(f"[OK] {model_name} tuning tamamlandı")
                 
             except Exception as e:
-                logger.error(f"✗ {model_name} tuning hatası: {e}")
+                logger.error(f"[FAIL] {model_name} tuning hatası: {e}")
                 results[model_name] = {'error': str(e)}
         
         # Save combined results
         with open(self.output_dir / 'all_models_best_params.json', 'w') as f:
             json.dump(results, f, indent=2)
         
-        logger.info(f"\n✓ Tüm tuning işlemleri tamamlandı!")
+        logger.info(f"\n[OK] Tüm tuning işlemleri tamamlandı!")
         logger.info(f"Sonuçlar: {self.output_dir}")
         
         return results
@@ -572,7 +572,7 @@ def test_hyperparameter_tuning():
             print(f"  Best Score: {result['best_score']:.4f}")
             print(f"  Best Params: {result['best_params']}")
     
-    print("\n✓ Test tamamlandı!")
+    print("\n[OK] Test tamamlandı!")
 
 
 if __name__ == "__main__":

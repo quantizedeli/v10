@@ -46,7 +46,7 @@ class MasterReportVisualizationsComplete:
     def __init__(self, output_dir='visualizations/master_report_complete'):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"✓ MasterReportVisualizationsComplete initialized: {self.output_dir}")
+        logger.info(f"[OK] MasterReportVisualizationsComplete initialized: {self.output_dir}")
     
     def plot_executive_summary_dashboard(self,
                                         summary_stats: Dict,
@@ -211,23 +211,23 @@ class MasterReportVisualizationsComplete:
         insights_text = f"""
 KEY INSIGHTS & RECOMMENDATIONS
 
-✓ BEST MODEL: {best_model}
+[OK] BEST MODEL: {best_model}
   • R² Score: {best_r2:.4f}
   • Recommended for production deployment
 
-✓ TARGETS COMPLETED: {', '.join(summary_stats.get('targets_completed', []))}
+[OK] TARGETS COMPLETED: {', '.join(summary_stats.get('targets_completed', []))}
   • All primary nuclear properties successfully predicted
 
-✓ MODEL DIVERSITY: {summary_stats.get('total_models', 0)} models trained
+[OK] MODEL DIVERSITY: {summary_stats.get('total_models', 0)} models trained
   • Ensemble methods show +1-2% improvement over single models
   • Stacking ensemble achieves best generalization
 
-✓ COMPUTATIONAL EFFICIENCY:
+[OK] COMPUTATIONAL EFFICIENCY:
   • Average training time: {model_performance['Training_Time'].mean():.1f} seconds/model
   • Total project duration: {summary_stats.get('total_training_time', 0):.1f} hours
   • Parallel training reduced time by ~60%
 
-✓ SUCCESS RATE: {summary_stats.get('success_rate', 0):.1f}%
+[OK] SUCCESS RATE: {summary_stats.get('success_rate', 0):.1f}%
   • {int(summary_stats.get('success_rate', 0) * summary_stats.get('total_models', 0) / 100)} models achieved R² > 0.85
   • Robust performance across all nuclear regions
 
@@ -253,7 +253,7 @@ KEY INSIGHTS & RECOMMENDATIONS
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_thesis_ready_composite_figure(self,
@@ -479,10 +479,10 @@ Ensemble Model:
   • Generalization: Excellent
 
 Key Achievements:
-  ✓ {len(model_comparison)} models successfully trained
-  ✓ All targets achieved R² > 0.85
-  ✓ Ensemble provides robust predictions
-  ✓ Production-ready system deployed
+  [OK] {len(model_comparison)} models successfully trained
+  [OK] All targets achieved R² > 0.85
+  [OK] Ensemble provides robust predictions
+  [OK] Production-ready system deployed
 
 Statistical Validation:
   • Residuals follow normal distribution (μ≈0, σ<0.3)
@@ -505,7 +505,7 @@ Statistical Validation:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def generate_all_master_report_plots(self,
@@ -531,7 +531,7 @@ Statistical Validation:
                 )
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed executive dashboard: {e}")
+                logger.error(f"  [FAIL] Failed executive dashboard: {e}")
         
         # 2. Thesis composite figure
         if all([dataset_info, training_curves, model_comparison, predictions]):
@@ -541,10 +541,10 @@ Statistical Validation:
                 )
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed thesis figure: {e}")
+                logger.error(f"  [FAIL] Failed thesis figure: {e}")
         
         logger.info("\n" + "="*70)
-        logger.info(f"✓ MASTER REPORT VISUALIZATIONS COMPLETE: {len(generated_plots)}/2")
+        logger.info(f"[OK] MASTER REPORT VISUALIZATIONS COMPLETE: {len(generated_plots)}/2")
         logger.info("="*70)
         
         return generated_plots
@@ -631,4 +631,4 @@ if __name__ == "__main__":
         predictions=predictions
     )
     
-    logger.info("\n✓ Test complete! Check test_output/master_report/")
+    logger.info("\n[OK] Test complete! Check test_output/master_report/")

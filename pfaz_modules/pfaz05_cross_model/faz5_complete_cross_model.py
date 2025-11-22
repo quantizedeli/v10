@@ -73,7 +73,7 @@ class CrossModelEvaluator:
         df_copy['r2'] = 1 - (df_copy['error']**2) / (df_copy['target'].std()**2 + 1e-10)
         
         self.predictions[model_name] = df_copy
-        logger.info(f"✓ {model_name}: {len(df_copy)} çekirdek eklendi")
+        logger.info(f"[OK] {model_name}: {len(df_copy)} çekirdek eklendi")
     
     def evaluate_common_performance(self, target_name='MM', top_n=50):
         """Ortak performans analizi"""
@@ -234,7 +234,7 @@ class CrossModelEvaluator:
             # 4. Detailed statistics
             self._write_detailed_stats(writer)
         
-        logger.info(f"✓ Excel rapor kaydedildi: {filepath}")
+        logger.info(f"[OK] Excel rapor kaydedildi: {filepath}")
     
     def _write_summary(self, writer):
         """Özet sheet"""
@@ -417,7 +417,7 @@ Genel Model Uyumu: {results['model_agreement']['overall_agreement']:.3f}
         plt.savefig(viz_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Görselleştirme kaydedildi: {viz_path}")
+        logger.info(f"[OK] Görselleştirme kaydedildi: {viz_path}")
 
 
 class CrossModelAnalysisPipeline:
@@ -526,7 +526,7 @@ class CrossModelAnalysisPipeline:
                     self._load_model_predictions(f'ANFIS_{config_name}', config_dir, 'ANFIS')
         
         # Özet
-        logger.info(f"\n  ✓ Tahmin toplama özeti:")
+        logger.info(f"\n  [OK] Tahmin toplama özeti:")
         for target in self.targets:
             n_models = len(self.all_predictions.get(target, {}))
             logger.info(f"    {target}: {n_models} model")
@@ -551,10 +551,10 @@ class CrossModelAnalysisPipeline:
                         self.all_predictions[target] = {}
                     
                     self.all_predictions[target][model_name] = df
-                    logger.debug(f"  ✓ {model_name} - {target}: {len(df)} çekirdek")
+                    logger.debug(f"  [OK] {model_name} - {target}: {len(df)} çekirdek")
                     
                 except Exception as e:
-                    logger.error(f"  ✗ {model_name} - {target} yükleme hatası: {e}")
+                    logger.error(f"  [FAIL] {model_name} - {target} yükleme hatası: {e}")
     
     def _create_master_report(self, results):
         """Master Excel rapor"""
@@ -574,7 +574,7 @@ class CrossModelAnalysisPipeline:
             # 4. Model istatistikleri
             self._write_model_statistics_all(writer)
         
-        logger.info(f"  ✓ Master rapor kaydedildi: {master_file}")
+        logger.info(f"  [OK] Master rapor kaydedildi: {master_file}")
     
     def _write_overall_summary(self, writer, results):
         """Genel özet sheet"""
@@ -684,7 +684,7 @@ class CrossModelAnalysisPipeline:
         with open(json_file, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"  ✓ JSON özet kaydedildi: {json_file}")
+        logger.info(f"  [OK] JSON özet kaydedildi: {json_file}")
 
 
 def main():

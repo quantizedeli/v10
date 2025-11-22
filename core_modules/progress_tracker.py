@@ -162,7 +162,7 @@ class ProgressTracker:
         with open(self.log_file, 'w', encoding='utf-8') as f:
             json.dump(log_data, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"📄 Detaylı log kaydedildi: {self.log_file}")
+        logger.info(f"[FILE] Detaylı log kaydedildi: {self.log_file}")
 
 
 class ModelTrainingTracker(ProgressTracker):
@@ -373,7 +373,7 @@ class MultiStageTracker:
         with open(log_file, 'w', encoding='utf-8') as f:
             json.dump(log_data, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"📄 Proje özeti kaydedildi: {log_file}")
+        logger.info(f"[FILE] Proje özeti kaydedildi: {log_file}")
 
 
 def main():

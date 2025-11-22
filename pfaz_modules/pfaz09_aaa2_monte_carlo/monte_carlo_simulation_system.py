@@ -164,8 +164,8 @@ class MCDropoutSimulator:
         ci_lower = np.percentile(predictions, 2.5, axis=0)
         ci_upper = np.percentile(predictions, 97.5, axis=0)
         
-        logger.info(f"  ✓ Mean uncertainty: {std_pred.mean():.4f}")
-        logger.info(f"  ✓ Max uncertainty: {std_pred.max():.4f}")
+        logger.info(f"  [OK] Mean uncertainty: {std_pred.mean():.4f}")
+        logger.info(f"  [OK] Max uncertainty: {std_pred.max():.4f}")
         
         return {
             'mean_predictions': mean_pred,
@@ -255,8 +255,8 @@ class BootstrapSimulator:
         ci_lower = np.percentile(bootstrap_predictions, 2.5, axis=0)
         ci_upper = np.percentile(bootstrap_predictions, 97.5, axis=0)
         
-        logger.info(f"  ✓ Mean CI width: {(ci_upper - ci_lower).mean():.4f}")
-        logger.info(f"  ✓ Mean R²: {np.mean(bootstrap_r2):.4f} ± {np.std(bootstrap_r2):.4f}")
+        logger.info(f"  [OK] Mean CI width: {(ci_upper - ci_lower).mean():.4f}")
+        logger.info(f"  [OK] Mean R²: {np.mean(bootstrap_r2):.4f} ± {np.std(bootstrap_r2):.4f}")
         
         return {
             'mean_predictions': mean_pred,
@@ -349,7 +349,7 @@ class NoiseSimulator:
             
             logger.info(f"      Robustness: {robustness:.3f}")
         
-        logger.info(f"  ✓ Noise sensitivity analysis complete")
+        logger.info(f"  [OK] Noise sensitivity analysis complete")
         
         return {
             'noise_levels': self.noise_levels,
@@ -442,8 +442,8 @@ class FeatureDropoutSimulator:
         unstable_features = [feature_names[i] for i in range(n_features) 
                             if feature_variance[i] >= variance_threshold]
         
-        logger.info(f"  ✓ Stable features: {len(stable_features)}")
-        logger.info(f"  ✓ Unstable features: {len(unstable_features)}")
+        logger.info(f"  [OK] Stable features: {len(stable_features)}")
+        logger.info(f"  [OK] Unstable features: {len(unstable_features)}")
         
         return {
             'dropout_probs': self.dropout_probs,
@@ -518,9 +518,9 @@ class EnsembleUncertaintyAnalyzer:
         # Calculate model correlations
         model_correlations = np.corrcoef(all_predictions)
         
-        logger.info(f"  ✓ Mean inter-model std: {inter_model_std.mean():.4f}")
-        logger.info(f"  ✓ Consensus nuclei: {len(consensus_indices)}")
-        logger.info(f"  ✓ Disagreement nuclei: {len(disagreement_indices)}")
+        logger.info(f"  [OK] Mean inter-model std: {inter_model_std.mean():.4f}")
+        logger.info(f"  [OK] Consensus nuclei: {len(consensus_indices)}")
+        logger.info(f"  [OK] Disagreement nuclei: {len(disagreement_indices)}")
         
         return {
             'mean_predictions': mean_pred,
@@ -693,7 +693,7 @@ class MonteCarloSimulationSystem:
                 logger.warning(f"    Failed to load {model_id}: {e}")
                 continue
         
-        logger.info(f"  ✓ Successfully loaded {len(models)} models")
+        logger.info(f"  [OK] Successfully loaded {len(models)} models")
         
         # Save top 10 selection
         selection_file = self.output_dir / 'model_selection' / f'top10_models_{target}.json'
@@ -728,7 +728,7 @@ class MonteCarloSimulationSystem:
                 else:
                     aaa2_df = pd.read_csv(path)
                 
-                logger.info(f"  ✓ Loaded {len(aaa2_df)} nuclei")
+                logger.info(f"  [OK] Loaded {len(aaa2_df)} nuclei")
                 return aaa2_df
         
         logger.error("  AAA2 data not found in any expected location")
@@ -800,7 +800,7 @@ class MonteCarloSimulationSystem:
             )
             mc_results['ensemble_uncertainty'] = ensemble_result
         
-        logger.info("\n  ✓ MC simulations complete")
+        logger.info("\n  [OK] MC simulations complete")
         
         return mc_results
     
@@ -867,8 +867,8 @@ class MonteCarloSimulationSystem:
         high_unc_nuclei = aaa2_df.loc[high_unc_mask, 'NUCLEUS'].tolist()
         low_unc_nuclei = aaa2_df.loc[low_unc_mask, 'NUCLEUS'].tolist()
         
-        logger.info(f"  ✓ High uncertainty nuclei: {len(high_unc_nuclei)}")
-        logger.info(f"  ✓ Low uncertainty nuclei: {len(low_unc_nuclei)}")
+        logger.info(f"  [OK] High uncertainty nuclei: {len(high_unc_nuclei)}")
+        logger.info(f"  [OK] Low uncertainty nuclei: {len(low_unc_nuclei)}")
         
         aaa2_results = {
             'target': target,
@@ -1033,7 +1033,7 @@ class MonteCarloSimulationSystem:
         plt.close()
         
         viz_files['3d_uncertainty'] = str(png_file)
-        logger.info(f"    ✓ Chart 11 saved: {png_file.name}")
+        logger.info(f"    [OK] Chart 11 saved: {png_file.name}")
         
         # Chart 12: 3D Model Agreement (if ensemble results available)
         ensemble_results = mc_results.get('ensemble_uncertainty', {})
@@ -1062,7 +1062,7 @@ class MonteCarloSimulationSystem:
             plt.close()
             
             viz_files['3d_agreement'] = str(png_file)
-            logger.info(f"    ✓ Chart 12 saved: {png_file.name}")
+            logger.info(f"    [OK] Chart 12 saved: {png_file.name}")
         
         # Chart 13: 3D Noise Robustness
         noise_results = mc_results.get('noise_sensitivity', {})
@@ -1100,9 +1100,9 @@ class MonteCarloSimulationSystem:
             plt.close()
             
             viz_files['3d_robustness'] = str(png_file)
-            logger.info(f"    ✓ Chart 13 saved: {png_file.name}")
+            logger.info(f"    [OK] Chart 13 saved: {png_file.name}")
         
-        logger.info(f"  ✓ 3D visualizations complete: {len(viz_files)} charts")
+        logger.info(f"  [OK] 3D visualizations complete: {len(viz_files)} charts")
         return viz_files
     
     def create_standard_visualizations(self, target: str, mc_results: Dict,
@@ -1148,7 +1148,7 @@ class MonteCarloSimulationSystem:
         plt.close()
         viz_files['uncertainty_vs_A'] = str(png_file)
         
-        logger.info(f"  ✓ Standard visualizations: {len(viz_files)} charts")
+        logger.info(f"  [OK] Standard visualizations: {len(viz_files)} charts")
         return viz_files
     
     def generate_excel_report(self, target: str, mc_results: Dict,
@@ -1193,7 +1193,7 @@ class MonteCarloSimulationSystem:
                 ]
                 high_unc_df.to_excel(writer, sheet_name='High_Uncertainty', index=False)
         
-        logger.info(f"  ✓ Excel saved: {excel_file.name}")
+        logger.info(f"  [OK] Excel saved: {excel_file.name}")
         return excel_file
     
     def export_json_summary(self, target: str, mc_results: Dict,
@@ -1223,7 +1223,7 @@ class MonteCarloSimulationSystem:
         with open(json_file, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"  ✓ JSON saved: {json_file.name}")
+        logger.info(f"  [OK] JSON saved: {json_file.name}")
         return json_file
 
 

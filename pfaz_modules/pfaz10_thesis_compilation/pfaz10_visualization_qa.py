@@ -63,7 +63,7 @@ class VisualizationGalleryManager:
             'theoretical': ['semf', 'nilsson', 'theoretical', 'shell']
         }
         
-        logger.info("✓ Visualization Gallery Manager initialized")
+        logger.info("[OK] Visualization Gallery Manager initialized")
     
     def scan_all_figures(self) -> List[Dict]:
         """
@@ -112,7 +112,7 @@ class VisualizationGalleryManager:
             except Exception as e:
                 logger.warning(f"Could not process {fig_file.name}: {e}")
         
-        logger.info(f"✓ Scanned {len(self.catalog)} figures")
+        logger.info(f"[OK] Scanned {len(self.catalog)} figures")
         
         # Save catalog
         self._save_catalog()
@@ -170,7 +170,7 @@ class VisualizationGalleryManager:
         catalog_file = self.output_dir / 'figure_catalog.json'
         with open(catalog_file, 'w') as f:
             json.dump(self.catalog, f, indent=2)
-        logger.info(f"✓ Catalog saved: {catalog_file}")
+        logger.info(f"[OK] Catalog saved: {catalog_file}")
     
     def generate_appendix_gallery(self, 
                                  columns: int = 2,
@@ -216,7 +216,7 @@ This appendix contains all visualizations generated during the analysis, organiz
         with open(appendix_file, 'w', encoding='utf-8') as f:
             f.write(latex)
         
-        logger.info(f"✓ Gallery saved: {appendix_file}")
+        logger.info(f"[OK] Gallery saved: {appendix_file}")
         
         return latex
     
@@ -293,7 +293,7 @@ class ThesisQualityAssurance:
             'checks_failed': 0
         }
         
-        logger.info("✓ Thesis QA System initialized")
+        logger.info("[OK] Thesis QA System initialized")
     
     def run_all_checks(self) -> Dict[str, Any]:
         """
@@ -322,14 +322,14 @@ class ThesisQualityAssurance:
                 passed = check_func()
                 if passed:
                     self.qa_results['checks_passed'] += 1
-                    logger.info(f"  ✓ {check_name} passed")
+                    logger.info(f"  [OK] {check_name} passed")
                 else:
                     self.qa_results['checks_failed'] += 1
-                    logger.warning(f"  ✗ {check_name} failed")
+                    logger.warning(f"  [FAIL] {check_name} failed")
             except Exception as e:
                 self.qa_results['errors'].append(f"{check_name}: {str(e)}")
                 self.qa_results['checks_failed'] += 1
-                logger.error(f"  ✗ {check_name} error: {e}")
+                logger.error(f"  [FAIL] {check_name} error: {e}")
         
         # Save report
         self._save_qa_report()
@@ -481,7 +481,7 @@ class ThesisQualityAssurance:
         with open(report_file, 'w') as f:
             json.dump(self.qa_results, f, indent=2)
         
-        logger.info(f"\n✓ QA report saved: {report_file}")
+        logger.info(f"\n[OK] QA report saved: {report_file}")
     
     def _print_qa_summary(self):
         """Print QA summary"""
@@ -496,7 +496,7 @@ class ThesisQualityAssurance:
         if self.qa_results['errors']:
             print("\nErrors:")
             for error in self.qa_results['errors']:
-                print(f"  ✗ {error}")
+                print(f"  [FAIL] {error}")
         
         if self.qa_results['warnings']:
             print("\nWarnings:")
@@ -536,9 +536,9 @@ def main():
     
     # Overall status
     if qa_results['checks_failed'] == 0:
-        print("\n✓ ALL QUALITY CHECKS PASSED")
+        print("\n[OK] ALL QUALITY CHECKS PASSED")
     else:
-        print(f"\n✗ {qa_results['checks_failed']} CHECKS FAILED")
+        print(f"\n[FAIL] {qa_results['checks_failed']} CHECKS FAILED")
 
 
 if __name__ == "__main__":

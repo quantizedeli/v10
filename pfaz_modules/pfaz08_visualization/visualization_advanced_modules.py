@@ -125,7 +125,7 @@ class DataCatalogVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_data_quality_metrics(self,
                                  quality_metrics: Dict[str, Dict[str, float]],
@@ -159,7 +159,7 @@ class DataCatalogVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_feature_statistics_catalog(self,
                                        datasets_features: Dict[str, pd.DataFrame],
@@ -196,7 +196,7 @@ class DataCatalogVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -269,7 +269,7 @@ class ReportsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_report_generation_timeline(self,
                                        report_timestamps: Dict[str, List[datetime]],
@@ -314,7 +314,7 @@ class ReportsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -387,7 +387,7 @@ class LogAnalyticsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_error_analysis(self,
                            error_logs: pd.DataFrame,
@@ -444,7 +444,7 @@ class LogAnalyticsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_performance_metrics_from_logs(self,
                                           logs_with_metrics: pd.DataFrame,
@@ -511,7 +511,7 @@ class LogAnalyticsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -565,7 +565,7 @@ class Advanced3DVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_3d_density_landscape(self,
                                  X: np.ndarray,
@@ -593,7 +593,7 @@ class Advanced3DVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_hierarchical_clustering_dendrogram(self,
                                                X: np.ndarray,
@@ -627,7 +627,7 @@ class Advanced3DVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -713,7 +713,7 @@ class EnsembleVisualizationExtended:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_stacking_architecture(self,
                                   base_models: List[str],
@@ -768,7 +768,7 @@ class EnsembleVisualizationExtended:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -809,7 +809,7 @@ class ProductionReadinessDashboard:
         ax1.text(0.05, 0.95, 'Performance Checklist', fontsize=12, fontweight='bold', transform=ax1.transAxes)
         for i, (item, status) in enumerate(checklist_items):
             y_pos = 0.8 - i * 0.15
-            symbol = '✓' if status else '✗'
+            symbol = '[OK]' if status else '[FAIL]'
             color = 'green' if status else 'red'
             ax1.text(0.1, y_pos, f'{symbol} {item}', fontsize=11, transform=ax1.transAxes, color=color, fontweight='bold')
         
@@ -859,13 +859,13 @@ class ProductionReadinessDashboard:
         
         readiness_score = (performance_score + robustness_avg) / 2
         if readiness_score >= 0.95:
-            status = "🟢 READY FOR PRODUCTION"
+            status = "[OK] READY FOR PRODUCTION"
             color = 'green'
         elif readiness_score >= 0.85:
             status = "🟡 READY WITH MONITORING"
             color = 'orange'
         else:
-            status = "🔴 NOT READY - REQUIRES IMPROVEMENTS"
+            status = "[ERROR] NOT READY - REQUIRES IMPROVEMENTS"
             color = 'red'
         
         ax5.text(0.5, 0.8, 'Production Deployment Status', ha='center', fontsize=12, fontweight='bold', transform=ax5.transAxes)
@@ -878,7 +878,7 @@ class ProductionReadinessDashboard:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -903,7 +903,7 @@ def main():
         'ProductionReadiness': ProductionReadinessDashboard()
     }
     
-    logger.info("\n✓ Advanced visualizers initialized successfully!")
+    logger.info("\n[OK] Advanced visualizers initialized successfully!")
     logger.info("\nAvailable modules:")
     for name in visualizers.keys():
         logger.info(f"  - {name}Visualizer")

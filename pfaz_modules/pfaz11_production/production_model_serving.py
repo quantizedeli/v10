@@ -494,7 +494,7 @@ def main():
     )
     
     response = manager.predict_single(request)
-    print("\n✓ Single Prediction:")
+    print("\n[OK] Single Prediction:")
     print(f"  Prediction: {response.prediction:.4f}")
     print(f"  Confidence: {response.confidence:.4f}")
     print(f"  Inference Time: {response.inference_time_ms:.2f} ms")
@@ -507,15 +507,15 @@ def main():
     ]
     
     responses = manager.predict_batch(features_list, 'rf_test')
-    print(f"\n✓ Batch Prediction: {len(responses)} predictions")
+    print(f"\n[OK] Batch Prediction: {len(responses)} predictions")
     
     # Metrics
-    print("\n✓ Metrics:")
+    print("\n[OK] Metrics:")
     metrics = manager.get_metrics()
     for key, value in metrics.items():
         print(f"  {key}: {value}")
     
-    print("\n✓ Test completed!")
+    print("\n[OK] Test completed!")
 
 
 if __name__ == "__main__":

@@ -86,7 +86,7 @@ class AdvancedVotingEnsemble:
         self.models = {}
         self.model_performances = {}
         
-        logger.info("✓ AdvancedVotingEnsemble initialized")
+        logger.info("[OK] AdvancedVotingEnsemble initialized")
     
     def add_model(self, model_id: str, model: object, 
                   X_val: np.ndarray, y_val: np.ndarray):
@@ -106,7 +106,7 @@ class AdvancedVotingEnsemble:
             'inverse_rmse': 1.0 / (rmse + 1e-10)
         }
         
-        logger.info(f"  ✓ {model_id}: R²={r2:.4f}, RMSE={rmse:.4f}")
+        logger.info(f"  [OK] {model_id}: R²={r2:.4f}, RMSE={rmse:.4f}")
     
     def simple_voting(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Simple voting ensemble (equal weights)"""
@@ -294,12 +294,12 @@ class AdvancedStackingEnsemble:
         self.meta_models = {}
         self.oof_predictions = None
         
-        logger.info(f"✓ AdvancedStackingEnsemble initialized (CV folds: {cv_folds})")
+        logger.info(f"[OK] AdvancedStackingEnsemble initialized (CV folds: {cv_folds})")
     
     def add_base_model(self, model_id: str, model: object):
         """Add base model"""
         self.base_models[model_id] = model
-        logger.info(f"  ✓ Added base model: {model_id}")
+        logger.info(f"  [OK] Added base model: {model_id}")
     
     def generate_oof_predictions(self, X_train: np.ndarray, y_train: np.ndarray):
         """Generate out-of-fold predictions for meta-model training"""
@@ -330,7 +330,7 @@ class AdvancedStackingEnsemble:
         
         self.oof_predictions = oof_preds
         
-        logger.info(f"✓ OOF predictions generated: shape={oof_preds.shape}")
+        logger.info(f"[OK] OOF predictions generated: shape={oof_preds.shape}")
         
         return oof_preds
     
@@ -358,7 +358,7 @@ class AdvancedStackingEnsemble:
             r2 = r2_score(y_train, oof_pred)
             logger.info(f"    OOF R²: {r2:.4f}")
         
-        logger.info(f"✓ {len(self.meta_models)} meta-models trained")
+        logger.info(f"[OK] {len(self.meta_models)} meta-models trained")
     
     def predict(self, X_test: np.ndarray, meta_model_name: str) -> np.ndarray:
         """Predict using stacking ensemble"""
@@ -418,7 +418,7 @@ class AdvancedBoostingEnsemble:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        logger.info("✓ AdvancedBoostingEnsemble initialized")
+        logger.info("[OK] AdvancedBoostingEnsemble initialized")
     
     def train_adaboost(self, X_train: np.ndarray, y_train: np.ndarray,
                        X_test: np.ndarray, y_test: np.ndarray,
@@ -509,7 +509,7 @@ class EnsembleDiversityAnalyzer:
     """
     
     def __init__(self):
-        logger.info("✓ EnsembleDiversityAnalyzer initialized")
+        logger.info("[OK] EnsembleDiversityAnalyzer initialized")
     
     def analyze_diversity(self, predictions_dict: Dict[str, np.ndarray], 
                           y_true: np.ndarray) -> Dict:
@@ -592,7 +592,7 @@ class ComprehensiveEnsembleEvaluator:
         
         self.results = []
         
-        logger.info("✓ ComprehensiveEnsembleEvaluator initialized")
+        logger.info("[OK] ComprehensiveEnsembleEvaluator initialized")
     
     def add_result(self, result: Dict):
         """Add ensemble result"""
@@ -622,7 +622,7 @@ class ComprehensiveEnsembleEvaluator:
         # Save
         save_path = self.output_dir / 'ensemble_comparison.xlsx'
         df.to_excel(save_path, index=False)
-        logger.info(f"\n✓ Comparison saved: {save_path}")
+        logger.info(f"\n[OK] Comparison saved: {save_path}")
         
         return df
     
@@ -680,7 +680,7 @@ class ComprehensiveEnsembleEvaluator:
             
             json.dump(report_copy, f, indent=2, default=str)
         
-        logger.info(f"✓ Report saved: {json_path}")
+        logger.info(f"[OK] Report saved: {json_path}")
         
         return report
 
@@ -731,7 +731,7 @@ def pfaz7_complete_pipeline():
     y_val = target_func(X_val) + np.random.randn(n_val) * 0.5
     y_test = target_func(X_test) + np.random.randn(n_test) * 0.5
     
-    logger.info(f"✓ Data: Train={n_train}, Val={n_val}, Test={n_test}")
+    logger.info(f"[OK] Data: Train={n_train}, Val={n_val}, Test={n_test}")
     
     # Base models
     base_models = {
@@ -745,7 +745,7 @@ def pfaz7_complete_pipeline():
     if XGBOOST_AVAILABLE:
         base_models['XGB'] = XGBRegressor(n_estimators=100, max_depth=3, random_state=42).fit(X_train, y_train)
     
-    logger.info(f"✓ Base models trained: {len(base_models)}")
+    logger.info(f"[OK] Base models trained: {len(base_models)}")
     
     # ========================================================================
     # STEP 2: Voting Ensembles
@@ -866,7 +866,7 @@ def pfaz7_complete_pipeline():
     logger.info("PFAZ 7: FINAL SUMMARY")
     logger.info("="*80)
     
-    logger.info(f"\n📋 TOTAL ENSEMBLES TESTED: {len(evaluator.results)}")
+    logger.info(f"\n[LIST] TOTAL ENSEMBLES TESTED: {len(evaluator.results)}")
     logger.info(f"  - Voting: {len(voting_results)}")
     logger.info(f"  - Stacking: {len(stacking_results)}")
     logger.info(f"  - Boosting: {len(boosting_results)}")

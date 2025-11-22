@@ -155,7 +155,7 @@ class AutoMLFeatureEngineer:
         # Transformers
         self.scaler = StandardScaler()
         
-        logger.info(f"✓ AutoMLFeatureEngineer initialized")
+        logger.info(f"[OK] AutoMLFeatureEngineer initialized")
         logger.info(f"  Polynomial degree: {polynomial_degree}")
         logger.info(f"  Transforms: {include_transforms}")
         logger.info(f"  Interactions: {include_interactions}")
@@ -196,28 +196,28 @@ class AutoMLFeatureEngineer:
         # Step 1: Generate candidate features
         logger.info("-> Step 1: Generating candidate features...")
         X_candidates, candidate_names = self._generate_candidates(X, feature_names)
-        logger.info(f"  ✓ Generated {len(candidate_names)} candidate features")
+        logger.info(f"  [OK] Generated {len(candidate_names)} candidate features")
         
         self.candidate_features = candidate_names
         
         # Step 2: Remove low-variance features
         logger.info("\n-> Step 2: Removing low-variance features...")
         X_filtered, filtered_names = self._filter_low_variance(X_candidates, candidate_names)
-        logger.info(f"  ✓ Retained {len(filtered_names)} features (variance > 0.01)")
+        logger.info(f"  [OK] Retained {len(filtered_names)} features (variance > 0.01)")
         
         # Step 3: Remove highly correlated features
         logger.info("\n-> Step 3: Removing highly correlated features...")
         X_decorrelated, decorrelated_names = self._remove_high_correlation(
             X_filtered, filtered_names, threshold=0.95
         )
-        logger.info(f"  ✓ Retained {len(decorrelated_names)} features (|corr| < 0.95)")
+        logger.info(f"  [OK] Retained {len(decorrelated_names)} features (|corr| < 0.95)")
         
         # Step 4: Feature selection
         logger.info("\n-> Step 4: Feature selection...")
         X_selected, selected_names = self._select_features(
             X_decorrelated, y, decorrelated_names
         )
-        logger.info(f"  ✓ Selected {len(selected_names)} best features")
+        logger.info(f"  [OK] Selected {len(selected_names)} best features")
         
         self.selected_features = selected_names
         
@@ -330,7 +330,7 @@ class AutoMLFeatureEngineer:
                 X_poly = np.delete(X_poly, original_indices, axis=1)
                 poly_names = [name for i, name in enumerate(poly_names) if i not in original_indices]
                 
-                logger.info(f"    ✓ Generated {len(poly_names)} polynomial features")
+                logger.info(f"    [OK] Generated {len(poly_names)} polynomial features")
                 return X_poly, list(poly_names)
             
             # Manual for degree 3 (to limit explosion)
@@ -351,11 +351,11 @@ class AutoMLFeatureEngineer:
                     poly_names.append(f"{feat}^3")
                 
                 X_poly = np.column_stack(poly_features)
-                logger.info(f"    ✓ Generated {len(poly_names)} degree-3 features")
+                logger.info(f"    [OK] Generated {len(poly_names)} degree-3 features")
                 return X_poly, poly_names
         
         except Exception as e:
-            logger.error(f"    ✗ Polynomial generation failed: {e}")
+            logger.error(f"    [FAIL] Polynomial generation failed: {e}")
             return None, []
     
     def _generate_physics_interactions(self,
@@ -383,10 +383,10 @@ class AutoMLFeatureEngineer:
         
         if interaction_features:
             X_interactions = np.column_stack(interaction_features)
-            logger.info(f"    ✓ Generated {len(interaction_names)} physics interactions")
+            logger.info(f"    [OK] Generated {len(interaction_names)} physics interactions")
             return X_interactions, interaction_names
         else:
-            logger.info("    ✗ No physics interactions generated")
+            logger.info("    [FAIL] No physics interactions generated")
             return None, []
     
     def _generate_transforms(self,
@@ -432,7 +432,7 @@ class AutoMLFeatureEngineer:
         
         if transform_features:
             X_transforms = np.column_stack(transform_features)
-            logger.info(f"    ✓ Generated {len(transform_names)} transforms")
+            logger.info(f"    [OK] Generated {len(transform_names)} transforms")
             return X_transforms, transform_names
         else:
             return None, []
@@ -651,10 +651,10 @@ class AutoMLFeatureEngineer:
         with open(self.output_dir / 'feature_engineering_summary.json', 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"  ✓ Exported: selected_features.csv")
-        logger.info(f"  ✓ Exported: feature_importance.png")
-        logger.info(f"  ✓ Exported: features_latex_table.txt")
-        logger.info(f"  ✓ Exported: feature_engineering_summary.json")
+        logger.info(f"  [OK] Exported: selected_features.csv")
+        logger.info(f"  [OK] Exported: feature_importance.png")
+        logger.info(f"  [OK] Exported: features_latex_table.txt")
+        logger.info(f"  [OK] Exported: feature_engineering_summary.json")
     
     def _plot_feature_importance(self, feature_df: pd.DataFrame):
         """Plot feature importance"""
@@ -750,7 +750,7 @@ if __name__ == "__main__":
         X_train, y_train, feature_names, X_val
     )
     
-    logger.info(f"\n✓ Feature engineering complete!")
+    logger.info(f"\n[OK] Feature engineering complete!")
     logger.info(f"  Original features: {X_train.shape[1]}")
     logger.info(f"  Engineered features: {X_train_eng.shape[1]}")
     logger.info(f"  Improvement: {X_train_eng.shape[1] / X_train.shape[1]:.1f}x")

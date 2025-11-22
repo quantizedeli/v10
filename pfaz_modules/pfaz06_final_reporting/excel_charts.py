@@ -43,7 +43,7 @@ class ExcelChartGenerator:
                 chart = self._create_chart(workbook, config)
                 worksheet.insert_chart(f'K{i*15 + 2}', chart)
             
-        logger.info(f"✓ Excel with charts: {output_file}")
+        logger.info(f"[OK] Excel with charts: {output_file}")
     
     def _create_chart(self, workbook, config):
         """Create single chart"""
@@ -90,8 +90,8 @@ class ExcelChartGenerator:
         
         worksheet.insert_chart('D2', chart, {'x_scale': 1.5, 'y_scale': 1.5})
         
-        logger.info(f"✓ Performance chart added to {sheet_name}")
+        logger.info(f"[OK] Performance chart added to {sheet_name}")
 
 
 if __name__ == "__main__":
-    print("✓ Excel Charts modülü hazır - visualization/excel_charts.py")
+    print("[OK] Excel Charts modülü hazır - visualization/excel_charts.py")

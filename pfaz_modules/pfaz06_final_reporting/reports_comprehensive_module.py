@@ -59,7 +59,7 @@ class ComprehensiveReportsBuilder:
             'reports': []
         }
         
-        logger.info(f"✓ Reports Builder initialized at {self.output_dir}")
+        logger.info(f"[OK] Reports Builder initialized at {self.output_dir}")
     
     # =========================================================================
     # 1. EXCEL REPORTS
@@ -192,7 +192,7 @@ class ComprehensiveReportsBuilder:
             self._create_report_metadata_sheet(writer, formats, sheet_count, config)
             sheet_count += 1
         
-        logger.info(f"✓ Excel report saved: {excel_file.name}")
+        logger.info(f"[OK] Excel report saved: {excel_file.name}")
         logger.info(f"  Total sheets: {sheet_count}")
         
         self.reports_generated.append({
@@ -277,7 +277,7 @@ class ComprehensiveReportsBuilder:
         summary_df = pd.DataFrame(summary_data)
         summary_df.to_excel(writer, sheet_name='1_Özet', index=False)
         
-        logger.info("    ✓ Summary sheet created")
+        logger.info("    [OK] Summary sheet created")
     
     def _create_model_performance_sheet(self, writer, metrics, formats):
         """Sheet 2: Model Performance"""
@@ -297,14 +297,14 @@ class ComprehensiveReportsBuilder:
         perf_df = pd.DataFrame(perf_data).sort_values('R² Score', ascending=False)
         perf_df.to_excel(writer, sheet_name='2_Model_Performance', index=False)
         
-        logger.info("    ✓ Model Performance sheet created")
+        logger.info("    [OK] Model Performance sheet created")
     
     def _create_all_results_sheet(self, writer, df, formats):
         """Sheet 3: All Results"""
         df_sorted = df.sort_values('r2', ascending=False) if 'r2' in df.columns else df
         df_sorted.to_excel(writer, sheet_name='3_All_Results', index=False)
         
-        logger.info("    ✓ All Results sheet created")
+        logger.info("    [OK] All Results sheet created")
     
     def _create_results_by_target_sheet(self, writer, df, formats):
         """Sheet 4: Results by Target"""
@@ -315,7 +315,7 @@ class ComprehensiveReportsBuilder:
             sheet_name = f'Target_{str(target)[:10]}'[:31]
             target_df.to_excel(writer, sheet_name=sheet_name, index=False)
         
-        logger.info(f"    ✓ Results by Target sheet created ({len(targets)} targets)")
+        logger.info(f"    [OK] Results by Target sheet created ({len(targets)} targets)")
     
     def _create_results_by_model_sheet(self, writer, df, formats):
         """Sheet 5: Results by Model"""
@@ -329,7 +329,7 @@ class ComprehensiveReportsBuilder:
                 sheet_name = f'Model_{str(model)[:10]}'[:31]
                 model_df.to_excel(writer, sheet_name=sheet_name, index=False)
             
-            logger.info(f"    ✓ Results by Model sheet created ({len(models)} models)")
+            logger.info(f"    [OK] Results by Model sheet created ({len(models)} models)")
     
     def _create_results_by_config_sheet(self, writer, df, formats):
         """Sheet 6: Results by Config"""
@@ -343,14 +343,14 @@ class ComprehensiveReportsBuilder:
                 sheet_name = f'Cfg_{str(config)[:10]}'[:31]
                 config_df.to_excel(writer, sheet_name=sheet_name, index=False)
             
-            logger.info(f"    ✓ Results by Config sheet created ({len(configs)} configs)")
+            logger.info(f"    [OK] Results by Config sheet created ({len(configs)} configs)")
     
     def _create_training_history_sheet(self, writer, history, formats):
         """Sheet 7: Training History"""
         history_df = pd.DataFrame(history)
         history_df.to_excel(writer, sheet_name='7_Training_History', index=False)
         
-        logger.info("    ✓ Training History sheet created")
+        logger.info("    [OK] Training History sheet created")
     
     def _create_metrics_comparison_sheet(self, writer, metrics, formats):
         """Sheet 8: Metrics Comparison"""
@@ -369,7 +369,7 @@ class ComprehensiveReportsBuilder:
         comp_df = pd.DataFrame(comparison_data)
         comp_df.to_excel(writer, sheet_name='8_Metrics_Comparison', index=False)
         
-        logger.info("    ✓ Metrics Comparison sheet created")
+        logger.info("    [OK] Metrics Comparison sheet created")
     
     def _create_statistical_summary_sheet(self, writer, df, formats):
         """Sheet 9: Statistical Summary"""
@@ -391,7 +391,7 @@ class ComprehensiveReportsBuilder:
         stats_df = pd.DataFrame(stats_data)
         stats_df.to_excel(writer, sheet_name='9_Statistical_Summary', index=False)
         
-        logger.info("    ✓ Statistical Summary sheet created")
+        logger.info("    [OK] Statistical Summary sheet created")
     
     def _create_top_performers_sheet(self, writer, df, formats):
         """Sheet 10: Top Performers"""
@@ -403,13 +403,13 @@ class ComprehensiveReportsBuilder:
         
         top_df.to_excel(writer, sheet_name='10_Top_Performers', index=False)
         
-        logger.info(f"    ✓ Top Performers sheet created ({len(top_df)} records)")
+        logger.info(f"    [OK] Top Performers sheet created ({len(top_df)} records)")
     
     def _create_anomalies_sheet(self, writer, anomalies, formats):
         """Sheet 11: Anomalies"""
         anomalies.to_excel(writer, sheet_name='11_Anomalies', index=False)
         
-        logger.info(f"    ✓ Anomalies sheet created ({len(anomalies)} anomalies)")
+        logger.info(f"    [OK] Anomalies sheet created ({len(anomalies)} anomalies)")
     
     def _create_errors_analysis_sheet(self, writer, df, formats):
         """Sheet 12: Errors Analysis"""
@@ -430,7 +430,7 @@ class ComprehensiveReportsBuilder:
         errors_df = pd.DataFrame(errors_data)
         errors_df.to_excel(writer, sheet_name='12_Errors_Analysis', index=False)
         
-        logger.info("    ✓ Errors Analysis sheet created")
+        logger.info("    [OK] Errors Analysis sheet created")
     
     def _create_feature_statistics_sheet(self, writer, df, formats):
         """Sheet 13: Feature Statistics"""
@@ -440,7 +440,7 @@ class ComprehensiveReportsBuilder:
             corr_matrix = numeric_df.corr()
             corr_matrix.to_excel(writer, sheet_name='13_Feature_Statistics')
         
-        logger.info("    ✓ Feature Statistics sheet created")
+        logger.info("    [OK] Feature Statistics sheet created")
     
     def _create_dataset_info_sheet(self, writer, df, formats):
         """Sheet 14: Dataset Info"""
@@ -468,7 +468,7 @@ class ComprehensiveReportsBuilder:
         info_df = pd.DataFrame(info_data)
         info_df.to_excel(writer, sheet_name='14_Dataset_Info', index=False)
         
-        logger.info("    ✓ Dataset Info sheet created")
+        logger.info("    [OK] Dataset Info sheet created")
     
     def _create_report_metadata_sheet(self, writer, formats, sheet_count, config):
         """Sheet 15: Report Metadata"""
@@ -498,7 +498,7 @@ class ComprehensiveReportsBuilder:
         metadata_df = pd.DataFrame(metadata)
         metadata_df.to_excel(writer, sheet_name='15_Metadata', index=False)
         
-        logger.info("    ✓ Report Metadata sheet created")
+        logger.info("    [OK] Report Metadata sheet created")
     
     def _create_pandas_excel(self, results_df, model_metrics, save_name):
         """Pandas ile Excel oluştur (fallback)"""
@@ -511,7 +511,7 @@ class ComprehensiveReportsBuilder:
             metrics_df = pd.DataFrame(model_metrics).T
             metrics_df.to_excel(writer, sheet_name='Model_Metrics')
         
-        logger.info(f"✓ Excel report (pandas) saved: {excel_file.name}")
+        logger.info(f"[OK] Excel report (pandas) saved: {excel_file.name}")
         return excel_file
     
     # =========================================================================
@@ -582,7 +582,7 @@ class ComprehensiveReportsBuilder:
         with open(json_file, 'w') as f:
             json.dump(report, f, indent=2)
         
-        logger.info(f"✓ JSON report saved: {json_file.name}")
+        logger.info(f"[OK] JSON report saved: {json_file.name}")
         
         return json_file
     
@@ -619,14 +619,14 @@ class ComprehensiveReportsBuilder:
         csv_file = csv_dir / 'results_all.csv'
         results_df.to_csv(csv_file, index=False)
         files.append(csv_file)
-        logger.info(f"  ✓ {csv_file.name}")
+        logger.info(f"  [OK] {csv_file.name}")
         
         # 2. Model metrics
         metrics_df = pd.DataFrame(model_metrics).T
         csv_file = csv_dir / 'model_metrics.csv'
         metrics_df.to_csv(csv_file)
         files.append(csv_file)
-        logger.info(f"  ✓ {csv_file.name}")
+        logger.info(f"  [OK] {csv_file.name}")
         
         # 3. Results by target
         if 'target' in results_df.columns:
@@ -638,7 +638,7 @@ class ComprehensiveReportsBuilder:
             }).round(4)
             target_summary.to_csv(csv_file)
             files.append(csv_file)
-            logger.info(f"  ✓ {csv_file.name}")
+            logger.info(f"  [OK] {csv_file.name}")
         
         # 4. Top performers
         if 'r2' in results_df.columns:
@@ -646,7 +646,7 @@ class ComprehensiveReportsBuilder:
             top_df = results_df.nlargest(20, 'r2')
             top_df.to_csv(csv_file, index=False)
             files.append(csv_file)
-            logger.info(f"  ✓ {csv_file.name}")
+            logger.info(f"  [OK] {csv_file.name}")
         
         # 5. Errors summary
         csv_file = csv_dir / 'errors_summary.csv'
@@ -662,9 +662,9 @@ class ComprehensiveReportsBuilder:
             })
             errors.to_csv(csv_file, index=False)
             files.append(csv_file)
-            logger.info(f"  ✓ {csv_file.name}")
+            logger.info(f"  [OK] {csv_file.name}")
         
-        logger.info(f"✓ CSV exports completed ({len(files)} files)")
+        logger.info(f"[OK] CSV exports completed ({len(files)} files)")
         
         return files
     
@@ -846,7 +846,7 @@ class ComprehensiveReportsBuilder:
         with open(html_file, 'w') as f:
             f.write(html_content)
         
-        logger.info(f"✓ HTML report saved: {html_file.name}")
+        logger.info(f"[OK] HTML report saved: {html_file.name}")
         
         return html_file
     
@@ -883,7 +883,7 @@ class ComprehensiveReportsBuilder:
         reports['html'] = self.create_html_summary_report(results_df, model_metrics)
         
         logger.info("\n" + "="*70)
-        logger.info("✓ ALL REPORTS GENERATED")
+        logger.info("[OK] ALL REPORTS GENERATED")
         logger.info("="*70)
         logger.info(f"\n  Excel: {reports['excel'].name}")
         logger.info(f"  JSON:  {reports['json'].name}")
@@ -928,7 +928,7 @@ def main():
         test_results, test_metrics
     )
     
-    logger.info("\n✓ Test completed successfully!")
+    logger.info("\n[OK] Test completed successfully!")
 
 
 if __name__ == "__main__":

@@ -115,12 +115,12 @@ class RealModelLoader:
                         models[model_id] = model
                         self.model_types[model_id] = 'AI'
                         
-                        logger.info(f"  ✓ Loaded: {model_id}")
+                        logger.info(f"  [OK] Loaded: {model_id}")
                         
                         if len(models) >= max_models:
                             break
                     except Exception as e:
-                        logger.warning(f"  ✗ Failed to load {model_file.name}: {e}")
+                        logger.warning(f"  [FAIL] Failed to load {model_file.name}: {e}")
                 
                 if len(models) >= max_models:
                     break
@@ -140,17 +140,17 @@ class RealModelLoader:
                             models[model_id] = model
                             self.model_types[model_id] = 'ANFIS'
                             
-                            logger.info(f"  ✓ Loaded: {model_id}")
+                            logger.info(f"  [OK] Loaded: {model_id}")
                             
                             if len(models) >= max_models:
                                 break
                         except Exception as e:
-                            logger.warning(f"  ✗ Failed to load {model_file.name}: {e}")
+                            logger.warning(f"  [FAIL] Failed to load {model_file.name}: {e}")
                     
                     if len(models) >= max_models:
                         break
         
-        logger.info(f"✓ Total models loaded: {len(models)}")
+        logger.info(f"[OK] Total models loaded: {len(models)}")
         
         self.models = models
         return models
@@ -204,7 +204,7 @@ class ProductionVotingEnsemble:
                 'inverse_rmse': 1.0 / (rmse + 1e-10)
             }
         
-        logger.info(f"✓ Set {len(predictions_dict)} base predictions")
+        logger.info(f"[OK] Set {len(predictions_dict)} base predictions")
     
     def simple_voting(self) -> np.ndarray:
         """Simple voting (equal weights)"""
@@ -292,7 +292,7 @@ class ProductionStackingEnsemble:
         
         self.meta_models[meta_learner_type] = meta_model
         
-        logger.info(f"✓ Stacking meta-learner trained: {meta_learner_type}")
+        logger.info(f"[OK] Stacking meta-learner trained: {meta_learner_type}")
         
         return meta_model
     
@@ -446,7 +446,7 @@ class ComprehensiveEnsembleEvaluator:
         with open(self.output_dir / 'ensemble_results.json', 'w') as f:
             json.dump(results_json, f, indent=2)
         
-        logger.info(f"\n✓ Results saved to: {self.output_dir}")
+        logger.info(f"\n[OK] Results saved to: {self.output_dir}")
 
 
 # ============================================================================
@@ -487,7 +487,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     try:
         aaa2_df = pd.read_csv('aaa2.txt', sep='\t', encoding='utf-8')
         aaa2_df.columns = aaa2_df.columns.str.strip()
-        logger.info(f"✓ AAA2 loaded: {len(aaa2_df)} nuclei")
+        logger.info(f"[OK] AAA2 loaded: {len(aaa2_df)} nuclei")
     except Exception as e:
         logger.error(f"Failed to load AAA2: {e}")
         return None
@@ -514,14 +514,14 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     X_features = aaa2_df[valid_mask][['A', 'Z', 'N']].values  # Simplified features
     y_true = aaa2_df[valid_mask][target_col].values
     
-    logger.info(f"✓ Valid data points: {len(y_true)}")
+    logger.info(f"[OK] Valid data points: {len(y_true)}")
     
     # Split train/test (80/20)
     n_train = int(0.8 * len(y_true))
     X_train, X_test = X_features[:n_train], X_features[n_train:]
     y_train, y_test = y_true[:n_train], y_true[n_train:]
     
-    logger.info(f"✓ Train: {len(y_train)}, Test: {len(y_test)}")
+    logger.info(f"[OK] Train: {len(y_train)}, Test: {len(y_test)}")
     
     # Load models
     model_loader = RealModelLoader(trained_models_dir)
@@ -539,7 +539,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
         
         for name, model in models.items():
             model.fit(X_train, y_train)
-            logger.info(f"✓ Trained baseline: {name}")
+            logger.info(f"[OK] Trained baseline: {name}")
     
     # Get base predictions
     logger.info("\nGenerating base model predictions...")
@@ -556,7 +556,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
         except Exception as e:
             logger.warning(f"  Failed {model_id}: {e}")
     
-    logger.info(f"✓ Base predictions ready: {len(base_pred_test)} models")
+    logger.info(f"[OK] Base predictions ready: {len(base_pred_test)} models")
     
     # ========================================================================
     # STEP 2: Voting Ensembles
@@ -586,7 +586,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     y_pred = voting_ensemble.rank_based_voting()
     evaluator.evaluate_ensemble('Rank_Based_Voting', y_pred, y_test)
     
-    logger.info("✓ Voting ensembles complete")
+    logger.info("[OK] Voting ensembles complete")
     
     # ========================================================================
     # STEP 3: Stacking Ensembles
@@ -608,7 +608,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
         except Exception as e:
             logger.warning(f"Stacking {meta_type} failed: {e}")
     
-    logger.info("✓ Stacking ensembles complete")
+    logger.info("[OK] Stacking ensembles complete")
     
     # ========================================================================
     # STEP 4: Diversity Analysis
@@ -680,7 +680,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     plt.savefig(viz_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    logger.info(f"✓ Visualization saved: {viz_path}")
+    logger.info(f"[OK] Visualization saved: {viz_path}")
     
     # ========================================================================
     # FINAL SUMMARY

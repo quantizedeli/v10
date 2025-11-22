@@ -46,7 +46,7 @@ class PFAZ7ExcelReporter:
         self.ensemble_results = []
         self.base_model_results = []
 
-        logger.info(f"✓ PFAZ7ExcelReporter initialized")
+        logger.info(f"[OK] PFAZ7ExcelReporter initialized")
         logger.info(f"  Output: {self.output_path}")
 
     def add_ensemble_result(self,
@@ -74,7 +74,7 @@ class PFAZ7ExcelReporter:
         }
 
         self.ensemble_results.append(result)
-        logger.info(f"  ✓ Added: {ensemble_name} (R²={r2:.4f})")
+        logger.info(f"  [OK] Added: {ensemble_name} (R²={r2:.4f})")
 
     def add_base_model_result(self,
                              model_id: str,

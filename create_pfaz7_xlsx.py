@@ -106,7 +106,7 @@ def create_minimal_xlsx():
         xlsx.writestr('xl/worksheets/sheet1.xml', create_sheet_xml(summary_data, 'Summary'))
         xlsx.writestr('xl/worksheets/sheet2.xml', create_sheet_xml(ensemble_data, 'Ensemble_Results'))
 
-    print(f"✓ Created: {filename}")
+    print(f"[OK] Created: {filename}")
     print(f"  File size: {os.path.getsize(filename)} bytes")
     return filename
 

@@ -92,7 +92,7 @@ class AutoMLVisualizer:
         # Plot style
         self._setup_plot_style()
         
-        logger.info(f"✓ AutoMLVisualizer initialized")
+        logger.info(f"[OK] AutoMLVisualizer initialized")
         logger.info(f"  Excel: {self.excel_path}")
         logger.info(f"  Output: {self.output_dir}")
     
@@ -121,7 +121,7 @@ class AutoMLVisualizer:
             except:
                 self.r2_vs_time = None
             
-            logger.info(f"  ✓ Loaded {len(self.all_trials)} trials")
+            logger.info(f"  [OK] Loaded {len(self.all_trials)} trials")
             
         except Exception as e:
             logger.error(f"  Failed to load Excel: {e}")
@@ -209,7 +209,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     def _generate_optimization_history_insight(self, completed) -> str:
@@ -286,7 +286,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -343,7 +343,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -401,7 +401,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -458,7 +458,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -478,8 +478,8 @@ class AutoMLVisualizer:
         df = self.best_trials.head(top_n)
         
         metrics = ['Val_R2', 'Val_RMSE', 'Val_MAE', 'Training_Time']
-        titles = ['Validation R² ↑', 'Validation RMSE ↓', 
-                 'Validation MAE ↓', 'Training Time ↓']
+        titles = ['Validation R² ^', 'Validation RMSE v', 
+                 'Validation MAE v', 'Training Time v']
         colors_list = ['green', 'red', 'red', 'orange']
         
         for i, (metric, title, color) in enumerate(zip(metrics, titles, colors_list)):
@@ -489,7 +489,7 @@ class AutoMLVisualizer:
                          color=color, alpha=0.7, edgecolor='black', linewidth=2)
             
             # Highlight best
-            if '↑' in title:  # Higher is better
+            if '^' in title:  # Higher is better
                 best_idx = df[metric].idxmax()
             else:  # Lower is better
                 best_idx = df[metric].idxmin()
@@ -518,7 +518,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -592,7 +592,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -625,9 +625,9 @@ class AutoMLVisualizer:
                 path = func()
                 if path:
                     plots.append(path)
-                    logger.info(f"  ✓ Created: {path.name}")
+                    logger.info(f"  [OK] Created: {path.name}")
             except Exception as e:
-                logger.error(f"  ✗ Failed: {e}")
+                logger.error(f"  [FAIL] Failed: {e}")
         
         logger.info(f"\n{'='*70}")
         logger.info(f"VISUALIZATION COMPLETE")
@@ -657,7 +657,7 @@ class AutoMLVisualizer:
                 f.write("-"*70 + "\n")
                 f.write(insight + "\n\n")
         
-        logger.info(f"\n✓ Insights exported to: {filepath}")
+        logger.info(f"\n[OK] Insights exported to: {filepath}")
         return filepath
 
 
@@ -689,6 +689,6 @@ if __name__ == "__main__":
         # Export insights
         visualizer.export_insights_to_txt()
         
-        logger.info(f"\n✓ Testing complete!")
+        logger.info(f"\n[OK] Testing complete!")
         logger.info(f"  Generated {len(plots)} plots")
         logger.info(f"  Check: test_automl_visualizations/")

@@ -175,12 +175,12 @@ class UniversalSHAPAnalyzer:
                                   'GradientBoosting']:
                 # Tree-based: TreeExplainer
                 self.explainer = shap.TreeExplainer(self.model)
-                logger.info("    ✓ TreeExplainer created")
+                logger.info("    [OK] TreeExplainer created")
             
             elif self.model_type in ['DNN', 'BNN', 'PINN']:
                 # Deep learning: DeepExplainer
                 self.explainer = shap.DeepExplainer(self.model, X_background)
-                logger.info("    ✓ DeepExplainer created")
+                logger.info("    [OK] DeepExplainer created")
             
             else:
                 # Universal: KernelExplainer (slower but works for all)
@@ -188,7 +188,7 @@ class UniversalSHAPAnalyzer:
                     self.model.predict, 
                     shap.sample(X_background, min(100, len(X_background)))
                 )
-                logger.info("    ✓ KernelExplainer created (universal)")
+                logger.info("    [OK] KernelExplainer created (universal)")
             
             return True
         
@@ -219,7 +219,7 @@ class UniversalSHAPAnalyzer:
             else:
                 self.expected_value = 0.0
             
-            logger.info(f"    ✓ SHAP values calculated: {self.shap_values.shape}")
+            logger.info(f"    [OK] SHAP values calculated: {self.shap_values.shape}")
             return True
         
         except Exception as e:
@@ -241,7 +241,7 @@ class UniversalSHAPAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Summary plot: {save_path.name}")
+        logger.info(f"    [OK] Summary plot: {save_path.name}")
         return save_path
     
     def plot_bar(self, max_display: int = 20):
@@ -259,7 +259,7 @@ class UniversalSHAPAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Bar plot: {save_path.name}")
+        logger.info(f"    [OK] Bar plot: {save_path.name}")
         return save_path
     
     def plot_waterfall(self, X_explain: np.ndarray, sample_idx: int = 0):
@@ -283,7 +283,7 @@ class UniversalSHAPAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Waterfall plot: {save_path.name}")
+        logger.info(f"    [OK] Waterfall plot: {save_path.name}")
         return save_path
     
     def get_feature_importance(self) -> pd.DataFrame:
@@ -319,7 +319,7 @@ class UniversalSHAPAnalyzer:
         save_path = self.output_dir / 'shap_values.csv'
         shap_df.to_csv(save_path, index=False)
         
-        logger.info(f"    ✓ SHAP values exported: {save_path.name}")
+        logger.info(f"    [OK] SHAP values exported: {save_path.name}")
         return save_path
 
 
@@ -352,7 +352,7 @@ class FeatureImportanceSystem:
         
         if len(importance_df) > 0:
             self.importance_results['shap'] = importance_df
-            logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+            logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
         
         return importance_df
     
@@ -384,7 +384,7 @@ class FeatureImportanceSystem:
             
             self.importance_results['permutation'] = importance_df
             
-            logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+            logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
             
             return importance_df
         
@@ -421,7 +421,7 @@ class FeatureImportanceSystem:
             
             self.importance_results['model_based'] = importance_df
             
-            logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+            logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
             
             return importance_df
         
@@ -452,7 +452,7 @@ class FeatureImportanceSystem:
         
         self.importance_results['correlation'] = importance_df
         
-        logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+        logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
         
         return importance_df
     
@@ -487,8 +487,8 @@ class FeatureImportanceSystem:
         save_path = self.output_dir / 'unified_feature_ranking.csv'
         unified_df.to_csv(save_path, index=False)
         
-        logger.info(f"    ✓ Unified ranking created")
-        logger.info(f"    ✓ Top 3 features:")
+        logger.info(f"    [OK] Unified ranking created")
+        logger.info(f"    [OK] Top 3 features:")
         for i in range(min(3, len(unified_df))):
             logger.info(f"       {i+1}. {unified_df.iloc[i]['Feature']}")
         
@@ -543,7 +543,7 @@ class FeatureImportanceSystem:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Comparison plot: {save_path.name}")
+        logger.info(f"    [OK] Comparison plot: {save_path.name}")
         return save_path
 
 
@@ -872,7 +872,7 @@ if __name__ == "__main__":
             'linkage_matrix_shape': linkage_matrix.shape
         }
         
-        logger.info("  ✓ Clustering analysis complete")
+        logger.info("  [OK] Clustering analysis complete")
         
         return results
     
@@ -983,7 +983,7 @@ if __name__ == "__main__":
             'top_3_features': target_corr_df['feature'].head(3).tolist()
         }
         
-        logger.info("  ✓ Correlation analysis complete")
+        logger.info("  [OK] Correlation analysis complete")
         
         return results
     
@@ -1059,7 +1059,7 @@ if __name__ == "__main__":
         
         results['overall_robustness_score'] = float(overall_robustness)
         
-        logger.info(f"  ✓ Overall robustness: {overall_robustness:.3f}")
+        logger.info(f"  [OK] Overall robustness: {overall_robustness:.3f}")
         
         return results
     
@@ -1165,7 +1165,7 @@ if __name__ == "__main__":
         
         results['learning_curve']['plot'] = str(save_path)
         
-        logger.info("  ✓ Cross-validation complete")
+        logger.info("  [OK] Cross-validation complete")
         
         return results
     
@@ -1234,7 +1234,7 @@ if __name__ == "__main__":
                             sens_df.to_excel(writer, sheet_name='Sensitivity', index=False)
                 
                 report_files['excel'] = str(excel_file)
-                logger.info(f"    ✓ Excel report: {excel_file.name}")
+                logger.info(f"    [OK] Excel report: {excel_file.name}")
             
             except Exception as e:
                 logger.error(f"    Excel generation failed: {e}")
@@ -1253,12 +1253,12 @@ if __name__ == "__main__":
                     json.dump(json_results, f, indent=2)
                 
                 report_files['json'] = str(json_file)
-                logger.info(f"    ✓ JSON export: {json_file.name}")
+                logger.info(f"    [OK] JSON export: {json_file.name}")
             
             except Exception as e:
                 logger.error(f"    JSON export failed: {e}")
         
-        logger.info("  ✓ Reports generated")
+        logger.info("  [OK] Reports generated")
         
         return report_files
     

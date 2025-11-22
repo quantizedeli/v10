@@ -410,7 +410,7 @@ class TheoreticalCalculator:
         # Fermi enerjisi (yaklaşık)
         df['fermi_energy'] = 33.0 * (df['A'] ** (2/3)) / (R0**2 * df['A'])
         
-        logger.info(f"✓ Teorik hesaplamalar tamamlandı: {len(df.columns)} özellik")
+        logger.info(f"[OK] Teorik hesaplamalar tamamlandı: {len(df.columns)} özellik")
         
         return df
 

@@ -96,7 +96,7 @@ class CrossModelEvaluator:
             self.predictions[model_name][prediction_col]
         )
         
-        logger.info(f"✓ Added predictions for {model_name}: {len(predictions_df)} nuclei")
+        logger.info(f"[OK] Added predictions for {model_name}: {len(predictions_df)} nuclei")
     
     def evaluate_common_performance(self, 
                                    target_name: str = 'MM',
@@ -220,7 +220,7 @@ class CrossModelEvaluator:
             })
         
         df = pd.DataFrame(nucleus_data)
-        logger.info(f"  ✓ Aggregate performance calculated for {len(df)} nuclei")
+        logger.info(f"  [OK] Aggregate performance calculated for {len(df)} nuclei")
         
         return df
     
@@ -297,7 +297,7 @@ class CrossModelEvaluator:
             'mean_agreement': float(poor_df['agreement_score'].mean())
         }
         
-        logger.info(f"  ✓ Selected top {top_n} nuclei for each category")
+        logger.info(f"  [OK] Selected top {top_n} nuclei for each category")
         
         return results
     
@@ -368,7 +368,7 @@ class CrossModelEvaluator:
             # Sheet 6: Detailed Statistics
             self._write_detailed_stats(writer)
         
-        logger.info(f"✓ Cross-model report saved: {output_path}")
+        logger.info(f"[OK] Cross-model report saved: {output_path}")
     
     def _write_summary_sheet(self, writer):
         """Write summary sheet"""
@@ -582,7 +582,7 @@ class CrossModelEvaluator:
         plt.savefig(viz_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Visualization saved: {viz_path}")
+        logger.info(f"[OK] Visualization saved: {viz_path}")
 
 
 def main():
@@ -639,7 +639,7 @@ def main():
     # Visualize
     evaluator.visualize_results('MM')
     
-    print("\n✓ Test completed!")
+    print("\n[OK] Test completed!")
 
 
 if __name__ == "__main__":

@@ -193,13 +193,13 @@ class AAA2ControlGroupAnalyzer:
         if self.pfaz01_output_path and self.pfaz01_output_path.exists():
             logger.info(f"-> Loading from PFAZ01 output: {self.pfaz01_output_path}")
             self.aaa2_df = pd.read_csv(self.pfaz01_output_path)
-            logger.info(f"✓ Loaded {len(self.aaa2_df)} nuclei with {len(self.aaa2_df.columns)} features")
+            logger.info(f"[OK] Loaded {len(self.aaa2_df)} nuclei with {len(self.aaa2_df.columns)} features")
         
         # Fallback to raw aaa2.txt
         elif self.aaa2_txt_path.exists():
             logger.info(f"-> Loading raw AAA2: {self.aaa2_txt_path}")
             self.aaa2_df = pd.read_csv(self.aaa2_txt_path, sep='\t', encoding='utf-8')
-            logger.info(f"✓ Loaded {len(self.aaa2_df)} nuclei")
+            logger.info(f"[OK] Loaded {len(self.aaa2_df)} nuclei")
             
             # Calculate features on-the-fly (if needed)
             if 'SEMF_BE' not in self.aaa2_df.columns:
@@ -255,7 +255,7 @@ class AAA2ControlGroupAnalyzer:
         # N/Z ratio
         df['N_Z_Ratio'] = N / Z
         
-        logger.info(f"  ✓ Added {11} theoretical features")
+        logger.info(f"  [OK] Added {11} theoretical features")
         
         return df
     
@@ -282,7 +282,7 @@ class AAA2ControlGroupAnalyzer:
         self.qm_empty_indices = self.aaa2_df[qm_empty_mask].index.tolist()
         self.qm_empty_nuclei = self.aaa2_df.loc[qm_empty_mask, 'NUCLEUS'].tolist()
         
-        logger.info(f"✓ QM empty nuclei: {len(self.qm_empty_indices)}")
+        logger.info(f"[OK] QM empty nuclei: {len(self.qm_empty_indices)}")
         logger.info(f"  Examples: {self.qm_empty_nuclei[:5]}")
         
         # Save to file
@@ -367,7 +367,7 @@ class AAA2ControlGroupAnalyzer:
         self.nucleus_categories = categories
         
         # Print summary
-        logger.info("✓ Nucleus categories:")
+        logger.info("[OK] Nucleus categories:")
         for cat_type, cat_dict in categories.items():
             logger.info(f"  {cat_type}:")
             for cat_name, nuclei_list in cat_dict.items():
@@ -441,7 +441,7 @@ class AAA2ControlGroupAnalyzer:
             
             top50_dict[target] = top50
             
-            logger.info(f"✓ Selected {len(top50)} models for {target}")
+            logger.info(f"[OK] Selected {len(top50)} models for {target}")
             if len(top50) > 0:
                 logger.info(f"  Best: {top50[0]} (R²={sorted_df.iloc[0][sort_col]:.4f})")
                 if len(top50) >= 50:
@@ -454,7 +454,7 @@ class AAA2ControlGroupAnalyzer:
         with open(top50_file, 'w') as f:
             json.dump(top50_dict, f, indent=2)
         
-        logger.info(f"\n✓ Top 50 models saved: {top50_file}")
+        logger.info(f"\n[OK] Top 50 models saved: {top50_file}")
         
         return top50_dict
     
@@ -519,7 +519,7 @@ class AAA2ControlGroupAnalyzer:
                 logger.warning(f"    Failed to load {model_id}: {e}")
                 continue
         
-        logger.info(f"✓ Successfully loaded {len(loaded_models)}/{len(model_ids)} models")
+        logger.info(f"[OK] Successfully loaded {len(loaded_models)}/{len(model_ids)} models")
         
         self.loaded_models[target] = loaded_models
         
@@ -609,7 +609,7 @@ class AAA2ControlGroupAnalyzer:
                 logger.warning(f"  Prediction failed for {model_id}: {e}")
                 continue
         
-        logger.info(f"✓ Predictions completed: {len(predictions_dict)} model outputs")
+        logger.info(f"[OK] Predictions completed: {len(predictions_dict)} model outputs")
         
         # Create DataFrame
         predictions_df = pd.DataFrame({
@@ -637,7 +637,7 @@ class AAA2ControlGroupAnalyzer:
         predictions_df.to_csv(pred_dir / 'predictions.csv', index=False)
         predictions_df.to_excel(pred_dir / 'predictions.xlsx', index=False, engine='openpyxl')
         
-        logger.info(f"✓ Predictions saved: {pred_dir}")
+        logger.info(f"[OK] Predictions saved: {pred_dir}")
         
         self.predictions[target] = {
             'dataframe': predictions_df,
@@ -734,7 +734,7 @@ class AAA2ControlGroupAnalyzer:
                     success_rates_df, best_worst_nuclei, category_success_df
                 )
                 
-                logger.info(f"✓ {target} processing complete")
+                logger.info(f"[OK] {target} processing complete")
             
             # Final summary
             end_time = datetime.now()

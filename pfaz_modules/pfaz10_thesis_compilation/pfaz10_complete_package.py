@@ -13,19 +13,19 @@
 ║  ██████████████████████████████████████████████████████████████████████████  ║
 ║                                                                              ║
 ║  FEATURES:                                                                  ║
-║  ✓ Automatic content generation from all 12 PFAZ phases                    ║
-║  ✓ LaTeX document creation with all chapters                               ║
-║  ✓ 80+ figure integration with smart captions                              ║
-║  ✓ Excel to LaTeX table conversion                                         ║
-║  ✓ BibTeX reference management                                             ║
-║  ✓ PDF compilation with error handling                                     ║
-║  ✓ Quality assurance and validation                                        ║
-║  ✓ Interactive CLI with progress tracking                                  ║
+║  [OK] Automatic content generation from all 12 PFAZ phases                    ║
+║  [OK] LaTeX document creation with all chapters                               ║
+║  [OK] 80+ figure integration with smart captions                              ║
+║  [OK] Excel to LaTeX table conversion                                         ║
+║  [OK] BibTeX reference management                                             ║
+║  [OK] PDF compilation with error handling                                     ║
+║  [OK] Quality assurance and validation                                        ║
+║  [OK] Interactive CLI with progress tracking                                  ║
 ║                                                                              ║
 ║  Author: Nuclear Physics AI Project                                         ║
 ║  Version: 4.0.0 - PRODUCTION COMPLETE                                       ║
 ║  Date: October 31, 2025                                                     ║
-║  Status: 100% COMPLETE ✓                                                    ║
+║  Status: 100% COMPLETE [OK]                                                    ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
@@ -131,13 +131,13 @@ class PFAZ10CompletePackage:
 Welcome to PFAZ 10 - Your Complete Thesis Compilation Solution!
 
 This system will:
-  ✓ Collect results from all 12 PFAZ phases
-  ✓ Generate comprehensive chapter content
-  ✓ Integrate 80+ visualizations with smart captions
-  ✓ Convert Excel reports to LaTeX tables
-  ✓ Manage bibliography and citations
-  ✓ Compile everything into a publication-ready PDF
-  ✓ Perform quality assurance checks
+  [OK] Collect results from all 12 PFAZ phases
+  [OK] Generate comprehensive chapter content
+  [OK] Integrate 80+ visualizations with smart captions
+  [OK] Convert Excel reports to LaTeX tables
+  [OK] Manage bibliography and citations
+  [OK] Compile everything into a publication-ready PDF
+  [OK] Perform quality assurance checks
 
 """
         print(banner)
@@ -216,7 +216,7 @@ This system will:
             
         except Exception as e:
             logger.error(f"Generation failed: {e}")
-            print(f"\n✗ ERROR: {e}")
+            print(f"\n[FAIL] ERROR: {e}")
             sys.exit(1)
     
     def _execute_generation(self, 
@@ -260,7 +260,7 @@ This system will:
                 if not integration_results.get('success'):
                     results['success'] = False
                 
-                print("✓ Master Integration completed")
+                print("[OK] Master Integration completed")
                 
             except Exception as e:
                 logger.error(f"Master Integration error: {e}")
@@ -278,7 +278,7 @@ This system will:
                 gallery.generate_appendix_gallery()
                 
                 results['steps'].append("Visualization Gallery Generated")
-                print(f"✓ Gallery created with {len(catalog)} figures")
+                print(f"[OK] Gallery created with {len(catalog)} figures")
                 
             except Exception as e:
                 logger.warning(f"Gallery generation warning: {e}")
@@ -297,7 +297,7 @@ This system will:
                 results['warnings'].extend(qa_results.get('warnings', []))
                 results['errors'].extend(qa_results.get('errors', []))
                 
-                print(f"✓ QA completed: {qa_results['checks_passed']} passed, {qa_results['checks_failed']} failed")
+                print(f"[OK] QA completed: {qa_results['checks_passed']} passed, {qa_results['checks_failed']} failed")
                 
             except Exception as e:
                 logger.warning(f"QA warning: {e}")
@@ -316,9 +316,9 @@ This system will:
         
         # Status
         if results['success']:
-            print("✓ Status: SUCCESS")
+            print("[OK] Status: SUCCESS")
         else:
-            print("✗ Status: FAILED")
+            print("[FAIL] Status: FAILED")
         
         # Statistics
         print(f"\nSteps Completed: {len(results['steps'])}")
@@ -329,13 +329,13 @@ This system will:
         if results['steps']:
             print("\nCompleted Steps:")
             for step in results['steps']:
-                print(f"  ✓ {step}")
+                print(f"  [OK] {step}")
         
         # Files
         if results['files']:
             print("\nGenerated Files:")
             for file_path in results['files'][:10]:  # Show first 10
-                print(f"  📄 {file_path}")
+                print(f"  [FILE] {file_path}")
             if len(results['files']) > 10:
                 print(f"  ... and {len(results['files']) - 10} more files")
         
@@ -349,9 +349,9 @@ This system will:
         
         # Errors
         if results['errors']:
-            print(f"\n✗ Errors ({len(results['errors'])}):")
+            print(f"\n[FAIL] Errors ({len(results['errors'])}):")
             for error in results['errors']:
-                print(f"  ✗ {error}")
+                print(f"  [FAIL] {error}")
         
         print("\n" + "="*80)
         
@@ -363,7 +363,7 @@ This system will:
             if any('pdf' in f.lower() for f in results['files']):
                 print("PDF file: output/thesis/thesis_main.pdf")
         else:
-            print("\n✗ Generation completed with errors.")
+            print("\n[FAIL] Generation completed with errors.")
             print("Please check the log file for details: pfaz10_complete.log")
     
     def run_quick_mode(self, 

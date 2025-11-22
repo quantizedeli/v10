@@ -495,7 +495,7 @@ class ProductionMonitoringSystem:
         df = pd.DataFrame([asdict(m) for m in self.metrics_history])
         output_path = self.output_dir / output_file
         df.to_csv(output_path, index=False)
-        logger.info(f"✓ Metrics history exported: {output_path}")
+        logger.info(f"[OK] Metrics history exported: {output_path}")
 
 
 def main():
@@ -512,7 +512,7 @@ def main():
     )
     
     # Simulate requests
-    print("\n✓ Simulating requests...")
+    print("\n[OK] Simulating requests...")
     for i in range(100):
         latency = np.random.uniform(10, 100)
         success = np.random.rand() > 0.05  # 95% success rate
@@ -520,25 +520,25 @@ def main():
     
     # Get current metrics
     metrics = monitoring.performance_monitor.get_current_metrics()
-    print(f"\n✓ Current Metrics:")
+    print(f"\n[OK] Current Metrics:")
     print(f"  Total Requests: {metrics.total_requests}")
     print(f"  Avg Latency: {metrics.avg_latency_ms:.2f} ms")
     print(f"  P95 Latency: {metrics.p95_latency_ms:.2f} ms")
     print(f"  Error Rate: {metrics.error_rate*100:.2f}%")
     
     # Test drift detection
-    print("\n✓ Testing drift detection...")
+    print("\n[OK] Testing drift detection...")
     current_data = np.random.randn(100, 5) + 0.5  # Shifted data
     drift_metrics = monitoring.check_drift(current_data)
     print(f"  Overall Drift: {drift_metrics.overall_drift_score:.4f}")
     print(f"  Drift Detected: {drift_metrics.drift_detected}")
     
     # Dashboard
-    print("\n✓ Dashboard data:")
+    print("\n[OK] Dashboard data:")
     dashboard = monitoring.get_dashboard_data()
     print(f"  Total Alerts: {dashboard['alert_summary']['total']}")
     
-    print("\n✓ Test completed!")
+    print("\n[OK] Test completed!")
 
 
 if __name__ == "__main__":

@@ -212,7 +212,7 @@ class WoodsSaxonPotential:
             output_path = Path(output_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
-            logger.info(f"✓ Potansiyel grafiği kaydedildi: {output_path}")
+            logger.info(f"[OK] Potansiyel grafiği kaydedildi: {output_path}")
         else:
             plt.show()
         
@@ -374,7 +374,7 @@ class ShellModelSolver:
             output_path = Path(output_path)
             output_path.parent.mkdir(parents=True, exist_ok=True)
             plt.savefig(output_path, dpi=300, bbox_inches='tight')
-            logger.info(f"✓ Enerji seviyeleri kaydedildi: {output_path}")
+            logger.info(f"[OK] Enerji seviyeleri kaydedildi: {output_path}")
         else:
             plt.show()
         
@@ -431,7 +431,7 @@ def main():
     solver.plot_energy_levels(A=208, Z=82,
                               output_path='output/test_woods_saxon/levels_Pb208.png')
     
-    print("\n✓ Tüm Woods-Saxon testleri tamamlandı")
+    print("\n[OK] Tüm Woods-Saxon testleri tamamlandı")
 
 
 if __name__ == "__main__":

@@ -102,7 +102,7 @@ class TheoreticalFeaturesCalculator:
         # Potential depth (mass dependent)
         df['WS_potential_depth'] = self.V0 * (1 + 0.4 * (df['N'] - df['Z']) / df['A'])
         
-        logger.info(f"  ✓ Added 4 Woods-Saxon features")
+        logger.info(f"  [OK] Added 4 Woods-Saxon features")
         return df
     
     def calculate_nilsson_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -127,7 +127,7 @@ class TheoreticalFeaturesCalculator:
         # Deformation type classification
         df['deformation_type'] = df['Beta_2_estimated'].apply(self._classify_deformation)
         
-        logger.info(f"  ✓ Added 5 Nilsson model features")
+        logger.info(f"  [OK] Added 5 Nilsson model features")
         return df
     
     def _estimate_beta2(self, row):
@@ -172,7 +172,7 @@ class TheoreticalFeaturesCalculator:
         # Shell closure effect
         df['shell_closure_effect'] = 1.0 / (1.0 + df['magic_Z_distance'] + df['magic_N_distance'])
         
-        logger.info(f"  ✓ Added 5 shell model features")
+        logger.info(f"  [OK] Added 5 shell model features")
         return df
 
 
@@ -286,7 +286,7 @@ class ExcelPivotTableCreator:
         self._add_pivot_worst_nuclei(wb, delta_df)
         
         wb.save(self.workbook_path)
-        logger.info(f"  ✓ All 8 pivot tables added")
+        logger.info(f"  [OK] All 8 pivot tables added")
     
     def _add_pivot_model_performance(self, wb, success_rates_df):
         """Pivot 1: Model x Target performance matrix"""
@@ -307,7 +307,7 @@ class ExcelPivotTableCreator:
         pivot.name = "ModelPerformancePivot"
         pivot.location = ws['A1']
         
-        logger.info("    ✓ Pivot 1: Model Performance")
+        logger.info("    [OK] Pivot 1: Model Performance")
     
     def _add_pivot_nucleus_category(self, wb, category_df):
         """Pivot 2: Category x Accuracy analysis"""
@@ -322,7 +322,7 @@ class ExcelPivotTableCreator:
             for c_idx, value in enumerate(row, 1):
                 ws.cell(row=r_idx, column=c_idx, value=value)
         
-        logger.info("    ✓ Pivot 2: Nucleus Category")
+        logger.info("    [OK] Pivot 2: Nucleus Category")
     
     def _add_pivot_mass_region(self, wb, predictions_df, delta_df):
         """Pivot 3: Mass region analysis"""
@@ -349,7 +349,7 @@ class ExcelPivotTableCreator:
             ws[f'A{idx}'] = str(region)
             ws[f'B{idx}'] = count
         
-        logger.info("    ✓ Pivot 3: Mass Region")
+        logger.info("    [OK] Pivot 3: Mass Region")
     
     def _add_pivot_magic_numbers(self, wb, predictions_df, delta_df):
         """Pivot 4: Magic number effect analysis"""
@@ -363,7 +363,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'Magic Number Analysis'
         ws['A2'] = 'Magic Z/N nuclei vs non-magic performance comparison'
         
-        logger.info("    ✓ Pivot 4: Magic Numbers")
+        logger.info("    [OK] Pivot 4: Magic Numbers")
     
     def _add_pivot_shell_closure(self, wb, predictions_df, delta_df):
         """Pivot 5: Shell closure effect"""
@@ -376,7 +376,7 @@ class ExcelPivotTableCreator:
         
         ws['A1'] = 'Shell Closure Effect Analysis'
         
-        logger.info("    ✓ Pivot 5: Shell Closure")
+        logger.info("    [OK] Pivot 5: Shell Closure")
     
     def _add_pivot_qm_empty(self, wb, predictions_df, delta_df):
         """Pivot 6: QM empty nuclei analysis"""
@@ -390,7 +390,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'QM Empty Nuclei Analysis'
         ws['A2'] = 'Model performance on nuclei without QM measurements'
         
-        logger.info("    ✓ Pivot 6: QM Empty")
+        logger.info("    [OK] Pivot 6: QM Empty")
     
     def _add_pivot_best_model(self, wb, delta_df):
         """Pivot 7: Best model per nucleus"""
@@ -404,7 +404,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'Best Model Per Nucleus'
         ws['A2'] = 'Which model performs best for each nucleus'
         
-        logger.info("    ✓ Pivot 7: Best Model")
+        logger.info("    [OK] Pivot 7: Best Model")
     
     def _add_pivot_worst_nuclei(self, wb, delta_df):
         """Pivot 8: Worst performing nuclei"""
@@ -418,7 +418,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'Worst Performing Nuclei'
         ws['A2'] = 'Nuclei with consistently high prediction errors'
         
-        logger.info("    ✓ Pivot 8: Worst Nuclei")
+        logger.info("    [OK] Pivot 8: Worst Nuclei")
 
 
 # ============================================================================
@@ -493,7 +493,7 @@ class AAA2ControlGroupAnalyzerComplete:
         else:
             raise FileNotFoundError("AAA2 data not found")
         
-        logger.info(f"✓ Loaded {len(self.aaa2_df)} nuclei")
+        logger.info(f"[OK] Loaded {len(self.aaa2_df)} nuclei")
         
         # Clean columns
         self.aaa2_df.columns = self.aaa2_df.columns.str.strip()
@@ -510,12 +510,12 @@ class AAA2ControlGroupAnalyzerComplete:
         # Shell Model
         self.aaa2_df = self.theoretical_calc.calculate_shell_model_features(self.aaa2_df)
         
-        logger.info(f"\n✓ Total features: {len(self.aaa2_df.columns)}")
+        logger.info(f"\n[OK] Total features: {len(self.aaa2_df.columns)}")
         
         # Save enriched data
         enriched_path = self.output_dir / 'aaa2_enriched_with_theory.csv'
         self.aaa2_df.to_csv(enriched_path, index=False)
-        logger.info(f"✓ Enriched data saved: {enriched_path}")
+        logger.info(f"[OK] Enriched data saved: {enriched_path}")
         
         return self.aaa2_df
     
@@ -544,7 +544,7 @@ class AAA2ControlGroupAnalyzerComplete:
         top50 = sorted_models[:50]
         self.top50_models[target] = [m[0] for m in top50]
         
-        logger.info(f"✓ Selected {len(self.top50_models[target])} models")
+        logger.info(f"[OK] Selected {len(self.top50_models[target])} models")
         return self.top50_models[target]
     
     def predict_with_top50(self, target: str) -> Tuple[pd.DataFrame, Dict]:
@@ -590,7 +590,7 @@ class AAA2ControlGroupAnalyzerComplete:
         # Convert to array (n_models, n_samples)
         predictions_array = np.array(predictions_array)
         
-        logger.info(f"✓ Predictions shape: {predictions_array.shape}")
+        logger.info(f"[OK] Predictions shape: {predictions_array.shape}")
         
         # Store predictions
         self.predictions[target] = predictions_array
@@ -622,8 +622,8 @@ class AAA2ControlGroupAnalyzerComplete:
         
         self.uncertainty[target] = full_uncertainty
         
-        logger.info(f"✓ High uncertainty nuclei: {uncertain_nuclei['n_high']}")
-        logger.info(f"✓ Low uncertainty nuclei: {uncertain_nuclei['n_low']}")
+        logger.info(f"[OK] High uncertainty nuclei: {uncertain_nuclei['n_high']}")
+        logger.info(f"[OK] Low uncertainty nuclei: {uncertain_nuclei['n_low']}")
         
         return full_uncertainty
     
@@ -668,7 +668,7 @@ class AAA2ControlGroupAnalyzerComplete:
                     writer, sheet_name=f'Analysis_{i}', index=False
                 )
         
-        logger.info(f"✓ Excel created: {excel_path}")
+        logger.info(f"[OK] Excel created: {excel_path}")
         
         # Add pivot tables
         pivot_creator = ExcelPivotTableCreator(excel_path)

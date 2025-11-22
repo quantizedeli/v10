@@ -103,7 +103,7 @@ class OutlierHandler:
         
         if save_removed:
             df_outliers.to_csv(self.output_dir / 'removed_outliers.csv', index=False)
-            logger.info(f"✓ Removed outliers saved")
+            logger.info(f"[OK] Removed outliers saved")
         
         return df_clean
     
@@ -195,7 +195,7 @@ class DataValidator:
         # Summary
         n_issues = len(self.validation_report)
         if n_issues == 0:
-            logger.info("\n✓ No validation issues found")
+            logger.info("\n[OK] No validation issues found")
         else:
             logger.warning(f"\n[WARNING] Found {n_issues} validation issues")
         
@@ -216,7 +216,7 @@ class DataValidator:
                 self.validation_report.append(issue)
                 logger.warning(f"  [WARNING] {issue}")
         else:
-            logger.info("  ✓ No missing values")
+            logger.info("  [OK] No missing values")
     
     def _check_duplicates(self, df):
         """Check for duplicate rows"""
@@ -230,7 +230,7 @@ class DataValidator:
             self.validation_report.append(issue)
             logger.warning(f"  [WARNING] {issue}")
         else:
-            logger.info("  ✓ No duplicates")
+            logger.info("  [OK] No duplicates")
     
     def _check_data_types(self, df):
         """Check data types"""
@@ -247,7 +247,7 @@ class DataValidator:
                     self.validation_report.append(issue)
                     logger.warning(f"  [WARNING] {issue}")
         
-        logger.info("  ✓ Data types checked")
+        logger.info("  [OK] Data types checked")
     
     def _check_value_ranges(self, df, ranges):
         """Check if values are within expected ranges"""
@@ -284,7 +284,7 @@ class DataValidator:
                 self.validation_report.append(issue)
                 logger.warning(f"  [WARNING] {issue}")
         
-        logger.info("  ✓ Physical constraints checked")
+        logger.info("  [OK] Physical constraints checked")
     
     def _save_report(self):
         """Save validation report"""
@@ -297,7 +297,7 @@ class DataValidator:
             report_path = self.output_dir / 'validation_report.csv'
             report_df.to_csv(report_path, index=False)
             
-            logger.info(f"\n✓ Validation report: {report_path}")
+            logger.info(f"\n[OK] Validation report: {report_path}")
 
 
 # ============================================================================
@@ -369,14 +369,14 @@ def test_data_quality_modules():
     
     issues = validator.validate_dataset(df, validation_rules)
     
-    print("\n✓ Data Quality modules test tamamlandı!")
+    print("\n[OK] Data Quality modules test tamamlandı!")
     print(f"  Outlier detections: {mask_iqr.sum()} (IQR), {mask_iso.sum()} (Isolation Forest)")
     print(f"  Validation issues: {len(issues)}")
 
 
 if __name__ == "__main__":
     test_data_quality_modules()
-    print("\n✓ Data Quality modülleri hazır:")
+    print("\n[OK] Data Quality modülleri hazır:")
     print("  - data_quality/outlier_handler.py")
     print("  - data_quality/data_validator.py")
     print("  - (robustness_tester.py zaten var: ai_training/model_validator.py)")

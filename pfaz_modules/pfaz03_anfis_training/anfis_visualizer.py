@@ -107,7 +107,7 @@ class ANFISVisualizer:
         
         fig_plotly.write_html(self.output_dir / f'{save_name}.html')
         
-        logger.info(f"  ✓ {save_name}.png & .html")
+        logger.info(f"  [OK] {save_name}.png & .html")
     
     def plot_predictions_scatter(self, y_true, y_pred, split_name='test', 
                                  title='ANFIS Predictions', save_name='predictions_scatter'):
@@ -150,7 +150,7 @@ class ANFISVisualizer:
         plt.savefig(self.output_dir / f'{save_name}_{split_name}.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ {save_name}_{split_name}.png")
+        logger.info(f"  [OK] {save_name}_{split_name}.png")
     
     def plot_residuals(self, y_true, y_pred, split_name='test', 
                       title='ANFIS Residuals', save_name='residuals'):
@@ -185,7 +185,7 @@ class ANFISVisualizer:
         plt.savefig(self.output_dir / f'{save_name}_{split_name}.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ {save_name}_{split_name}.png")
+        logger.info(f"  [OK] {save_name}_{split_name}.png")
     
     def plot_method_comparison(self, method1_results, method2_results, target_name):
         """
@@ -252,7 +252,7 @@ class ANFISVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ method_comparison_{target_name}.png")
+        logger.info(f"  [OK] method_comparison_{target_name}.png")
         
         # Statistics table
         stats_df = pd.DataFrame({
@@ -266,7 +266,7 @@ class ANFISVisualizer:
         })
         
         stats_df.to_csv(self.output_dir / f'method_comparison_{target_name}.csv', index=False)
-        logger.info(f"  ✓ method_comparison_{target_name}.csv")
+        logger.info(f"  [OK] method_comparison_{target_name}.csv")
     
     def plot_target_comparison(self, results_by_target):
         """
@@ -317,7 +317,7 @@ class ANFISVisualizer:
         plt.savefig(self.output_dir / 'target_comparison.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info("  ✓ target_comparison.png")
+        logger.info("  [OK] target_comparison.png")
         
         # Summary table
         summary = df.groupby('Target').agg({
@@ -326,7 +326,7 @@ class ANFISVisualizer:
         }).round(4)
         
         summary.to_csv(self.output_dir / 'target_comparison_summary.csv')
-        logger.info("  ✓ target_comparison_summary.csv")
+        logger.info("  [OK] target_comparison_summary.csv")
     
     def create_performance_heatmap(self, results_df):
         """
@@ -365,7 +365,7 @@ class ANFISVisualizer:
         plt.savefig(self.output_dir / 'performance_heatmap.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info("  ✓ performance_heatmap.png")
+        logger.info("  [OK] performance_heatmap.png")
 
 
 # ============================================================================
@@ -407,13 +407,13 @@ class ANFISBatchVisualizer:
             try:
                 self._visualize_single_result(result_dir)
             except Exception as e:
-                logger.error(f"  ✗ Visualization error: {e}")
+                logger.error(f"  [FAIL] Visualization error: {e}")
         
         # Overall summary
         self._create_overall_summary()
         
         logger.info("\n" + "="*80)
-        logger.info("✓ BATCH VISUALIZATION TAMAMLANDI")
+        logger.info("[OK] BATCH VISUALIZATION TAMAMLANDI")
         logger.info("="*80)
     
     def _visualize_single_result(self, result_dir):
@@ -439,7 +439,7 @@ class ANFISBatchVisualizer:
         temp_viz = ANFISVisualizer(viz_dir)
         temp_viz.plot_training_curve(history_df, title=f'ANFIS Training: {dataset_name}')
         
-        logger.info(f"  ✓ Visualizations created")
+        logger.info(f"  [OK] Visualizations created")
     
     def _create_overall_summary(self):
         """Create overall summary visualizations"""
@@ -483,7 +483,7 @@ class ANFISBatchVisualizer:
         # Distribution plots
         self._plot_distributions(summary_df)
         
-        logger.info("  ✓ Overall summary created")
+        logger.info("  [OK] Overall summary created")
     
     def _plot_distributions(self, summary_df):
         """Plot metric distributions"""
@@ -529,7 +529,7 @@ class ANFISBatchVisualizer:
         plt.savefig(self.output_dir / 'metric_distributions.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info("  ✓ Distribution plots created")
+        logger.info("  [OK] Distribution plots created")
 
 
 # ============================================================================
@@ -574,7 +574,7 @@ def test_anfis_visualizer():
     # Residuals
     viz.plot_residuals(y_true, y_pred, split_name='test')
     
-    print("\n✓ Test tamamlandı!")
+    print("\n[OK] Test tamamlandı!")
     print(f"Visualizations saved to: test_anfis_viz/")
 
 

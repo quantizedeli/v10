@@ -186,7 +186,7 @@ class RandomForestTrainer(BaseModelTrainer):
         
         metrics['training_time'] = training_time
         
-        logger.info(f"✓ Training completed in {training_time:.2f}s")
+        logger.info(f"[OK] Training completed in {training_time:.2f}s")
         
         return predictions, metrics
     
@@ -207,7 +207,7 @@ class RandomForestTrainer(BaseModelTrainer):
             
             importance_df.to_csv(save_path / 'feature_importance.csv', index=False)
         
-        logger.info(f"✓ Model saved: {save_path}")
+        logger.info(f"[OK] Model saved: {save_path}")
 
 
 # ============================================================================
@@ -279,7 +279,7 @@ class GradientBoostingTrainer(BaseModelTrainer):
         
         metrics['training_time'] = training_time
         
-        logger.info(f"✓ Training completed in {training_time:.2f}s")
+        logger.info(f"[OK] Training completed in {training_time:.2f}s")
         
         return predictions, metrics
     
@@ -298,7 +298,7 @@ class GradientBoostingTrainer(BaseModelTrainer):
             
             importance_df.to_csv(save_path / 'feature_importance.csv', index=False)
         
-        logger.info(f"✓ Model saved: {save_path}")
+        logger.info(f"[OK] Model saved: {save_path}")
 
 
 # ============================================================================
@@ -372,7 +372,7 @@ class XGBoostTrainer(BaseModelTrainer):
         
         metrics['training_time'] = training_time
         
-        logger.info(f"✓ Training completed in {training_time:.2f}s")
+        logger.info(f"[OK] Training completed in {training_time:.2f}s")
         
         return predictions, metrics
     
@@ -391,7 +391,7 @@ class XGBoostTrainer(BaseModelTrainer):
             
             importance_df.to_csv(save_path / 'feature_importance.csv', index=False)
         
-        logger.info(f"✓ Model saved: {save_path}")
+        logger.info(f"[OK] Model saved: {save_path}")
 
 
 # ============================================================================
@@ -501,7 +501,7 @@ class DNNTrainer(BaseModelTrainer):
         metrics['training_time'] = training_time
         metrics['history'] = {k: [float(v) for v in vals] for k, vals in history.history.items()}
         
-        logger.info(f"✓ Training completed in {training_time:.2f}s")
+        logger.info(f"[OK] Training completed in {training_time:.2f}s")
         
         return predictions, metrics
     
@@ -512,7 +512,7 @@ class DNNTrainer(BaseModelTrainer):
         
         self.model.save(str(save_path / 'model.h5'))
         
-        logger.info(f"✓ Model saved: {save_path}")
+        logger.info(f"[OK] Model saved: {save_path}")
 
 
 # ============================================================================
@@ -601,15 +601,15 @@ class ParallelTrainingPipeline:
                     results.append(result)
                     
                     if result['success']:
-                        logger.info(f"✓ {model} - {Path(dataset).name}")
+                        logger.info(f"[OK] {model} - {Path(dataset).name}")
                     else:
-                        logger.error(f"✗ {model} - {Path(dataset).name}")
+                        logger.error(f"[FAIL] {model} - {Path(dataset).name}")
                         
                 except Exception as e:
-                    logger.error(f"✗ Task failed: {model} - {dataset}: {e}")
+                    logger.error(f"[FAIL] Task failed: {model} - {dataset}: {e}")
         
         logger.info(f"\n{'='*80}")
-        logger.info(f"✓ PARALLEL TRAINING COMPLETED")
+        logger.info(f"[OK] PARALLEL TRAINING COMPLETED")
         logger.info(f"Success: {sum(1 for r in results if r['success'])}/{len(results)}")
         logger.info(f"{'='*80}\n")
         

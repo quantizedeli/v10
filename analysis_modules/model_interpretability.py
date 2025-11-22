@@ -99,7 +99,7 @@ class UniversalSHAPAnalyzer:
             logger.warning(f"Unknown model type {self.model_type}, using KernelExplainer")
             self.explainer = self._create_kernel_explainer(X_background)
         
-        logger.info("✓ Explainer ready")
+        logger.info("[OK] Explainer ready")
     
     def _create_tree_explainer(self):
         """TreeExplainer for tree-based models"""
@@ -148,7 +148,7 @@ class UniversalSHAPAnalyzer:
         
         self.shap_values = self.explainer.shap_values(X_explain)
         
-        logger.info("✓ SHAP values calculated")
+        logger.info("[OK] SHAP values calculated")
         
         return self.shap_values
     
@@ -176,7 +176,7 @@ class UniversalSHAPAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Summary plot: {save_path}")
+        logger.info(f"[OK] Summary plot: {save_path}")
     
     def get_feature_importance_df(self):
         """Get feature importance DataFrame"""
@@ -199,7 +199,7 @@ class UniversalSHAPAnalyzer:
         save_path = self.output_dir / f'{self.model_type}_shap_importance.csv'
         importance_df.to_csv(save_path, index=False)
         
-        logger.info(f"✓ Feature importance: {save_path}")
+        logger.info(f"[OK] Feature importance: {save_path}")
         
         return importance_df
 
@@ -248,7 +248,7 @@ class PermutationImportanceAnalyzer:
             n_jobs=-1
         )
         
-        logger.info("✓ Permutation importance calculated")
+        logger.info("[OK] Permutation importance calculated")
         
         return self.importance_result
     
@@ -293,7 +293,7 @@ class PermutationImportanceAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Plot saved: {save_path}")
+        logger.info(f"[OK] Plot saved: {save_path}")
         
         # Save CSV
         csv_path = self.output_dir / 'permutation_importance.csv'
@@ -370,10 +370,10 @@ class InterpretabilityAnalyzer:
                 
                 results['shap_importance'] = shap_importance
                 
-                logger.info("✓ SHAP Analysis completed")
+                logger.info("[OK] SHAP Analysis completed")
                 
             except Exception as e:
-                logger.error(f"✗ SHAP Analysis failed: {e}")
+                logger.error(f"[FAIL] SHAP Analysis failed: {e}")
                 results['shap_error'] = str(e)
         
         # 2. Permutation Importance (Universal)
@@ -392,10 +392,10 @@ class InterpretabilityAnalyzer:
                 
                 results['permutation_importance'] = perm_importance
                 
-                logger.info("✓ Permutation Importance completed")
+                logger.info("[OK] Permutation Importance completed")
                 
             except Exception as e:
-                logger.error(f"✗ Permutation Importance failed: {e}")
+                logger.error(f"[FAIL] Permutation Importance failed: {e}")
                 results['permutation_error'] = str(e)
         
         # 3. Model-specific importance (if available)
@@ -418,13 +418,13 @@ class InterpretabilityAnalyzer:
             
             results['model_importance'] = importance_df
             
-            logger.info("✓ Model-specific importance saved")
+            logger.info("[OK] Model-specific importance saved")
         
         # Summary report
         self._create_summary_report(results)
         
         logger.info("\n" + "="*80)
-        logger.info("✓ INTERPRETABILITY ANALYSIS COMPLETED")
+        logger.info("[OK] INTERPRETABILITY ANALYSIS COMPLETED")
         logger.info("="*80 + "\n")
         
         return results
@@ -454,7 +454,7 @@ class InterpretabilityAnalyzer:
         with open(self.output_dir / 'interpretability_summary.json', 'w') as f:
             json.dump(summary, f, indent=2, default=str)
         
-        logger.info(f"✓ Summary report: {self.output_dir / 'interpretability_summary.json'}")
+        logger.info(f"[OK] Summary report: {self.output_dir / 'interpretability_summary.json'}")
 
 
 # ============================================================================
@@ -525,7 +525,7 @@ def test_universal_interpretability():
         print("\n[SUCCESS] Permutation (Universal):")
         print(results['permutation_importance'].head(5)[['Feature', 'Importance']])
     
-    print("\n✓ Universal interpretability test completed!")
+    print("\n[OK] Universal interpretability test completed!")
     print("[SUCCESS] Now supports: RF, GBM, XGBoost, DNN, BNN, PINN, ANFIS, Ensemble")
 
 
@@ -635,7 +635,7 @@ class SHAPAnalyzer:
             self.explainer = shap.KernelExplainer(self.model.predict, X_background)
             logger.info("  -> KernelExplainer kullanılıyor (yavaş olabilir)")
         
-        logger.info("✓ Explainer hazır")
+        logger.info("[OK] Explainer hazır")
     
     def calculate_shap_values(self, X_explain):
         """
@@ -652,7 +652,7 @@ class SHAPAnalyzer:
         
         self.shap_values = self.explainer.shap_values(X_explain)
         
-        logger.info("✓ SHAP values hesaplandı")
+        logger.info("[OK] SHAP values hesaplandı")
         
         return self.shap_values
     
@@ -680,7 +680,7 @@ class SHAPAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Summary plot kaydedildi: {save_path}")
+        logger.info(f"[OK] Summary plot kaydedildi: {save_path}")
     
     def plot_bar(self, X_explain, max_display=20, show=False):
         """SHAP bar plot (mean absolute SHAP values)"""
@@ -707,7 +707,7 @@ class SHAPAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Bar plot kaydedildi: {save_path}")
+        logger.info(f"[OK] Bar plot kaydedildi: {save_path}")
     
     def plot_dependence(self, feature_idx, X_explain, interaction_index='auto', show=False):
         """
@@ -749,7 +749,7 @@ class SHAPAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Dependence plot kaydedildi: {save_path}")
+        logger.info(f"[OK] Dependence plot kaydedildi: {save_path}")
     
     def plot_top_dependence_plots(self, X_explain, n_top=5):
         """En önemli features için dependence plots"""
@@ -766,7 +766,7 @@ class SHAPAnalyzer:
         for idx in top_indices:
             self.plot_dependence(idx, X_explain)
         
-        logger.info(f"✓ {n_top} dependence plot tamamlandı")
+        logger.info(f"[OK] {n_top} dependence plot tamamlandı")
     
     def plot_waterfall(self, sample_idx, X_explain, show=False):
         """
@@ -798,7 +798,7 @@ class SHAPAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Waterfall plot kaydedildi: {save_path}")
+        logger.info(f"[OK] Waterfall plot kaydedildi: {save_path}")
     
     def get_feature_importance_df(self):
         """SHAP-based feature importance DataFrame"""
@@ -823,7 +823,7 @@ class SHAPAnalyzer:
         save_path = self.output_dir / 'shap_feature_importance.csv'
         importance_df.to_csv(save_path, index=False)
         
-        logger.info(f"✓ Feature importance saved: {save_path}")
+        logger.info(f"[OK] Feature importance saved: {save_path}")
         
         return importance_df
     
@@ -841,7 +841,7 @@ class SHAPAnalyzer:
         save_path = self.output_dir / 'shap_values.csv'
         shap_df.to_csv(save_path, index=False)
         
-        logger.info(f"✓ SHAP values exported: {save_path}")
+        logger.info(f"[OK] SHAP values exported: {save_path}")
 
 
 # ============================================================================
@@ -885,7 +885,7 @@ class PermutationImportanceAnalyzer:
             n_jobs=-1
         )
         
-        logger.info("✓ Permutation importance hesaplandı")
+        logger.info("[OK] Permutation importance hesaplandı")
         
         return self.importance_result
     
@@ -933,12 +933,12 @@ class PermutationImportanceAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Plot kaydedildi: {save_path}")
+        logger.info(f"[OK] Plot kaydedildi: {save_path}")
         
         # Save DataFrame
         csv_path = self.output_dir / 'permutation_importance.csv'
         importance_df.to_csv(csv_path, index=False)
-        logger.info(f"✓ CSV kaydedildi: {csv_path}")
+        logger.info(f"[OK] CSV kaydedildi: {csv_path}")
         
         return importance_df
 
@@ -1024,10 +1024,10 @@ class InterpretabilityAnalyzer:
                 
                 results['shap_importance'] = shap_importance
                 
-                logger.info("✓ SHAP Analysis tamamlandı")
+                logger.info("[OK] SHAP Analysis tamamlandı")
                 
             except Exception as e:
-                logger.error(f"✗ SHAP Analysis hatası: {e}")
+                logger.error(f"[FAIL] SHAP Analysis hatası: {e}")
                 results['shap_error'] = str(e)
         
         # 2. Permutation Importance
@@ -1046,10 +1046,10 @@ class InterpretabilityAnalyzer:
                 
                 results['permutation_importance'] = perm_importance
                 
-                logger.info("✓ Permutation Importance tamamlandı")
+                logger.info("[OK] Permutation Importance tamamlandı")
                 
             except Exception as e:
-                logger.error(f"✗ Permutation Importance hatası: {e}")
+                logger.error(f"[FAIL] Permutation Importance hatası: {e}")
                 results['permutation_error'] = str(e)
         
         # 3. Model-specific Feature Importance
@@ -1076,13 +1076,13 @@ class InterpretabilityAnalyzer:
             
             results['model_importance'] = importance_df
             
-            logger.info("✓ Model-specific importance kaydedildi")
+            logger.info("[OK] Model-specific importance kaydedildi")
         
         # Summary report
         self._create_summary_report(results)
         
         logger.info("\n" + "="*80)
-        logger.info("✓ INTERPRETABILITY ANALYSIS TAMAMLANDI")
+        logger.info("[OK] INTERPRETABILITY ANALYSIS TAMAMLANDI")
         logger.info("="*80 + "\n")
         
         return results
@@ -1109,7 +1109,7 @@ class InterpretabilityAnalyzer:
         if not show:
             plt.close()
         
-        logger.info(f"✓ Model importance plot: {save_path}")
+        logger.info(f"[OK] Model importance plot: {save_path}")
     
     def _create_summary_report(self, results):
         """Create summary report"""
@@ -1136,7 +1136,7 @@ class InterpretabilityAnalyzer:
         with open(self.output_dir / 'interpretability_summary.json', 'w') as f:
             json.dump(summary, f, indent=2, default=str)
         
-        logger.info(f"✓ Summary report: {self.output_dir / 'interpretability_summary.json'}")
+        logger.info(f"[OK] Summary report: {self.output_dir / 'interpretability_summary.json'}")
 
 
 # ============================================================================
@@ -1211,7 +1211,7 @@ def test_interpretability():
         print("\nModel-Specific:")
         print(results['model_importance'].head(5)[['Feature', 'Importance']])
     
-    print("\n✓ Test tamamlandı!")
+    print("\n[OK] Test tamamlandı!")
 
 
 if __name__ == "__main__":

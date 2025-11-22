@@ -54,7 +54,7 @@ class GPUOptimizer:
             
             return device
         else:
-            logger.info("💻 Using CPU (GPU disabled or unavailable)")
+            logger.info("[PC] Using CPU (GPU disabled or unavailable)")
             return torch.device('cpu')
     
     def to_device(self, tensor_or_model):

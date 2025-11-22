@@ -226,7 +226,7 @@ def print_report(results):
 
         # Found modules (if incomplete)
         if data["completion_percentage"] < 100 and data["modules"]["found"]:
-            print(f"   ✓ Found modules ({len(data['modules']['found'])}):")
+            print(f"   [OK] Found modules ({len(data['modules']['found'])}):")
             for module in data["modules"]["found"][:3]:  # Show first 3
                 print(f"      - {module}")
             if len(data["modules"]["found"]) > 3:
@@ -259,7 +259,7 @@ def save_report_json(results, output_path="/home/user/nucdatav1/pfaz_completenes
     """Save report to JSON"""
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)
-    print(f"✓ Report saved to: {output_path}")
+    print(f"[OK] Report saved to: {output_path}")
 
 if __name__ == "__main__":
     results = check_pfaz_completeness()

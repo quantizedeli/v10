@@ -187,7 +187,7 @@ class CrossModelAnalysisPipeline:
             logger.warning(f"[WARNING] ANFIS modelleri dizini bulunamadı: {anfis_dir}")
         
         # Özet
-        logger.info(f"\n  ✓ Tahmin toplama özeti:")
+        logger.info(f"\n  [OK] Tahmin toplama özeti:")
         for target in self.targets:
             n_models = len(self.all_predictions.get(target, {}))
             logger.info(f"    {target}: {n_models} model")
@@ -255,10 +255,10 @@ class CrossModelAnalysisPipeline:
                 # Kaydet
                 self.all_predictions[target][model_name] = df[required_cols].copy()
                 
-                logger.info(f"    ✓ {model_name} - {target}: {len(df)} tahmin yüklendi")
+                logger.info(f"    [OK] {model_name} - {target}: {len(df)} tahmin yüklendi")
             
             except Exception as e:
-                logger.error(f"    ✗ {model_name} - {target}: Yükleme hatası: {e}")
+                logger.error(f"    [FAIL] {model_name} - {target}: Yükleme hatası: {e}")
     
     def _create_master_report(self, results: Dict):
         """
@@ -297,7 +297,7 @@ class CrossModelAnalysisPipeline:
             self._write_model_agreement_all(writer, results)
             self._write_detailed_statistics_all(writer)
         
-        logger.info(f"  ✓ Master rapor kaydedildi: {master_file}")
+        logger.info(f"  [OK] Master rapor kaydedildi: {master_file}")
     
     def _write_overall_summary(self, writer, results):
         """Overall summary sheet - Tüm targetler"""
@@ -325,7 +325,7 @@ class CrossModelAnalysisPipeline:
         df = pd.DataFrame(summary_data)
         df.to_excel(writer, sheet_name='Overall_Summary', index=False)
         
-        logger.info(f"    ✓ Overall_Summary sheet yazıldı")
+        logger.info(f"    [OK] Overall_Summary sheet yazıldı")
     
     def _write_target_sheets(self, writer, target, results):
         """Her target için Good/Medium/Poor sheet'ler"""
@@ -373,7 +373,7 @@ class CrossModelAnalysisPipeline:
             sheet_name = f'{target}_{category.capitalize()}'[:31]
             df_detailed.to_excel(writer, sheet_name=sheet_name, index=False)
             
-            logger.info(f"    ✓ {sheet_name} sheet yazıldı ({len(nuclei_list)} çekirdek)")
+            logger.info(f"    [OK] {sheet_name} sheet yazıldı ({len(nuclei_list)} çekirdek)")
     
     def _write_model_agreement_all(self, writer, results):
         """Tüm targetler için model agreement"""
@@ -393,7 +393,7 @@ class CrossModelAnalysisPipeline:
         df = pd.DataFrame(agreement_data)
         df.to_excel(writer, sheet_name='Model_Agreement_All', index=False)
         
-        logger.info(f"    ✓ Model_Agreement_All sheet yazıldı")
+        logger.info(f"    [OK] Model_Agreement_All sheet yazıldı")
     
     def _write_detailed_statistics_all(self, writer):
         """Tüm modeller için detaylı istatistikler"""
@@ -422,7 +422,7 @@ class CrossModelAnalysisPipeline:
         df_stats = pd.DataFrame(stats_data)
         df_stats.to_excel(writer, sheet_name='Detailed_Statistics_All', index=False)
         
-        logger.info(f"    ✓ Detailed_Statistics_All sheet yazıldı")
+        logger.info(f"    [OK] Detailed_Statistics_All sheet yazıldı")
     
     def _save_summary_json(self, results, duration):
         """Özet JSON kaydet"""
@@ -447,7 +447,7 @@ class CrossModelAnalysisPipeline:
         with open(json_file, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"  ✓ Özet JSON kaydedildi: {json_file}")
+        logger.info(f"  [OK] Özet JSON kaydedildi: {json_file}")
 
 
 def main():

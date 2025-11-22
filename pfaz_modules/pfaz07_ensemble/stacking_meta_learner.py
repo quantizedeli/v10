@@ -56,7 +56,7 @@ class StackingMetaLearner:
         self.meta_model = None
         self.oof_predictions = None  # Out-of-fold predictions
         
-        logger.info(f"✓ StackingMetaLearner initialized")
+        logger.info(f"[OK] StackingMetaLearner initialized")
         logger.info(f"  Meta-model type: {meta_model_type}")
         logger.info(f"  CV folds: {cv_folds}")
         logger.info(f"  Output directory: {self.output_dir}")
@@ -72,7 +72,7 @@ class StackingMetaLearner:
         """
         self.base_models[model_id] = model
         self.base_model_metadata[model_id] = metadata
-        logger.info(f"  ✓ Base model added: {model_id} ({metadata['model_type']})")
+        logger.info(f"  [OK] Base model added: {model_id} ({metadata['model_type']})")
     
     def _predict_single(self, model, X, model_type: str) -> np.ndarray:
         """Tek bir modelden tahmin al"""
@@ -152,7 +152,7 @@ class StackingMetaLearner:
         
         self.oof_predictions = oof_predictions
         
-        logger.info(f"\n✓ OOF predictions generated: {oof_predictions.shape}")
+        logger.info(f"\n[OK] OOF predictions generated: {oof_predictions.shape}")
         
         return oof_predictions
     
@@ -207,7 +207,7 @@ class StackingMetaLearner:
         rmse_train = np.sqrt(mean_squared_error(y_meta, y_pred_train))
         mae_train = mean_absolute_error(y_meta, y_pred_train)
         
-        logger.info(f"\n✓ Meta-model trained")
+        logger.info(f"\n[OK] Meta-model trained")
         logger.info(f"  Training R² = {r2_train:.4f}")
         logger.info(f"  Training RMSE = {rmse_train:.4f}")
         logger.info(f"  Training MAE = {mae_train:.4f}")
@@ -251,12 +251,12 @@ class StackingMetaLearner:
             metadata = self.base_model_metadata[model_id]
             y_pred = self._predict_single(model, X_test, metadata['model_type'])
             base_predictions[:, model_idx] = y_pred
-            logger.info(f"  ✓ {model_id}: {len(y_pred)} predictions")
+            logger.info(f"  [OK] {model_id}: {len(y_pred)} predictions")
         
         # Meta-model prediction
         y_pred_stacking = self.meta_model.predict(base_predictions)
         
-        logger.info(f"\n✓ Stacking predictions: {len(y_pred_stacking)}")
+        logger.info(f"\n[OK] Stacking predictions: {len(y_pred_stacking)}")
         
         return y_pred_stacking
     
@@ -329,7 +329,7 @@ class StackingMetaLearner:
         with open(metadata_path, 'w') as f:
             json.dump(metadata, f, indent=2)
         
-        logger.info(f"\n✓ Stacking model saved: {save_dir}")
+        logger.info(f"\n[OK] Stacking model saved: {save_dir}")
     
     def compare_with_base_models(self, 
                                  X_test: np.ndarray, 
@@ -391,7 +391,7 @@ class StackingMetaLearner:
         # Save
         save_path = self.output_dir / 'stacking_comparison.xlsx'
         df.to_excel(save_path, index=False)
-        logger.info(f"\n✓ Comparison saved: {save_path}")
+        logger.info(f"\n[OK] Comparison saved: {save_path}")
         
         return df
 
