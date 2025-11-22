@@ -222,11 +222,25 @@ class BaseAITrainer:
             # NaN oranlarını hesapla
             nan_threshold = 0.5  # %50
             feature_cols = []
+            excluded_high_nan = []
+            schmidt_related = []  # Schmidt features excluded (expected for odd-odd nuclei)
+
             for col in all_possible_features:
                 nan_ratio = df[col].isna().sum() / len(df)
                 if nan_ratio < nan_threshold:
                     feature_cols.append(col)
                 else:
+                    # Check if this is a Schmidt-related feature (expected to be NaN for odd-odd nuclei)
+                    if 'schmidt' in col.lower():
+                        schmidt_related.append(col)
+                    else:
+                        excluded_high_nan.append((col, nan_ratio))
+
+            # Report excluded features
+            if schmidt_related:
+                logger.info(f"Excluded {len(schmidt_related)} Schmidt features (not applicable for odd-odd nuclei): {', '.join(schmidt_related)}")
+            if excluded_high_nan:
+                for col, nan_ratio in excluded_high_nan:
                     logger.warning(f"Excluding {col}: {nan_ratio*100:.1f}% NaN (threshold: {nan_threshold*100}%)")
 
             logger.info(f"Using adaptive feature selection ({len(feature_cols)}/{len(all_possible_features)} features)")
@@ -963,9 +977,17 @@ class ParallelAITrainer:
         """
         dataset_paths = []
 
+        # Directories to exclude (not datasets, but metadata/reports)
+        excluded_dirs = {'quality_reports', 'metadata', 'reports', 'logs', '__pycache__', '.git'}
+
         # Look for subdirectories that contain data files
         for subdir in datasets_dir.iterdir():
             if subdir.is_dir():
+                # Skip excluded directories
+                if subdir.name in excluded_dirs:
+                    logger.debug(f"  Skipping non-dataset directory: {subdir.name}")
+                    continue
+
                 # Check if directory contains CSV, XLSX, or TSV files
                 has_data = (
                     list(subdir.glob('*.csv')) or

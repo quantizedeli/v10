@@ -267,12 +267,26 @@ class TheoreticalCalculationsManager:
     def _calculate_schmidt_moments(self, df):
         """Schmidt moment hesaplamaları"""
         from core_modules.constants import G_FACTORS
-        
+
+        # Check nucleus type distribution first
+        odd_z = (df['Z'] % 2 == 1).sum()
+        odd_n = (df['N'] % 2 == 1).sum()
+        odd_odd_count = ((df['Z'] % 2 == 1) & (df['N'] % 2 == 1)).sum()
+        total_nuclei = len(df)
+
+        # If >90% odd-odd nuclei, skip Schmidt calculation (not applicable)
+        if odd_odd_count / total_nuclei > 0.9:
+            logger.info(f"  [SKIP] Schmidt moment calculation skipped:")
+            logger.info(f"         Dataset is {odd_odd_count}/{total_nuclei} ({odd_odd_count/total_nuclei*100:.1f}%) odd-odd nuclei")
+            logger.info(f"         Schmidt moments are not defined for odd-odd nuclei")
+            logger.info(f"         Feature 'schmidt_moment' will NOT be added")
+            return df
+
         g_l_p = G_FACTORS['proton']['g_l']
         g_s_p = G_FACTORS['proton']['g_s']
         g_l_n = G_FACTORS['neutron']['g_l']
         g_s_n = G_FACTORS['neutron']['g_s']
-        
+
         # Odd-mass nuclei için Schmidt moments
         def schmidt_moment(row):
             I = row['SPIN']
@@ -280,10 +294,10 @@ class TheoreticalCalculationsManager:
             A = row['A']
             Z = row['Z']
             N = row['N']
-            
+
             if I == 0:
                 return 0.0  # Even-even
-            
+
             # Odd proton
             if Z % 2 == 1 and N % 2 == 0:
                 if parity == 1:  # j = l + 1/2
@@ -293,7 +307,7 @@ class TheoreticalCalculationsManager:
                     l = I + 0.5
                     mu = (g_l_p * (I + 1) - g_s_p * 0.5) * I / (I + 1)
                 return mu
-            
+
             # Odd neutron
             elif Z % 2 == 0 and N % 2 == 1:
                 if parity == 1:  # j = l + 1/2
@@ -303,16 +317,23 @@ class TheoreticalCalculationsManager:
                     l = I + 0.5
                     mu = (g_l_n * (I + 1) - g_s_n * 0.5) * I / (I + 1)
                 return mu
-            
+
             return np.nan
-        
+
         df['schmidt_moment'] = df.apply(schmidt_moment, axis=1)
-        
+
         # Schmidt deviation (if experimental MM available)
-        if 'MM' in df.columns:
-            df['schmidt_deviation'] = abs(df['MM'] - df['schmidt_moment'])
-            df['schmidt_quenching'] = df['MM'] / df['schmidt_moment'].replace(0, np.nan)
-        
+        target_col_names = ['MM', 'MAGNETIC MOMENT [µ]', 'MAGNETIC MOMENT [μ]']
+        mm_col = None
+        for col_name in target_col_names:
+            if col_name in df.columns:
+                mm_col = col_name
+                break
+
+        if mm_col:
+            df['schmidt_deviation'] = abs(df[mm_col] - df['schmidt_moment'])
+            df['schmidt_quenching'] = df[mm_col] / df['schmidt_moment'].replace(0, np.nan)
+
         logger.info(f"  [OK] Schmidt: 1-3 özellik eklendi")
         return df
     
