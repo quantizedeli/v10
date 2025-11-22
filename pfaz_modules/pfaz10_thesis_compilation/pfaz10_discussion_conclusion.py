@@ -29,7 +29,7 @@ class DiscussionConclusionGenerator:
         
     def generate_chapter5_discussion(self):
         """Bölüm 5: Tartışma - Detaylı"""
-        logger.info("  ✓ Generating detailed Chapter 5: Tartışma...")
+        logger.info("  [OK] Generating detailed Chapter 5: Tartışma...")
         
         content = r"""\chapter{Tartışma}
 \label{ch:tartisma}
@@ -172,7 +172,7 @@ ANFIS'ten örnek bulanık kurallar:
 \end{center}
 
 Bu kural şunu söyler: Ağır, orta-Z, küresel çekirdekler küçük pozitif MM'ye sahip olma 
-eğilimindedir. Bu, kabuk modeli beklentileriyle uyumludur (kapalı kabuklar → düşük MM).
+eğilimindedir. Bu, kabuk modeli beklentileriyle uyumludur (kapalı kabuklar -> düşük MM).
 
 \textbf{Kural 12 (ağırlık: 0.22):}
 \begin{center}
@@ -300,8 +300,8 @@ Deformasyon, QM ile doğrudan ilişkilidir:
 Q \propto Z \cdot R^2 \cdot \beta_2
 \end{equation}
 
-Pozitif $\beta_2$ (prolate) → pozitif QM\\
-Negatif $\beta_2$ (oblate) → negatif QM
+Pozitif $\beta_2$ (prolate) -> pozitif QM\\
+Negatif $\beta_2$ (oblate) -> negatif QM
 
 \textbf{4. Spin ($J$) - 9.7\%}
 
@@ -321,7 +321,7 @@ Bazı teorik olarak önemli özelliklerin düşük SHAP skorları şaşırtıcı
 Parite, kuantum seçim kurallarında önemli olmasına rağmen, ML modelleri için zayıf tahmin 
 gücüne sahiptir. Bu şu sebeplerden olabilir:
 \begin{itemize}
-\item Parite ikili ($\pm 1$) → sınırlı bilgi içeriği
+\item Parite ikili ($\pm 1$) -> sınırlı bilgi içeriği
 \item Diğer özelliklerle yüksek korelasyon (spin, kabuk dolulumu)
 \item Veri setinde dengesiz dağılım (çoğu çekirdek pozitif parite)
 \end{itemize}
@@ -565,12 +565,12 @@ onlar hakkında düşünmenin yeni yollarını keşfetmektir.''} \\
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"    ✓ Chapter 5 saved: {chapter_file}")
+        logger.info(f"    [OK] Chapter 5 saved: {chapter_file}")
         return chapter_file
     
     def generate_chapter6_conclusion(self):
         """Bölüm 6: Sonuç ve Öneriler - Detaylı"""
-        logger.info("  ✓ Generating detailed Chapter 6: Sonuç...")
+        logger.info("  [OK] Generating detailed Chapter 6: Sonuç...")
         
         content = r"""\chapter{Sonuç ve Öneriler}
 \label{ch:sonuc}
@@ -913,7 +913,7 @@ yatmaktadır.
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"    ✓ Chapter 6 saved: {chapter_file}")
+        logger.info(f"    [OK] Chapter 6 saved: {chapter_file}")
         return chapter_file
 
 
@@ -933,8 +933,8 @@ def generate_discussion_conclusion(chapters_dir: Path, results_summary: Dict):
     generator.generate_chapter5_discussion()
     generator.generate_chapter6_conclusion()
     
-    logger.info("\n✓ Discussion & Conclusion chapters complete!")
+    logger.info("\n[OK] Discussion & Conclusion chapters complete!")
 
 
 if __name__ == "__main__":
-    print("✓ PFAZ 10 Step 3: Discussion & Conclusion Generator Ready")
+    print("[OK] PFAZ 10 Step 3: Discussion & Conclusion Generator Ready")

@@ -74,7 +74,7 @@ SHELL_GAPS = {
 # ============================================================================
 
 # Küresel nükleus eşik değeri
-SPHERICAL_THRESHOLD = 0.05  # |β₂| < 0.05 → küresel
+SPHERICAL_THRESHOLD = 0.05  # |β₂| < 0.05 -> küresel
 
 # Bölge tanımlamaları (β₂ değerlerine göre)
 DEFORMATION_REGIONS = {
@@ -117,7 +117,7 @@ ANOMALY_THRESHOLDS = {
 # VERİ SETİ OLUŞTURMA PARAMETRELERİ
 # ============================================================================
 
-# ✅ FAZ 0 - DÜZELTİLDİ: 120 ve 250 kaldırıldı
+# [SUCCESS] FAZ 0 - DÜZELTİLDİ: 120 ve 250 kaldırıldı
 NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']
 
 SCENARIOS = {
@@ -135,7 +135,7 @@ SAMPLING_METHODS = ['random', 'stratified']
 # EĞİTİM ZAMANLAMA PARAMETRELERİ
 # ============================================================================
 
-# ✅ FAZ 0 - YENİ: Timeout ve overfitting kontrolü
+# [SUCCESS] FAZ 0 - YENİ: Timeout ve overfitting kontrolü
 MAX_TRAINING_TIME = 3600  # seconds (1 hour)
 CHECKPOINT_INTERVAL = 600  # seconds (10 minutes)
 TIMEOUT_GRACE_PERIOD = 60  # seconds (1 minute warning before timeout)
@@ -201,7 +201,7 @@ BETA2_FEATURE_SETS = {
 # ANFİS KONFİGÜRASYONLARI
 # ============================================================================
 
-# ✅ FAZ 0 - GÜNCELLENDİ: Config isimleri değiştirildi
+# [SUCCESS] FAZ 0 - GÜNCELLENDİ: Config isimleri değiştirildi
 ANFIS_CONFIGS = {
     # Grid Partition (genfis1) - 5 config
     'GAU2MF': {

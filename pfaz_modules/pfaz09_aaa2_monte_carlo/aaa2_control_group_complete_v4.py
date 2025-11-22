@@ -4,13 +4,13 @@ PFAZ 9: AAA2 CONTROL GROUP - COMPLETE %100 IMPLEMENTATION
 ==========================================================
 
 Complete AAA2 control group analysis with ALL features:
-- Top 50 model selection & predictions ✅
-- Woods-Saxon potential integration ✅
-- Nilsson model deformation ✅
-- Monte Carlo uncertainty quantification ✅
-- 15-sheet Excel + 8 Pivot Tables ✅
-- Dual visualizations (PNG + HTML) ✅
-- Advanced analytics (SHAP, Bayesian) ✅
+- Top 50 model selection & predictions [SUCCESS]
+- Woods-Saxon potential integration [SUCCESS]
+- Nilsson model deformation [SUCCESS]
+- Monte Carlo uncertainty quantification [SUCCESS]
+- 15-sheet Excel + 8 Pivot Tables [SUCCESS]
+- Dual visualizations (PNG + HTML) [SUCCESS]
+- Advanced analytics (SHAP, Bayesian) [SUCCESS]
 
 Author: Nuclear Physics AI Project  
 Version: 4.0.0 - COMPLETE
@@ -88,7 +88,7 @@ class TheoreticalFeaturesCalculator:
     
     def calculate_woods_saxon_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate Woods-Saxon potential-based features"""
-        logger.info("  → Calculating Woods-Saxon features...")
+        logger.info("  -> Calculating Woods-Saxon features...")
         
         # Nuclear radius
         df['WS_radius'] = self.r0 * (df['A'] ** (1/3))
@@ -102,12 +102,12 @@ class TheoreticalFeaturesCalculator:
         # Potential depth (mass dependent)
         df['WS_potential_depth'] = self.V0 * (1 + 0.4 * (df['N'] - df['Z']) / df['A'])
         
-        logger.info(f"  ✓ Added 4 Woods-Saxon features")
+        logger.info(f"  [OK] Added 4 Woods-Saxon features")
         return df
     
     def calculate_nilsson_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate Nilsson model deformation features"""
-        logger.info("  → Calculating Nilsson model features...")
+        logger.info("  -> Calculating Nilsson model features...")
         
         # Estimate Beta_2 deformation (if not present)
         if 'Beta_2' not in df.columns:
@@ -127,7 +127,7 @@ class TheoreticalFeaturesCalculator:
         # Deformation type classification
         df['deformation_type'] = df['Beta_2_estimated'].apply(self._classify_deformation)
         
-        logger.info(f"  ✓ Added 5 Nilsson model features")
+        logger.info(f"  [OK] Added 5 Nilsson model features")
         return df
     
     def _estimate_beta2(self, row):
@@ -155,7 +155,7 @@ class TheoreticalFeaturesCalculator:
     
     def calculate_shell_model_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate shell model features"""
-        logger.info("  → Calculating shell model features...")
+        logger.info("  -> Calculating shell model features...")
         
         # Distance to magic numbers
         df['magic_Z_distance'] = df['Z'].apply(
@@ -172,7 +172,7 @@ class TheoreticalFeaturesCalculator:
         # Shell closure effect
         df['shell_closure_effect'] = 1.0 / (1.0 + df['magic_Z_distance'] + df['magic_N_distance'])
         
-        logger.info(f"  ✓ Added 5 shell model features")
+        logger.info(f"  [OK] Added 5 shell model features")
         return df
 
 
@@ -257,7 +257,7 @@ class ExcelPivotTableCreator:
                             category_df: pd.DataFrame):
         """Add all 8 pivot tables to workbook"""
         
-        logger.info("\n→ Adding 8 Pivot Tables to Excel...")
+        logger.info("\n-> Adding 8 Pivot Tables to Excel...")
         
         wb = load_workbook(self.workbook_path)
         
@@ -286,7 +286,7 @@ class ExcelPivotTableCreator:
         self._add_pivot_worst_nuclei(wb, delta_df)
         
         wb.save(self.workbook_path)
-        logger.info(f"  ✓ All 8 pivot tables added")
+        logger.info(f"  [OK] All 8 pivot tables added")
     
     def _add_pivot_model_performance(self, wb, success_rates_df):
         """Pivot 1: Model x Target performance matrix"""
@@ -307,7 +307,7 @@ class ExcelPivotTableCreator:
         pivot.name = "ModelPerformancePivot"
         pivot.location = ws['A1']
         
-        logger.info("    ✓ Pivot 1: Model Performance")
+        logger.info("    [OK] Pivot 1: Model Performance")
     
     def _add_pivot_nucleus_category(self, wb, category_df):
         """Pivot 2: Category x Accuracy analysis"""
@@ -322,7 +322,7 @@ class ExcelPivotTableCreator:
             for c_idx, value in enumerate(row, 1):
                 ws.cell(row=r_idx, column=c_idx, value=value)
         
-        logger.info("    ✓ Pivot 2: Nucleus Category")
+        logger.info("    [OK] Pivot 2: Nucleus Category")
     
     def _add_pivot_mass_region(self, wb, predictions_df, delta_df):
         """Pivot 3: Mass region analysis"""
@@ -349,7 +349,7 @@ class ExcelPivotTableCreator:
             ws[f'A{idx}'] = str(region)
             ws[f'B{idx}'] = count
         
-        logger.info("    ✓ Pivot 3: Mass Region")
+        logger.info("    [OK] Pivot 3: Mass Region")
     
     def _add_pivot_magic_numbers(self, wb, predictions_df, delta_df):
         """Pivot 4: Magic number effect analysis"""
@@ -363,7 +363,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'Magic Number Analysis'
         ws['A2'] = 'Magic Z/N nuclei vs non-magic performance comparison'
         
-        logger.info("    ✓ Pivot 4: Magic Numbers")
+        logger.info("    [OK] Pivot 4: Magic Numbers")
     
     def _add_pivot_shell_closure(self, wb, predictions_df, delta_df):
         """Pivot 5: Shell closure effect"""
@@ -376,7 +376,7 @@ class ExcelPivotTableCreator:
         
         ws['A1'] = 'Shell Closure Effect Analysis'
         
-        logger.info("    ✓ Pivot 5: Shell Closure")
+        logger.info("    [OK] Pivot 5: Shell Closure")
     
     def _add_pivot_qm_empty(self, wb, predictions_df, delta_df):
         """Pivot 6: QM empty nuclei analysis"""
@@ -390,7 +390,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'QM Empty Nuclei Analysis'
         ws['A2'] = 'Model performance on nuclei without QM measurements'
         
-        logger.info("    ✓ Pivot 6: QM Empty")
+        logger.info("    [OK] Pivot 6: QM Empty")
     
     def _add_pivot_best_model(self, wb, delta_df):
         """Pivot 7: Best model per nucleus"""
@@ -404,7 +404,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'Best Model Per Nucleus'
         ws['A2'] = 'Which model performs best for each nucleus'
         
-        logger.info("    ✓ Pivot 7: Best Model")
+        logger.info("    [OK] Pivot 7: Best Model")
     
     def _add_pivot_worst_nuclei(self, wb, delta_df):
         """Pivot 8: Worst performing nuclei"""
@@ -418,7 +418,7 @@ class ExcelPivotTableCreator:
         ws['A1'] = 'Worst Performing Nuclei'
         ws['A2'] = 'Nuclei with consistently high prediction errors'
         
-        logger.info("    ✓ Pivot 8: Worst Nuclei")
+        logger.info("    [OK] Pivot 8: Worst Nuclei")
 
 
 # ============================================================================
@@ -485,21 +485,21 @@ class AAA2ControlGroupAnalyzerComplete:
         
         # Load basic data
         if self.pfaz01_output_path and self.pfaz01_output_path.exists():
-            logger.info(f"→ Loading PFAZ01 output: {self.pfaz01_output_path}")
+            logger.info(f"-> Loading PFAZ01 output: {self.pfaz01_output_path}")
             self.aaa2_df = pd.read_csv(self.pfaz01_output_path)
         elif self.aaa2_txt_path.exists():
-            logger.info(f"→ Loading raw AAA2: {self.aaa2_txt_path}")
+            logger.info(f"-> Loading raw AAA2: {self.aaa2_txt_path}")
             self.aaa2_df = pd.read_csv(self.aaa2_txt_path, sep='\t', encoding='utf-8')
         else:
             raise FileNotFoundError("AAA2 data not found")
         
-        logger.info(f"✓ Loaded {len(self.aaa2_df)} nuclei")
+        logger.info(f"[OK] Loaded {len(self.aaa2_df)} nuclei")
         
         # Clean columns
         self.aaa2_df.columns = self.aaa2_df.columns.str.strip()
         
         # Calculate theoretical features
-        logger.info("\n→ Calculating theoretical features...")
+        logger.info("\n-> Calculating theoretical features...")
         
         # Woods-Saxon
         self.aaa2_df = self.theoretical_calc.calculate_woods_saxon_features(self.aaa2_df)
@@ -510,12 +510,12 @@ class AAA2ControlGroupAnalyzerComplete:
         # Shell Model
         self.aaa2_df = self.theoretical_calc.calculate_shell_model_features(self.aaa2_df)
         
-        logger.info(f"\n✓ Total features: {len(self.aaa2_df.columns)}")
+        logger.info(f"\n[OK] Total features: {len(self.aaa2_df.columns)}")
         
         # Save enriched data
         enriched_path = self.output_dir / 'aaa2_enriched_with_theory.csv'
         self.aaa2_df.to_csv(enriched_path, index=False)
-        logger.info(f"✓ Enriched data saved: {enriched_path}")
+        logger.info(f"[OK] Enriched data saved: {enriched_path}")
         
         return self.aaa2_df
     
@@ -525,7 +525,7 @@ class AAA2ControlGroupAnalyzerComplete:
     
     def select_top50_models(self, target: str):
         """Select top 50 models based on R² and RMSE"""
-        logger.info(f"\n→ Selecting top 50 models for {target}...")
+        logger.info(f"\n-> Selecting top 50 models for {target}...")
         
         # Load model performance summaries
         perf_file = self.trained_models_dir / f'{target}_model_performance.json'
@@ -544,12 +544,12 @@ class AAA2ControlGroupAnalyzerComplete:
         top50 = sorted_models[:50]
         self.top50_models[target] = [m[0] for m in top50]
         
-        logger.info(f"✓ Selected {len(self.top50_models[target])} models")
+        logger.info(f"[OK] Selected {len(self.top50_models[target])} models")
         return self.top50_models[target]
     
     def predict_with_top50(self, target: str) -> Tuple[pd.DataFrame, Dict]:
         """Generate predictions with top 50 models"""
-        logger.info(f"\n→ Generating predictions for {target}...")
+        logger.info(f"\n-> Generating predictions for {target}...")
         
         model_ids = self.top50_models.get(target, [])
         
@@ -590,7 +590,7 @@ class AAA2ControlGroupAnalyzerComplete:
         # Convert to array (n_models, n_samples)
         predictions_array = np.array(predictions_array)
         
-        logger.info(f"✓ Predictions shape: {predictions_array.shape}")
+        logger.info(f"[OK] Predictions shape: {predictions_array.shape}")
         
         # Store predictions
         self.predictions[target] = predictions_array
@@ -603,7 +603,7 @@ class AAA2ControlGroupAnalyzerComplete:
     
     def quantify_prediction_uncertainty(self, target: str):
         """Quantify uncertainty for predictions"""
-        logger.info(f"\n→ Quantifying prediction uncertainty for {target}...")
+        logger.info(f"\n-> Quantifying prediction uncertainty for {target}...")
         
         predictions = self.predictions.get(target)
         
@@ -622,8 +622,8 @@ class AAA2ControlGroupAnalyzerComplete:
         
         self.uncertainty[target] = full_uncertainty
         
-        logger.info(f"✓ High uncertainty nuclei: {uncertain_nuclei['n_high']}")
-        logger.info(f"✓ Low uncertainty nuclei: {uncertain_nuclei['n_low']}")
+        logger.info(f"[OK] High uncertainty nuclei: {uncertain_nuclei['n_high']}")
+        logger.info(f"[OK] Low uncertainty nuclei: {uncertain_nuclei['n_low']}")
         
         return full_uncertainty
     
@@ -633,7 +633,7 @@ class AAA2ControlGroupAnalyzerComplete:
     
     def generate_comprehensive_excel(self, target: str):
         """Generate 15-sheet Excel with 8 pivot tables"""
-        logger.info(f"\n→ Generating comprehensive Excel for {target}...")
+        logger.info(f"\n-> Generating comprehensive Excel for {target}...")
         
         excel_path = self.output_dir / f'AAA2_Complete_{target}.xlsx'
         
@@ -668,7 +668,7 @@ class AAA2ControlGroupAnalyzerComplete:
                     writer, sheet_name=f'Analysis_{i}', index=False
                 )
         
-        logger.info(f"✓ Excel created: {excel_path}")
+        logger.info(f"[OK] Excel created: {excel_path}")
         
         # Add pivot tables
         pivot_creator = ExcelPivotTableCreator(excel_path)
@@ -729,7 +729,7 @@ class AAA2ControlGroupAnalyzerComplete:
             duration = (end_time - start_time).total_seconds()
             
             logger.info("\n" + "="*80)
-            logger.info("✅ PFAZ 9 COMPLETE!")
+            logger.info("[SUCCESS] PFAZ 9 COMPLETE!")
             logger.info("="*80)
             logger.info(f"Duration: {duration:.1f}s ({duration/60:.1f}min)")
             logger.info(f"Targets processed: {len(self.predictions)}")
@@ -743,7 +743,7 @@ class AAA2ControlGroupAnalyzerComplete:
             }
         
         except Exception as e:
-            logger.error(f"\n❌ PIPELINE FAILED: {e}")
+            logger.error(f"\n[ERROR] PIPELINE FAILED: {e}")
             import traceback
             traceback.print_exc()
             return {'success': False, 'error': str(e)}
@@ -773,13 +773,13 @@ if __name__ == "__main__":
     
     if results['success']:
         print("\n" + "="*80)
-        print("✅ PFAZ 9 SUCCESS!")
+        print("[SUCCESS] PFAZ 9 SUCCESS!")
         print("="*80)
         print(f"Duration: {results['duration']:.1f}s")
         print(f"Targets: {', '.join(results['targets'])}")
         print(f"Output: {results['output_dir']}")
     else:
         print("\n" + "="*80)
-        print("❌ PFAZ 9 FAILED!")
+        print("[ERROR] PFAZ 9 FAILED!")
         print("="*80)
         print(f"Error: {results['error']}")

@@ -175,7 +175,7 @@ class AutoMLTrialLogger:
         self.best_trial: Optional[AutoMLTrialRecord] = None
         self.best_val_r2: float = -np.inf
         
-        logger.info(f"✓ AutoMLTrialLogger initialized: {self.output_dir}")
+        logger.info(f"[OK] AutoMLTrialLogger initialized: {self.output_dir}")
     
     def start_optimization(self, 
                           model_type: str,
@@ -205,7 +205,7 @@ class AutoMLTrialLogger:
             if self.best_trial is not None:
                 improvement = trial_record.val_r2 - self.best_val_r2
                 trial_record.improvement_over_previous_best = improvement
-                logger.info(f"  🎯 NEW BEST! R²={trial_record.val_r2:.4f} (+{improvement:.4f})")
+                logger.info(f"  [TARGET] NEW BEST! R²={trial_record.val_r2:.4f} (+{improvement:.4f})")
             
             trial_record.is_best_so_far = True
             self.best_trial = trial_record
@@ -216,10 +216,10 @@ class AutoMLTrialLogger:
         
         # Log
         status_emoji = {
-            'COMPLETE': '✅',
+            'COMPLETE': '[SUCCESS]',
             'PRUNED': '✂️',
-            'FAILED': '❌'
-        }.get(trial_record.status, '❓')
+            'FAILED': '[ERROR]'
+        }.get(trial_record.status, '[UNKNOWN]')
         
         logger.info(
             f"  {status_emoji} Trial {trial_record.trial_id:3d} | "
@@ -462,7 +462,7 @@ class AutoMLTrialLogger:
         11. Recommendations - What to do next?
         12. LaTeX_Tables - Ready for thesis
         """
-        logger.info(f"\n→ Exporting AutoML report to {filename}...")
+        logger.info(f"\n-> Exporting AutoML report to {filename}...")
         
         filepath = self.output_dir / filename
         
@@ -530,7 +530,7 @@ class AutoMLTrialLogger:
             # Sheet 12: LaTeX Tables
             self._create_latex_tables_sheet(writer, header_format)
         
-        logger.info(f"  ✓ Exported: {filepath}")
+        logger.info(f"  [OK] Exported: {filepath}")
         return filepath
     
     def _create_summary_sheet(self, writer, header_format):
@@ -676,7 +676,7 @@ class AutoMLTrialLogger:
         
         if not failed:
             # Empty sheet with message
-            df = pd.DataFrame({'Message': ['No failed trials! 🎉']})
+            df = pd.DataFrame({'Message': ['No failed trials! [COMPLETE]']})
             df.to_excel(writer, sheet_name='Failed_Trials', index=False)
             return
         
@@ -1013,4 +1013,4 @@ if __name__ == "__main__":
     # Export to Excel
     trial_logger.export_to_excel('automl_test_report.xlsx')
     
-    logger.info("\n✓ Testing complete! Check test_automl_logs/")
+    logger.info("\n[OK] Testing complete! Check test_automl_logs/")

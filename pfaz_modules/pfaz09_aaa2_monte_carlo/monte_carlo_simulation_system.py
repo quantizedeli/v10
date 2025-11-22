@@ -164,8 +164,8 @@ class MCDropoutSimulator:
         ci_lower = np.percentile(predictions, 2.5, axis=0)
         ci_upper = np.percentile(predictions, 97.5, axis=0)
         
-        logger.info(f"  ✓ Mean uncertainty: {std_pred.mean():.4f}")
-        logger.info(f"  ✓ Max uncertainty: {std_pred.max():.4f}")
+        logger.info(f"  [OK] Mean uncertainty: {std_pred.mean():.4f}")
+        logger.info(f"  [OK] Max uncertainty: {std_pred.max():.4f}")
         
         return {
             'mean_predictions': mean_pred,
@@ -255,8 +255,8 @@ class BootstrapSimulator:
         ci_lower = np.percentile(bootstrap_predictions, 2.5, axis=0)
         ci_upper = np.percentile(bootstrap_predictions, 97.5, axis=0)
         
-        logger.info(f"  ✓ Mean CI width: {(ci_upper - ci_lower).mean():.4f}")
-        logger.info(f"  ✓ Mean R²: {np.mean(bootstrap_r2):.4f} ± {np.std(bootstrap_r2):.4f}")
+        logger.info(f"  [OK] Mean CI width: {(ci_upper - ci_lower).mean():.4f}")
+        logger.info(f"  [OK] Mean R²: {np.mean(bootstrap_r2):.4f} ± {np.std(bootstrap_r2):.4f}")
         
         return {
             'mean_predictions': mean_pred,
@@ -349,7 +349,7 @@ class NoiseSimulator:
             
             logger.info(f"      Robustness: {robustness:.3f}")
         
-        logger.info(f"  ✓ Noise sensitivity analysis complete")
+        logger.info(f"  [OK] Noise sensitivity analysis complete")
         
         return {
             'noise_levels': self.noise_levels,
@@ -442,8 +442,8 @@ class FeatureDropoutSimulator:
         unstable_features = [feature_names[i] for i in range(n_features) 
                             if feature_variance[i] >= variance_threshold]
         
-        logger.info(f"  ✓ Stable features: {len(stable_features)}")
-        logger.info(f"  ✓ Unstable features: {len(unstable_features)}")
+        logger.info(f"  [OK] Stable features: {len(stable_features)}")
+        logger.info(f"  [OK] Unstable features: {len(unstable_features)}")
         
         return {
             'dropout_probs': self.dropout_probs,
@@ -518,9 +518,9 @@ class EnsembleUncertaintyAnalyzer:
         # Calculate model correlations
         model_correlations = np.corrcoef(all_predictions)
         
-        logger.info(f"  ✓ Mean inter-model std: {inter_model_std.mean():.4f}")
-        logger.info(f"  ✓ Consensus nuclei: {len(consensus_indices)}")
-        logger.info(f"  ✓ Disagreement nuclei: {len(disagreement_indices)}")
+        logger.info(f"  [OK] Mean inter-model std: {inter_model_std.mean():.4f}")
+        logger.info(f"  [OK] Consensus nuclei: {len(consensus_indices)}")
+        logger.info(f"  [OK] Disagreement nuclei: {len(disagreement_indices)}")
         
         return {
             'mean_predictions': mean_pred,
@@ -615,7 +615,7 @@ class MonteCarloSimulationSystem:
             model_ids: List of model identifiers
             metadata: Model metadata (R², RMSE, etc.)
         """
-        logger.info(f"\n→ Loading top 10 models for {target}...")
+        logger.info(f"\n-> Loading top 10 models for {target}...")
         
         # Load performance summary
         perf_file = self.models_dir / f'performance_summary_{target}.csv'
@@ -693,7 +693,7 @@ class MonteCarloSimulationSystem:
                 logger.warning(f"    Failed to load {model_id}: {e}")
                 continue
         
-        logger.info(f"  ✓ Successfully loaded {len(models)} models")
+        logger.info(f"  [OK] Successfully loaded {len(models)} models")
         
         # Save top 10 selection
         selection_file = self.output_dir / 'model_selection' / f'top10_models_{target}.json'
@@ -710,7 +710,7 @@ class MonteCarloSimulationSystem:
     
     def load_aaa2_data(self) -> pd.DataFrame:
         """Load AAA2 control group data"""
-        logger.info("\n→ Loading AAA2 control group data...")
+        logger.info("\n-> Loading AAA2 control group data...")
         
         # Try multiple possible locations
         possible_paths = [
@@ -728,7 +728,7 @@ class MonteCarloSimulationSystem:
                 else:
                     aaa2_df = pd.read_csv(path)
                 
-                logger.info(f"  ✓ Loaded {len(aaa2_df)} nuclei")
+                logger.info(f"  [OK] Loaded {len(aaa2_df)} nuclei")
                 return aaa2_df
         
         logger.error("  AAA2 data not found in any expected location")
@@ -754,7 +754,7 @@ class MonteCarloSimulationSystem:
         Returns:
             mc_results: Dictionary with all MC results
         """
-        logger.info("\n→ Running MC simulations on top 10 models...")
+        logger.info("\n-> Running MC simulations on top 10 models...")
         
         mc_results = {
             'target': target,
@@ -769,7 +769,7 @@ class MonteCarloSimulationSystem:
         
         # MC Dropout (DNN only)
         if self.config['mc_dropout']['enabled']:
-            logger.info("\n  → MC Dropout (DNNs)...")
+            logger.info("\n  -> MC Dropout (DNNs)...")
             dnn_indices = [i for i, mid in enumerate(model_ids) if 'DNN' in mid]
             
             for idx in dnn_indices:
@@ -782,7 +782,7 @@ class MonteCarloSimulationSystem:
         
         # Noise Sensitivity (all models)
         if self.config['noise_sensitivity']['enabled']:
-            logger.info("\n  → Noise Sensitivity (all models)...")
+            logger.info("\n  -> Noise Sensitivity (all models)...")
             
             for idx, model in enumerate(models):
                 model_id = model_ids[idx]
@@ -793,14 +793,14 @@ class MonteCarloSimulationSystem:
         
         # Ensemble Uncertainty (all models together)
         if self.config['ensemble_uncertainty']['enabled']:
-            logger.info("\n  → Ensemble Uncertainty...")
+            logger.info("\n  -> Ensemble Uncertainty...")
             
             ensemble_result = self.ensemble_uncertainty.analyze_ensemble_uncertainty(
                 models, X, model_ids
             )
             mc_results['ensemble_uncertainty'] = ensemble_result
         
-        logger.info("\n  ✓ MC simulations complete")
+        logger.info("\n  [OK] MC simulations complete")
         
         return mc_results
     
@@ -822,7 +822,7 @@ class MonteCarloSimulationSystem:
         Returns:
             aaa2_results: AAA2 validation results
         """
-        logger.info("\n→ Validating on AAA2 control group...")
+        logger.info("\n-> Validating on AAA2 control group...")
         
         # Prepare features (same as used in training)
         feature_cols = [col for col in aaa2_df.columns 
@@ -867,8 +867,8 @@ class MonteCarloSimulationSystem:
         high_unc_nuclei = aaa2_df.loc[high_unc_mask, 'NUCLEUS'].tolist()
         low_unc_nuclei = aaa2_df.loc[low_unc_mask, 'NUCLEUS'].tolist()
         
-        logger.info(f"  ✓ High uncertainty nuclei: {len(high_unc_nuclei)}")
-        logger.info(f"  ✓ Low uncertainty nuclei: {len(low_unc_nuclei)}")
+        logger.info(f"  [OK] High uncertainty nuclei: {len(high_unc_nuclei)}")
+        logger.info(f"  [OK] Low uncertainty nuclei: {len(low_unc_nuclei)}")
         
         aaa2_results = {
             'target': target,
@@ -947,7 +947,7 @@ class MonteCarloSimulationSystem:
                 results['mc_simulations'] = mc_results
             
             # Phase 5: Reports and visualizations
-            logger.info("\n→ Phase 5: Visualizations...")
+            logger.info("\n-> Phase 5: Visualizations...")
             
             # 3D Visualizations
             viz_3d_files = self.create_3d_visualizations(
@@ -962,14 +962,14 @@ class MonteCarloSimulationSystem:
             results['visualizations_standard'] = viz_std_files
             
             # Phase 6: Excel report
-            logger.info("\n→ Phase 6: Excel report...")
+            logger.info("\n-> Phase 6: Excel report...")
             excel_file = self.generate_excel_report(
                 target, mc_results, aaa2_results, aaa2_df
             )
             results['excel_report'] = str(excel_file)
             
             # Phase 7: JSON summary
-            logger.info("\n→ Phase 7: JSON summary...")
+            logger.info("\n-> Phase 7: JSON summary...")
             json_file = self.export_json_summary(
                 target, mc_results, aaa2_results
             )
@@ -981,13 +981,13 @@ class MonteCarloSimulationSystem:
             results['success'] = True
             results['duration_seconds'] = duration
             
-            logger.info(f"\n✅ Monte Carlo analysis complete for {target}")
+            logger.info(f"\n[SUCCESS] Monte Carlo analysis complete for {target}")
             logger.info(f"Duration: {duration:.1f} seconds ({duration/60:.1f} minutes)")
             
             return results
         
         except Exception as e:
-            logger.error(f"\n❌ Monte Carlo analysis failed: {e}")
+            logger.error(f"\n[ERROR] Monte Carlo analysis failed: {e}")
             import traceback
             traceback.print_exc()
             results['error'] = str(e)
@@ -1033,7 +1033,7 @@ class MonteCarloSimulationSystem:
         plt.close()
         
         viz_files['3d_uncertainty'] = str(png_file)
-        logger.info(f"    ✓ Chart 11 saved: {png_file.name}")
+        logger.info(f"    [OK] Chart 11 saved: {png_file.name}")
         
         # Chart 12: 3D Model Agreement (if ensemble results available)
         ensemble_results = mc_results.get('ensemble_uncertainty', {})
@@ -1062,7 +1062,7 @@ class MonteCarloSimulationSystem:
             plt.close()
             
             viz_files['3d_agreement'] = str(png_file)
-            logger.info(f"    ✓ Chart 12 saved: {png_file.name}")
+            logger.info(f"    [OK] Chart 12 saved: {png_file.name}")
         
         # Chart 13: 3D Noise Robustness
         noise_results = mc_results.get('noise_sensitivity', {})
@@ -1100,9 +1100,9 @@ class MonteCarloSimulationSystem:
             plt.close()
             
             viz_files['3d_robustness'] = str(png_file)
-            logger.info(f"    ✓ Chart 13 saved: {png_file.name}")
+            logger.info(f"    [OK] Chart 13 saved: {png_file.name}")
         
-        logger.info(f"  ✓ 3D visualizations complete: {len(viz_files)} charts")
+        logger.info(f"  [OK] 3D visualizations complete: {len(viz_files)} charts")
         return viz_files
     
     def create_standard_visualizations(self, target: str, mc_results: Dict,
@@ -1148,7 +1148,7 @@ class MonteCarloSimulationSystem:
         plt.close()
         viz_files['uncertainty_vs_A'] = str(png_file)
         
-        logger.info(f"  ✓ Standard visualizations: {len(viz_files)} charts")
+        logger.info(f"  [OK] Standard visualizations: {len(viz_files)} charts")
         return viz_files
     
     def generate_excel_report(self, target: str, mc_results: Dict,
@@ -1193,7 +1193,7 @@ class MonteCarloSimulationSystem:
                 ]
                 high_unc_df.to_excel(writer, sheet_name='High_Uncertainty', index=False)
         
-        logger.info(f"  ✓ Excel saved: {excel_file.name}")
+        logger.info(f"  [OK] Excel saved: {excel_file.name}")
         return excel_file
     
     def export_json_summary(self, target: str, mc_results: Dict,
@@ -1223,7 +1223,7 @@ class MonteCarloSimulationSystem:
         with open(json_file, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"  ✓ JSON saved: {json_file.name}")
+        logger.info(f"  [OK] JSON saved: {json_file.name}")
         return json_file
 
 

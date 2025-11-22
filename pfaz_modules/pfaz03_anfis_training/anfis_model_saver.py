@@ -56,7 +56,7 @@ class ANFISModelSaver:
         
         saved_files = {}
         
-        # 1. ⚠️ WORKSPACE KAYDI (.mat) - Tüm veriler
+        # 1. [WARNING] WORKSPACE KAYDI (.mat) - Tüm veriler
         workspace_data = {
             'fis_data': model_data.get('fis'),
             'training_error': np.array(model_data.get('training_error', [])),
@@ -74,13 +74,13 @@ class ANFISModelSaver:
         workspace_file = output_dir / f'{model_name}_workspace.mat'
         sio.savemat(workspace_file, workspace_data)
         saved_files['workspace'] = str(workspace_file)
-        logger.info(f"  ✓ Workspace kaydedildi: {workspace_file.name}")
+        logger.info(f"  [OK] Workspace kaydedildi: {workspace_file.name}")
         
-        # 2. ⚠️ FIS KAYDI (.fis veya .mat) - Sadece FIS yapısı
+        # 2. [WARNING] FIS KAYDI (.fis veya .mat) - Sadece FIS yapısı
         fis_file = output_dir / f'{model_name}_fis.mat'
         sio.savemat(fis_file, {'fis': model_data.get('fis')})
         saved_files['fis'] = str(fis_file)
-        logger.info(f"  ✓ FIS kaydedildi: {fis_file.name}")
+        logger.info(f"  [OK] FIS kaydedildi: {fis_file.name}")
         
         # 3. Metrikleri JSON olarak kaydet
         metrics = model_data.get('metrics', {})
@@ -92,7 +92,7 @@ class ANFISModelSaver:
         with open(metrics_file, 'w') as f:
             json.dump(metrics, f, indent=2)
         saved_files['metrics'] = str(metrics_file)
-        logger.info(f"  ✓ Metrikler kaydedildi: {metrics_file.name}")
+        logger.info(f"  [OK] Metrikler kaydedildi: {metrics_file.name}")
         
         # 4. Hata grafikleri verileri
         if 'training_error' in model_data and 'validation_error' in model_data:
@@ -101,14 +101,14 @@ class ANFISModelSaver:
                     training_error=model_data['training_error'],
                     validation_error=model_data['validation_error'])
             saved_files['errors'] = str(errors_file)
-            logger.info(f"  ✓ Hata verileri kaydedildi: {errors_file.name}")
+            logger.info(f"  [OK] Hata verileri kaydedildi: {errors_file.name}")
         
         # 5. Outliers (varsa)
         if 'outliers' in model_data and model_data['outliers'] is not None:
             outliers_file = output_dir / f'{model_name}_outliers.csv'
             np.savetxt(outliers_file, model_data['outliers'], delimiter=',', fmt='%d')
             saved_files['outliers'] = str(outliers_file)
-            logger.info(f"  ✓ Outliers kaydedildi: {outliers_file.name}")
+            logger.info(f"  [OK] Outliers kaydedildi: {outliers_file.name}")
         
         # 6. Model bilgilerini özet dosyasına kaydet
         summary = {
@@ -125,7 +125,7 @@ class ANFISModelSaver:
             json.dump(summary, f, indent=2)
         saved_files['summary'] = str(summary_file)
         
-        logger.info(f"✓ ANFIS modeli başarıyla kaydedildi: {model_name}")
+        logger.info(f"[OK] ANFIS modeli başarıyla kaydedildi: {model_name}")
         
         return {
             'status': 'success',
@@ -167,7 +167,7 @@ class ANFISModelSaver:
         if workspace_files:
             verification['workspace_exists'] = True
             verification['workspace_file'] = str(workspace_files[0])
-            logger.info(f"  ✓ Workspace bulundu: {workspace_files[0].name}")
+            logger.info(f"  [OK] Workspace bulundu: {workspace_files[0].name}")
             
             # Workspace içeriğini kontrol et
             try:
@@ -178,19 +178,19 @@ class ANFISModelSaver:
                 if missing_keys:
                     verification['errors'].append(f"Workspace'te eksik key'ler: {missing_keys}")
                 else:
-                    logger.info(f"    ✓ Workspace içeriği doğru")
+                    logger.info(f"    [OK] Workspace içeriği doğru")
             except Exception as e:
                 verification['errors'].append(f"Workspace yükleme hatası: {str(e)}")
         else:
             verification['errors'].append("Workspace dosyası bulunamadı")
-            logger.warning(f"  ✗ Workspace bulunamadı")
+            logger.warning(f"  [FAIL] Workspace bulunamadı")
         
         # 2. FIS kontrolü
         fis_files = list(model_dir.glob(f'{model_name}*_fis.mat'))
         if fis_files:
             verification['fis_exists'] = True
             verification['fis_file'] = str(fis_files[0])
-            logger.info(f"  ✓ FIS bulundu: {fis_files[0].name}")
+            logger.info(f"  [OK] FIS bulundu: {fis_files[0].name}")
             
             # FIS içeriğini kontrol et
             try:
@@ -198,37 +198,37 @@ class ANFISModelSaver:
                 if 'fis' not in fis_data:
                     verification['errors'].append("FIS dosyasında 'fis' key'i yok")
                 else:
-                    logger.info(f"    ✓ FIS içeriği doğru")
+                    logger.info(f"    [OK] FIS içeriği doğru")
             except Exception as e:
                 verification['errors'].append(f"FIS yükleme hatası: {str(e)}")
         else:
             verification['errors'].append("FIS dosyası bulunamadı")
-            logger.warning(f"  ✗ FIS bulunamadı")
+            logger.warning(f"  [FAIL] FIS bulunamadı")
         
         # 3. Metrics kontrolü
         metrics_files = list(model_dir.glob(f'{model_name}*_metrics.json'))
         if metrics_files:
             verification['metrics_exists'] = True
             verification['metrics_file'] = str(metrics_files[0])
-            logger.info(f"  ✓ Metrics bulundu: {metrics_files[0].name}")
+            logger.info(f"  [OK] Metrics bulundu: {metrics_files[0].name}")
             
             try:
                 with open(metrics_files[0], 'r') as f:
                     metrics = json.load(f)
-                    logger.info(f"    ✓ Metrics içeriği doğru (R²={metrics.get('R2', 'N/A')})")
+                    logger.info(f"    [OK] Metrics içeriği doğru (R²={metrics.get('R2', 'N/A')})")
             except Exception as e:
                 verification['errors'].append(f"Metrics yükleme hatası: {str(e)}")
         else:
             verification['errors'].append("Metrics dosyası bulunamadı")
-            logger.warning(f"  ✗ Metrics bulunamadı")
+            logger.warning(f"  [FAIL] Metrics bulunamadı")
         
         # 4. Durum belirleme
         if verification['workspace_exists'] and verification['fis_exists'] and len(verification['errors']) == 0:
             verification['status'] = 'success'
-            logger.info(f"✓ Model doğrulama BAŞARILI: {model_name}")
+            logger.info(f"[OK] Model doğrulama BAŞARILI: {model_name}")
         else:
             verification['status'] = 'failed'
-            logger.error(f"✗ Model doğrulama BAŞARISIZ: {model_name}")
+            logger.error(f"[FAIL] Model doğrulama BAŞARISIZ: {model_name}")
             for error in verification['errors']:
                 logger.error(f"    - {error}")
         
@@ -269,7 +269,7 @@ class ANFISModelSaver:
             'verification': verification
         }
         
-        logger.info(f"✓ Model başarıyla yüklendi: {verification['model_name']}")
+        logger.info(f"[OK] Model başarıyla yüklendi: {verification['model_name']}")
         
         return model_data
 

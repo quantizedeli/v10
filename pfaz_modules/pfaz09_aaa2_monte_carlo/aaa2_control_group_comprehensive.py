@@ -8,7 +8,7 @@ Complete analysis of AAA2 control group with top 50 models per target
 Features:
 - PFAZ01 integration (pre-calculated features)
 - Top 50 model selection (R², RMSE criteria)
-- MM_QM dual predictions (both MM and QM separately) ⭐
+- MM_QM dual predictions (both MM and QM separately) [STAR]
 - QM empty nuclei special handling
 - Best/worst/unpredictable nuclei analysis
 - Model success rates (overall + by category)
@@ -139,7 +139,7 @@ class AAA2ControlGroupAnalyzer:
                 'threshold_delta': {'MM': 0.3, 'QM': 0.05},
                 'unit': {'MM': 'µ_N', 'QM': 'barn'},
                 'full_name': 'Magnetic + Quadrupole Moments',
-                'is_dual': True  # ⭐ DUAL OUTPUT
+                'is_dual': True  # [STAR] DUAL OUTPUT
             },
             'Beta_2': {
                 'column': 'Beta_2',
@@ -191,19 +191,19 @@ class AAA2ControlGroupAnalyzer:
         
         # Try PFAZ01 output first
         if self.pfaz01_output_path and self.pfaz01_output_path.exists():
-            logger.info(f"→ Loading from PFAZ01 output: {self.pfaz01_output_path}")
+            logger.info(f"-> Loading from PFAZ01 output: {self.pfaz01_output_path}")
             self.aaa2_df = pd.read_csv(self.pfaz01_output_path)
-            logger.info(f"✓ Loaded {len(self.aaa2_df)} nuclei with {len(self.aaa2_df.columns)} features")
+            logger.info(f"[OK] Loaded {len(self.aaa2_df)} nuclei with {len(self.aaa2_df.columns)} features")
         
         # Fallback to raw aaa2.txt
         elif self.aaa2_txt_path.exists():
-            logger.info(f"→ Loading raw AAA2: {self.aaa2_txt_path}")
+            logger.info(f"-> Loading raw AAA2: {self.aaa2_txt_path}")
             self.aaa2_df = pd.read_csv(self.aaa2_txt_path, sep='\t', encoding='utf-8')
-            logger.info(f"✓ Loaded {len(self.aaa2_df)} nuclei")
+            logger.info(f"[OK] Loaded {len(self.aaa2_df)} nuclei")
             
             # Calculate features on-the-fly (if needed)
             if 'SEMF_BE' not in self.aaa2_df.columns:
-                logger.info("→ Calculating theoretical features...")
+                logger.info("-> Calculating theoretical features...")
                 self.aaa2_df = self._calculate_theoretical_features(self.aaa2_df)
         
         else:
@@ -255,7 +255,7 @@ class AAA2ControlGroupAnalyzer:
         # N/Z ratio
         df['N_Z_Ratio'] = N / Z
         
-        logger.info(f"  ✓ Added {11} theoretical features")
+        logger.info(f"  [OK] Added {11} theoretical features")
         
         return df
     
@@ -267,7 +267,7 @@ class AAA2ControlGroupAnalyzer:
             qm_empty_indices: List of indices
             qm_empty_nuclei: List of nucleus names
         """
-        logger.info("\n→ Identifying QM empty nuclei...")
+        logger.info("\n-> Identifying QM empty nuclei...")
         
         qm_col = self.target_configs['QM']['column']
         
@@ -282,7 +282,7 @@ class AAA2ControlGroupAnalyzer:
         self.qm_empty_indices = self.aaa2_df[qm_empty_mask].index.tolist()
         self.qm_empty_nuclei = self.aaa2_df.loc[qm_empty_mask, 'NUCLEUS'].tolist()
         
-        logger.info(f"✓ QM empty nuclei: {len(self.qm_empty_indices)}")
+        logger.info(f"[OK] QM empty nuclei: {len(self.qm_empty_indices)}")
         logger.info(f"  Examples: {self.qm_empty_nuclei[:5]}")
         
         # Save to file
@@ -307,7 +307,7 @@ class AAA2ControlGroupAnalyzer:
         - By shell structure: Closed-shell, Open-shell
         - By N/Z ratio: Neutron-rich, Stable, Proton-rich
         """
-        logger.info("\n→ Categorizing nuclei...")
+        logger.info("\n-> Categorizing nuclei...")
         
         magic_numbers = [2, 8, 20, 28, 50, 82, 126]
         
@@ -367,7 +367,7 @@ class AAA2ControlGroupAnalyzer:
         self.nucleus_categories = categories
         
         # Print summary
-        logger.info("✓ Nucleus categories:")
+        logger.info("[OK] Nucleus categories:")
         for cat_type, cat_dict in categories.items():
             logger.info(f"  {cat_type}:")
             for cat_name, nuclei_list in cat_dict.items():
@@ -403,13 +403,13 @@ class AAA2ControlGroupAnalyzer:
         top50_dict = {}
         
         for target in self.target_configs.keys():
-            logger.info(f"\n→ Selecting top 50 models for {target}...")
+            logger.info(f"\n-> Selecting top 50 models for {target}...")
             
             # Look for performance summary file
             summary_file = self.performance_summary_dir / f'performance_summary_{target}.csv'
             
             if not summary_file.exists():
-                logger.warning(f"  ⚠️ Performance summary not found: {summary_file}")
+                logger.warning(f"  [WARNING] Performance summary not found: {summary_file}")
                 logger.warning(f"  Skipping {target}")
                 continue
             
@@ -441,7 +441,7 @@ class AAA2ControlGroupAnalyzer:
             
             top50_dict[target] = top50
             
-            logger.info(f"✓ Selected {len(top50)} models for {target}")
+            logger.info(f"[OK] Selected {len(top50)} models for {target}")
             if len(top50) > 0:
                 logger.info(f"  Best: {top50[0]} (R²={sorted_df.iloc[0][sort_col]:.4f})")
                 if len(top50) >= 50:
@@ -454,7 +454,7 @@ class AAA2ControlGroupAnalyzer:
         with open(top50_file, 'w') as f:
             json.dump(top50_dict, f, indent=2)
         
-        logger.info(f"\n✓ Top 50 models saved: {top50_file}")
+        logger.info(f"\n[OK] Top 50 models saved: {top50_file}")
         
         return top50_dict
     
@@ -468,7 +468,7 @@ class AAA2ControlGroupAnalyzer:
         Returns:
             loaded_models: {model_id: model_object}
         """
-        logger.info(f"\n→ Loading top 50 models for {target}...")
+        logger.info(f"\n-> Loading top 50 models for {target}...")
         
         model_ids = self.top50_models.get(target, [])
         if len(model_ids) == 0:
@@ -519,7 +519,7 @@ class AAA2ControlGroupAnalyzer:
                 logger.warning(f"    Failed to load {model_id}: {e}")
                 continue
         
-        logger.info(f"✓ Successfully loaded {len(loaded_models)}/{len(model_ids)} models")
+        logger.info(f"[OK] Successfully loaded {len(loaded_models)}/{len(model_ids)} models")
         
         self.loaded_models[target] = loaded_models
         
@@ -563,7 +563,7 @@ class AAA2ControlGroupAnalyzer:
         
         X = self.aaa2_df[feature_cols].values
         
-        logger.info(f"→ Feature matrix: {X.shape}")
+        logger.info(f"-> Feature matrix: {X.shape}")
         
         # Initialize predictions storage
         predictions_dict = {}
@@ -609,7 +609,7 @@ class AAA2ControlGroupAnalyzer:
                 logger.warning(f"  Prediction failed for {model_id}: {e}")
                 continue
         
-        logger.info(f"✓ Predictions completed: {len(predictions_dict)} model outputs")
+        logger.info(f"[OK] Predictions completed: {len(predictions_dict)} model outputs")
         
         # Create DataFrame
         predictions_df = pd.DataFrame({
@@ -637,7 +637,7 @@ class AAA2ControlGroupAnalyzer:
         predictions_df.to_csv(pred_dir / 'predictions.csv', index=False)
         predictions_df.to_excel(pred_dir / 'predictions.xlsx', index=False, engine='openpyxl')
         
-        logger.info(f"✓ Predictions saved: {pred_dir}")
+        logger.info(f"[OK] Predictions saved: {pred_dir}")
         
         self.predictions[target] = {
             'dataframe': predictions_df,
@@ -690,37 +690,37 @@ class AAA2ControlGroupAnalyzer:
                     continue
                 
                 # Phase 4: Delta & Accuracy
-                logger.info(f"\n→ Phase 4: Calculating delta & accuracy...")
+                logger.info(f"\n-> Phase 4: Calculating delta & accuracy...")
                 delta_df, accuracy_df = self.calculate_delta_and_accuracy(
                     predictions_df, target
                 )
                 
                 # Phase 5: Model Success Rates
-                logger.info(f"\n→ Phase 5: Calculating model success rates...")
+                logger.info(f"\n-> Phase 5: Calculating model success rates...")
                 success_rates_df = self.calculate_model_success_rates(
                     delta_df, accuracy_df, target
                 )
                 
                 # Phase 6: Best/Worst/Unpredictable Nuclei
-                logger.info(f"\n→ Phase 6: Analyzing best/worst nuclei...")
+                logger.info(f"\n-> Phase 6: Analyzing best/worst nuclei...")
                 best_worst_nuclei = self.analyze_best_worst_nuclei(
                     delta_df, target, top_n=20
                 )
                 
                 # Phase 7: Common Features
-                logger.info(f"\n→ Phase 7: Extracting common features...")
+                logger.info(f"\n-> Phase 7: Extracting common features...")
                 common_features = self.extract_common_features_analysis(
                     best_worst_nuclei, target
                 )
                 
                 # Phase 8: Category Success Rates
-                logger.info(f"\n→ Phase 8: Calculating category success rates...")
+                logger.info(f"\n-> Phase 8: Calculating category success rates...")
                 category_success_df = self.calculate_category_success_rates(
                     delta_df, target
                 )
                 
                 # Phase 9: Excel Report
-                logger.info(f"\n→ Phase 9: Generating Excel report...")
+                logger.info(f"\n-> Phase 9: Generating Excel report...")
                 excel_file = self.generate_comprehensive_excel_report(
                     target, predictions_df, delta_df, accuracy_df,
                     success_rates_df, best_worst_nuclei, category_success_df,
@@ -728,20 +728,20 @@ class AAA2ControlGroupAnalyzer:
                 )
                 
                 # Phase 10: Visualizations
-                logger.info(f"\n→ Phase 10: Creating visualizations...")
+                logger.info(f"\n-> Phase 10: Creating visualizations...")
                 viz_files = self.generate_dual_visualizations(
                     target, predictions_df, delta_df, accuracy_df,
                     success_rates_df, best_worst_nuclei, category_success_df
                 )
                 
-                logger.info(f"✓ {target} processing complete")
+                logger.info(f"[OK] {target} processing complete")
             
             # Final summary
             end_time = datetime.now()
             duration = (end_time - start_time).total_seconds()
             
             logger.info("\n" + "="*80)
-            logger.info("✅ AAA2 CONTROL GROUP ANALYSIS COMPLETE")
+            logger.info("[SUCCESS] AAA2 CONTROL GROUP ANALYSIS COMPLETE")
             logger.info("="*80)
             logger.info(f"Duration: {duration:.1f} seconds ({duration/60:.1f} minutes)")
             logger.info(f"Targets processed: {len(self.predictions)}")
@@ -755,7 +755,7 @@ class AAA2ControlGroupAnalyzer:
             }
         
         except Exception as e:
-            logger.error(f"\n❌ ANALYSIS FAILED: {e}")
+            logger.error(f"\n[ERROR] ANALYSIS FAILED: {e}")
             import traceback
             traceback.print_exc()
             return {
@@ -791,13 +791,13 @@ if __name__ == "__main__":
     
     if results['success']:
         print("\n" + "="*80)
-        print("✅ SUCCESS!")
+        print("[SUCCESS] SUCCESS!")
         print("="*80)
         print(f"Duration: {results['duration']:.1f}s")
         print(f"Targets: {', '.join(results['targets_processed'])}")
         print(f"Output: {results['output_dir']}")
     else:
         print("\n" + "="*80)
-        print("❌ FAILED!")
+        print("[ERROR] FAILED!")
         print("="*80)
         print(f"Error: {results['error']}")

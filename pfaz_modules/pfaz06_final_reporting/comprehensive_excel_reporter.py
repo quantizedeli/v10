@@ -96,7 +96,7 @@ class ComprehensiveExcelReporter:
             logger.info("18/18: Creating Kısaltmalar sheet...")
             self._create_abbreviations_sheet(writer, formats)
         
-        logger.info(f"\n✅ Excel report saved: {excel_file.name}")
+        logger.info(f"\n[SUCCESS] Excel report saved: {excel_file.name}")
         logger.info("="*60)
         
         return excel_file
@@ -370,4 +370,4 @@ if __name__ == "__main__":
     reporter = ComprehensiveExcelReporter('test_output')
     excel_file = reporter.generate_full_report(df, replacements)
     
-    print(f"\n✅ Test Excel report created: {excel_file}")
+    print(f"\n[SUCCESS] Test Excel report created: {excel_file}")

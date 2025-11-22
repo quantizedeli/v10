@@ -345,7 +345,7 @@ class OptimizerComparisonReporter:
         logger.info("Identifying best configurations...")
         analyses['best_configs'] = self._get_best_configs()
         
-        logger.info("✅ Analysis completed\n")
+        logger.info("[SUCCESS] Analysis completed\n")
         
         return analyses
     
@@ -405,7 +405,7 @@ class OptimizerComparisonReporter:
         # Chart 3: Batch size effect
         self._create_batch_size_chart(charts_dir)
         
-        logger.info(f"✅ Charts saved to {charts_dir}")
+        logger.info(f"[SUCCESS] Charts saved to {charts_dir}")
     
     def _create_optimizer_comparison_chart(self, output_dir: Path):
         """Create optimizer comparison bar chart"""
@@ -501,7 +501,7 @@ class OptimizerComparisonReporter:
         else:
             self._generate_simple_excel(excel_path, analyses)
         
-        logger.info(f"✅ Excel report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Excel report saved: {excel_path}")
     
     def _generate_simple_excel(self, excel_path: Path, analyses: Dict):
         """Generate simple Excel without formatting"""
@@ -736,7 +736,7 @@ def main():
     print("\nGenerating Excel report...")
     reporter.generate_excel_report()
     
-    print("\n✅ OPTIMIZER COMPARISON TEST COMPLETED!")
+    print("\n[SUCCESS] OPTIMIZER COMPARISON TEST COMPLETED!")
     print(f"Output directory: {reporter.output_dir}")
 
 

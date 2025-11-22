@@ -15,7 +15,7 @@ import logging
 
 import sys
 # sys.path.append('..') - REMOVED
-from nuclear_physics_modules.constants import *
+from core_modules.constants import *
 from .nuclei_distribution_analyzer import NucleiDistributionAnalyzer
 
 logging.basicConfig(level=logging.INFO)
@@ -176,7 +176,7 @@ class DatasetGenerator:
         dataset_count = 0
         
         for target_name, target_cols in targets.items():
-            logger.info(f"\n→ Hedef: {target_name}")
+            logger.info(f"\n-> Hedef: {target_name}")
             
             # Hedef için özellik setlerini belirle
             if target_name == 'Beta_2':
@@ -188,7 +188,7 @@ class DatasetGenerator:
             target_df = self._filter_for_target(df, target_cols)
             
             if len(target_df) == 0:
-                logger.warning(f"  ⚠ {target_name} için veri yok, atlanıyor")
+                logger.warning(f"  [WARNING] {target_name} için veri yok, atlanıyor")
                 continue
             
             for nucleus_count in nucleus_counts:
@@ -209,24 +209,24 @@ class DatasetGenerator:
                                         dataset_count += 1
                                         
                                         if dataset_count % 50 == 0:
-                                            logger.info(f"  ✓ {dataset_count} veri seti oluşturuldu")
+                                            logger.info(f"  [OK] {dataset_count} veri seti oluşturuldu")
                                     
                                     except Exception as e:
-                                        logger.error(f"  ✗ Hata: {e}")
+                                        logger.error(f"  [FAIL] Hata: {e}")
                                         continue
         
-        logger.info(f"\n✓ Toplam {dataset_count} veri seti oluşturuldu")
+        logger.info(f"\n[OK] Toplam {dataset_count} veri seti oluşturuldu")
         self._save_catalog()
 
         # Master çekirdek kataloğu oluştur
-        logger.info("\n→ Master çekirdek kataloğu oluşturuluyor...")
+        logger.info("\n-> Master çekirdek kataloğu oluşturuluyor...")
         try:
             self.distribution_analyzer.create_master_nuclei_catalog(
                 df, self.base_path / 'Master_Nuclei_Catalog.xlsx'
             )
-            logger.info("✓ Master çekirdek kataloğu oluşturuldu")
+            logger.info("[OK] Master çekirdek kataloğu oluşturuldu")
         except Exception as e:
-            logger.error(f"✗ Master katalog hatası: {e}")
+            logger.error(f"[FAIL] Master katalog hatası: {e}")
     
     def _generate_single_dataset(self, df, target_name, target_cols,
                                 nucleus_count, scenario_name, split_ratios,
@@ -267,7 +267,7 @@ class DatasetGenerator:
         y = y[mask]
         
         if len(X) < 10:
-            logger.warning(f"  ⚠ Yetersiz veri ({len(X)} örnek), atlanıyor")
+            logger.warning(f"  [WARNING] Yetersiz veri ({len(X)} örnek), atlanıyor")
             return
         
         # Train/Check/Test split
@@ -443,7 +443,7 @@ class DatasetGenerator:
                 analysis, path / 'nuclei_distribution_report.xlsx'
             )
         except Exception as e:
-            logger.warning(f"  ⚠ Dağılım raporu oluşturulamadı: {e}")
+            logger.warning(f"  [WARNING] Dağılım raporu oluşturulamadı: {e}")
     
     def _estimate_total_combinations(self):
         """Toplam kombinasyon sayısını tahmin et"""
@@ -496,7 +496,7 @@ class DatasetGenerator:
             }
             pd.DataFrame(summary).to_excel(writer, sheet_name='Summary', index=False)
         
-        logger.info(f"✓ Veri seti kataloğu kaydedildi: {output_path}")
+        logger.info(f"[OK] Veri seti kataloğu kaydedildi: {output_path}")
 
 
 class ControlGroupGenerator:
@@ -530,7 +530,7 @@ class ControlGroupGenerator:
                     target_control = target_control[target_control[col].notna()]
             
             if len(target_control) == 0:
-                logger.warning(f"  ⚠ {target_name} için kontrol grubu yok")
+                logger.warning(f"  [WARNING] {target_name} için kontrol grubu yok")
                 continue
             
             # Çeşitlilik için stratejik seçim
@@ -540,7 +540,7 @@ class ControlGroupGenerator:
             output_path = Path('ANFIS_Datasets') / f'Control_Group_{target_name}.xlsx'
             selected.to_excel(output_path, index=False)
             
-            logger.info(f"  ✓ {target_name}: {len(selected)} nükleus")
+            logger.info(f"  [OK] {target_name}: {len(selected)} nükleus")
     
     def _select_diverse_control_group(self, df, max_size=100):
         """Çeşitli kontrol grubu seç"""
@@ -621,7 +621,7 @@ def main():
         sampling_methods=['random']
     )
     
-    print("\n✓ Test tamamlandı")
+    print("\n[OK] Test tamamlandı")
 
 
 if __name__ == "__main__":

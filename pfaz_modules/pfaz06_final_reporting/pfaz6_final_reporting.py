@@ -46,7 +46,7 @@ class FinalReportingPipeline:
         logger.info("4. Cross-Model Analiz...")
         self._collect_crossmodel_results()
         
-        logger.info(f"\n✓ Toplanan sonuç sayısı: {self._count_total_results()}")
+        logger.info(f"\n[OK] Toplanan sonuç sayısı: {self._count_total_results()}")
         return self.all_results
     
     def _count_total_results(self):
@@ -74,7 +74,7 @@ class FinalReportingPipeline:
                             with open(metrics_file) as f:
                                 self.all_results['ai_models'][model_name][target] = json.load(f)
         
-        logger.info(f"  ✓ {len(self.all_results['ai_models'])} AI model")
+        logger.info(f"  [OK] {len(self.all_results['ai_models'])} AI model")
     
     def _collect_anfis_results(self):
         """ANFIS sonuçlarını topla"""
@@ -93,7 +93,7 @@ class FinalReportingPipeline:
                             with open(metrics_file) as f:
                                 self.all_results['anfis_models'][config_name][target] = json.load(f)
         
-        logger.info(f"  ✓ {len(self.all_results['anfis_models'])} ANFIS config")
+        logger.info(f"  [OK] {len(self.all_results['anfis_models'])} ANFIS config")
     
     def _collect_individual_analysis(self):
         """Individual analysis sonuçları"""
@@ -101,7 +101,7 @@ class FinalReportingPipeline:
         if ind_file.exists():
             with open(ind_file) as f:
                 self.all_results['individual_analysis'] = json.load(f)
-            logger.info(f"  ✓ Individual analysis yüklendi")
+            logger.info(f"  [OK] Individual analysis yüklendi")
     
     def _collect_crossmodel_results(self):
         """Cross-model analiz sonuçları"""
@@ -109,7 +109,7 @@ class FinalReportingPipeline:
         if json_file.exists():
             with open(json_file) as f:
                 self.all_results['cross_model'] = json.load(f)
-            logger.info(f"  ✓ Cross-model analiz yüklendi")
+            logger.info(f"  [OK] Cross-model analiz yüklendi")
     
     def generate_thesis_tables(self):
         """Tez için KAPSAMLI Excel tabloları"""
@@ -139,7 +139,7 @@ class FinalReportingPipeline:
             # Tablo 6: Genel istatistikler
             self._write_overall_statistics(writer)
         
-        logger.info(f"\n✓ Excel: {excel_file}")
+        logger.info(f"\n[OK] Excel: {excel_file}")
         logger.info(f"  Toplam sheet: {6 + 4}")  # 6 genel + 4 target-specific
         return excel_file
     
@@ -161,7 +161,7 @@ class FinalReportingPipeline:
         if data:
             df = pd.DataFrame(data)
             df.to_excel(writer, sheet_name='All_AI_Models', index=False)
-            logger.info(f"  ✓ All_AI_Models ({len(data)} sonuç)")
+            logger.info(f"  [OK] All_AI_Models ({len(data)} sonuç)")
     
     def _write_all_anfis_models(self, writer):
         """TÜM ANFIS konfigürasyonların TÜM targetlerde performansı"""
@@ -181,7 +181,7 @@ class FinalReportingPipeline:
         if data:
             df = pd.DataFrame(data)
             df.to_excel(writer, sheet_name='All_ANFIS_Models', index=False)
-            logger.info(f"  ✓ All_ANFIS_Models ({len(data)} sonuç)")
+            logger.info(f"  [OK] All_ANFIS_Models ({len(data)} sonuç)")
     
     def _write_ai_anfis_comparison(self, writer):
         """AI vs ANFIS karşılaştırması (target bazında)"""
@@ -216,7 +216,7 @@ class FinalReportingPipeline:
         
         df = pd.DataFrame(data)
         df.to_excel(writer, sheet_name='AI_vs_ANFIS_Comparison', index=False)
-        logger.info(f"  ✓ AI_vs_ANFIS_Comparison")
+        logger.info(f"  [OK] AI_vs_ANFIS_Comparison")
     
     def _write_target_specific(self, writer, target):
         """Belirli bir target için TÜM modeller"""
@@ -250,7 +250,7 @@ class FinalReportingPipeline:
             df = pd.DataFrame(data)
             df = df.sort_values('R²', ascending=False)
             df.to_excel(writer, sheet_name=f'{target}_All_Models', index=False)
-            logger.info(f"  ✓ {target}_All_Models ({len(data)} model)")
+            logger.info(f"  [OK] {target}_All_Models ({len(data)} model)")
     
     def _write_crossmodel_details(self, writer):
         """Cross-model detaylı sonuçlar"""
@@ -270,7 +270,7 @@ class FinalReportingPipeline:
         if data:
             df = pd.DataFrame(data)
             df.to_excel(writer, sheet_name='CrossModel_Summary', index=False)
-            logger.info(f"  ✓ CrossModel_Summary")
+            logger.info(f"  [OK] CrossModel_Summary")
     
     def _write_overall_statistics(self, writer):
         """Genel istatistikler"""
@@ -290,7 +290,7 @@ class FinalReportingPipeline:
         
         df = pd.DataFrame(data)
         df.to_excel(writer, sheet_name='Overall_Statistics', index=False)
-        logger.info(f"  ✓ Overall_Statistics")
+        logger.info(f"  [OK] Overall_Statistics")
     
     def generate_summary_json(self):
         """JSON özet dosyası"""
@@ -306,7 +306,7 @@ class FinalReportingPipeline:
         with open(json_file, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"\n✓ JSON: {json_file}")
+        logger.info(f"\n[OK] JSON: {json_file}")
         return json_file
     
     def run_complete_pipeline(self):
@@ -330,7 +330,7 @@ class FinalReportingPipeline:
         duration = (datetime.now() - start).total_seconds()
         
         logger.info("\n" + "="*80)
-        logger.info("✅ PFAZ 6 TAMAMLANDI")
+        logger.info("[SUCCESS] PFAZ 6 TAMAMLANDI")
         logger.info("="*80)
         logger.info(f"Süre: {duration:.1f} saniye")
         logger.info(f"Excel: {excel_file}")

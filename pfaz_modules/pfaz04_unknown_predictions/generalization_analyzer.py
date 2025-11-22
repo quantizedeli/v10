@@ -121,7 +121,7 @@ class GeneralizationAnalyzer:
         results_df = pd.DataFrame(results)
         results_df = results_df.sort_values('generalization_score', ascending=False)
         
-        logger.info(f"✅ Calculated generalization for {len(results_df)} models")
+        logger.info(f"[SUCCESS] Calculated generalization for {len(results_df)} models")
         
         self.analysis_results = results_df
         
@@ -170,7 +170,7 @@ class GeneralizationAnalyzer:
         else:
             self.analysis_results.to_csv(self.output_dir / 'generalization_analysis.csv', index=False)
         
-        logger.info(f"✅ Report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Report saved: {excel_path}")
     
     def _write_dataframe(self, ws, df: pd.DataFrame):
         """Write dataframe to worksheet"""
@@ -239,7 +239,7 @@ def main():
     print("\nGenerating Excel report...")
     analyzer.generate_excel_report()
     
-    print("\n✅ TEST COMPLETED!")
+    print("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

@@ -332,7 +332,7 @@ class ANFISRobustnessTester:
         else:
             self._generate_simple_excel(excel_path)
         
-        logger.info(f"✅ Excel report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Excel report saved: {excel_path}")
     
     def _generate_simple_excel(self, excel_path: Path):
         """Generate simple Excel"""
@@ -522,7 +522,7 @@ def main():
     print("\nSaving summary...")
     tester.save_summary_report()
     
-    print("\n✅ TEST COMPLETED!")
+    print("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

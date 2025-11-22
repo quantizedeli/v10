@@ -78,7 +78,7 @@ class ANFISDatasetSelector:
         else:
             raise ValueError(f"Desteklenmeyen format: {summary_file.suffix}")
         
-        logger.info(f"✓ {len(self.results_df)} sonuç yüklendi")
+        logger.info(f"[OK] {len(self.results_df)} sonuç yüklendi")
         
         return self.results_df
     
@@ -102,7 +102,7 @@ class ANFISDatasetSelector:
         target_df = self.results_df[self.results_df['Target'] == target].copy()
         
         if len(target_df) == 0:
-            logger.warning(f"⚠ {target} için sonuç bulunamadı!")
+            logger.warning(f"[WARNING] {target} için sonuç bulunamadı!")
             return pd.DataFrame()
         
         # Layers
@@ -126,7 +126,7 @@ class ANFISDatasetSelector:
         # Adjust if total < 50
         total_available = n_top + n_mid + n_low
         if total_available < n_datasets:
-            logger.warning(f"  ⚠ Sadece {total_available} dataset mevcut (hedef: {n_datasets})")
+            logger.warning(f"  [WARNING] Sadece {total_available} dataset mevcut (hedef: {n_datasets})")
             n_datasets = total_available
         
         # Select randomly from each layer (or all if not enough)
@@ -143,7 +143,7 @@ class ANFISDatasetSelector:
                              ['Mid'] * len(selected_mid) + 
                              ['Low'] * len(selected_low))
         
-        logger.info(f"  ✓ {len(selected)} datasets seçildi")
+        logger.info(f"  [OK] {len(selected)} datasets seçildi")
         
         return selected
     
@@ -167,7 +167,7 @@ class ANFISDatasetSelector:
         target_df = self.results_df[self.results_df['Target'] == target].copy()
         
         if len(target_df) == 0:
-            logger.warning(f"⚠ {target} için sonuç bulunamadı!")
+            logger.warning(f"[WARNING] {target} için sonuç bulunamadı!")
             return pd.DataFrame()
         
         # Sort by Composite Score (or R² if not available)
@@ -185,7 +185,7 @@ class ANFISDatasetSelector:
         # Add selection method
         selected['Selection_Method'] = 'Balanced'
         
-        logger.info(f"  ✓ {len(selected)} datasets seçildi")
+        logger.info(f"  [OK] {len(selected)} datasets seçildi")
         
         return selected
     
@@ -288,7 +288,7 @@ class ANFISDatasetSelector:
         self._create_summary_report(all_selections)
         
         logger.info("\n" + "="*80)
-        logger.info("✓ DATASET SELECTION TAMAMLANDI")
+        logger.info("[OK] DATASET SELECTION TAMAMLANDI")
         logger.info("="*80)
         
         return all_selections
@@ -316,7 +316,7 @@ class ANFISDatasetSelector:
             # Copy dataset files
             self._copy_dataset_files(method2_df, save_dir2)
         
-        logger.info(f"  ✓ {target} seçimleri kaydedildi")
+        logger.info(f"  [OK] {target} seçimleri kaydedildi")
     
     def _copy_dataset_files(self, df, dest_dir):
         """Copy dataset files to destination"""
@@ -339,7 +339,7 @@ class ANFISDatasetSelector:
                 
                 shutil.copytree(source_path, dest_path)
             else:
-                logger.warning(f"    ⚠ Dataset bulunamadı: {dataset_name}")
+                logger.warning(f"    [WARNING] Dataset bulunamadı: {dataset_name}")
     
     def _find_dataset_path(self, dataset_name):
         """Find dataset path"""
@@ -405,7 +405,7 @@ class ANFISDatasetSelector:
         with open(self.output_dir / 'selection_summary.json', 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"\n✓ Summary report: {self.output_dir / 'selection_summary.json'}")
+        logger.info(f"\n[OK] Summary report: {self.output_dir / 'selection_summary.json'}")
         
         # Print summary
         print("\n" + "="*80)
@@ -482,7 +482,7 @@ class ANFISTrainingQueueGenerator:
         # Sort by priority (high to low)
         self.queue.sort(key=lambda x: x['priority'], reverse=True)
         
-        logger.info(f"✓ {len(self.queue)} ANFIS training task oluşturuldu")
+        logger.info(f"[OK] {len(self.queue)} ANFIS training task oluşturuldu")
         
         # Save queue
         self._save_queue()
@@ -515,14 +515,14 @@ class ANFISTrainingQueueGenerator:
         save_path = self.selected_datasets_dir / 'anfis_training_queue.csv'
         queue_df.to_csv(save_path, index=False)
         
-        logger.info(f"✓ Training queue saved: {save_path}")
+        logger.info(f"[OK] Training queue saved: {save_path}")
         
         # JSON version
         json_path = self.selected_datasets_dir / 'anfis_training_queue.json'
         with open(json_path, 'w') as f:
             json.dump(self.queue, f, indent=2, default=str)
         
-        logger.info(f"✓ Training queue (JSON): {json_path}")
+        logger.info(f"[OK] Training queue (JSON): {json_path}")
 
 
 # ============================================================================
@@ -586,7 +586,7 @@ def test_anfis_dataset_selector():
     queue = queue_gen.generate_queue()
     
     print("\n" + "="*80)
-    print(f"✓ Test tamamlandı!")
+    print(f"[OK] Test tamamlandı!")
     print(f"  Total queue items: {len(queue)}")
     print(f"  Top 5 priority tasks:")
     for i, task in enumerate(queue[:5]):

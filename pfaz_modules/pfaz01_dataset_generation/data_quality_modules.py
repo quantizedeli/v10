@@ -103,7 +103,7 @@ class OutlierHandler:
         
         if save_removed:
             df_outliers.to_csv(self.output_dir / 'removed_outliers.csv', index=False)
-            logger.info(f"✓ Removed outliers saved")
+            logger.info(f"[OK] Removed outliers saved")
         
         return df_clean
     
@@ -195,16 +195,16 @@ class DataValidator:
         # Summary
         n_issues = len(self.validation_report)
         if n_issues == 0:
-            logger.info("\n✓ No validation issues found")
+            logger.info("\n[OK] No validation issues found")
         else:
-            logger.warning(f"\n⚠ Found {n_issues} validation issues")
+            logger.warning(f"\n[WARNING] Found {n_issues} validation issues")
         
         return self.validation_report
     
     def _check_missing_values(self, df):
         """Check for missing values"""
         
-        logger.info("\n→ Checking missing values...")
+        logger.info("\n-> Checking missing values...")
         
         missing = df.isnull().sum()
         missing = missing[missing > 0]
@@ -214,28 +214,28 @@ class DataValidator:
                 pct = count / len(df) * 100
                 issue = f"Missing values in {col}: {count} ({pct:.1f}%)"
                 self.validation_report.append(issue)
-                logger.warning(f"  ⚠ {issue}")
+                logger.warning(f"  [WARNING] {issue}")
         else:
-            logger.info("  ✓ No missing values")
+            logger.info("  [OK] No missing values")
     
     def _check_duplicates(self, df):
         """Check for duplicate rows"""
         
-        logger.info("\n→ Checking duplicates...")
+        logger.info("\n-> Checking duplicates...")
         
         n_duplicates = df.duplicated().sum()
         
         if n_duplicates > 0:
             issue = f"Duplicate rows: {n_duplicates}"
             self.validation_report.append(issue)
-            logger.warning(f"  ⚠ {issue}")
+            logger.warning(f"  [WARNING] {issue}")
         else:
-            logger.info("  ✓ No duplicates")
+            logger.info("  [OK] No duplicates")
     
     def _check_data_types(self, df):
         """Check data types"""
         
-        logger.info("\n→ Checking data types...")
+        logger.info("\n-> Checking data types...")
         
         # Expected numeric columns
         numeric_cols = ['A', 'Z', 'N', 'MM', 'Q', 'BE']
@@ -245,14 +245,14 @@ class DataValidator:
                 if not pd.api.types.is_numeric_dtype(df[col]):
                     issue = f"Non-numeric type in {col}: {df[col].dtype}"
                     self.validation_report.append(issue)
-                    logger.warning(f"  ⚠ {issue}")
+                    logger.warning(f"  [WARNING] {issue}")
         
-        logger.info("  ✓ Data types checked")
+        logger.info("  [OK] Data types checked")
     
     def _check_value_ranges(self, df, ranges):
         """Check if values are within expected ranges"""
         
-        logger.info("\n→ Checking value ranges...")
+        logger.info("\n-> Checking value ranges...")
         
         for col, (min_val, max_val) in ranges.items():
             if col in df.columns:
@@ -261,12 +261,12 @@ class DataValidator:
                 if out_of_range > 0:
                     issue = f"Out of range values in {col}: {out_of_range} (expected [{min_val}, {max_val}])"
                     self.validation_report.append(issue)
-                    logger.warning(f"  ⚠ {issue}")
+                    logger.warning(f"  [WARNING] {issue}")
     
     def _check_physical_constraints(self, df):
         """Check nuclear physics constraints"""
         
-        logger.info("\n→ Checking physical constraints...")
+        logger.info("\n-> Checking physical constraints...")
         
         # A = Z + N
         if all(col in df.columns for col in ['A', 'Z', 'N']):
@@ -274,7 +274,7 @@ class DataValidator:
             if mismatch > 0:
                 issue = f"A ≠ Z + N mismatch: {mismatch} samples"
                 self.validation_report.append(issue)
-                logger.warning(f"  ⚠ {issue}")
+                logger.warning(f"  [WARNING] {issue}")
         
         # Z, N > 0
         if 'Z' in df.columns:
@@ -282,9 +282,9 @@ class DataValidator:
             if invalid_z > 0:
                 issue = f"Invalid Z values: {invalid_z}"
                 self.validation_report.append(issue)
-                logger.warning(f"  ⚠ {issue}")
+                logger.warning(f"  [WARNING] {issue}")
         
-        logger.info("  ✓ Physical constraints checked")
+        logger.info("  [OK] Physical constraints checked")
     
     def _save_report(self):
         """Save validation report"""
@@ -297,7 +297,7 @@ class DataValidator:
             report_path = self.output_dir / 'validation_report.csv'
             report_df.to_csv(report_path, index=False)
             
-            logger.info(f"\n✓ Validation report: {report_path}")
+            logger.info(f"\n[OK] Validation report: {report_path}")
 
 
 # ============================================================================
@@ -346,7 +346,7 @@ def test_data_quality_modules():
     df.loc[20:22, 'MM'] = np.nan
     
     # Test Outlier Handler
-    print("\n→ Testing Outlier Handler...")
+    print("\n-> Testing Outlier Handler...")
     outlier_handler = OutlierHandler(output_dir='test_outliers')
     
     mask_iqr = outlier_handler.detect_outliers_iqr(df, ['MM', 'Q'])
@@ -356,7 +356,7 @@ def test_data_quality_modules():
     print(f"  Isolation Forest: {mask_iso.sum()} outliers")
     
     # Test Data Validator
-    print("\n→ Testing Data Validator...")
+    print("\n-> Testing Data Validator...")
     validator = DataValidator(output_dir='test_validation')
     
     validation_rules = {
@@ -369,14 +369,14 @@ def test_data_quality_modules():
     
     issues = validator.validate_dataset(df, validation_rules)
     
-    print("\n✓ Data Quality modules test tamamlandı!")
+    print("\n[OK] Data Quality modules test tamamlandı!")
     print(f"  Outlier detections: {mask_iqr.sum()} (IQR), {mask_iso.sum()} (Isolation Forest)")
     print(f"  Validation issues: {len(issues)}")
 
 
 if __name__ == "__main__":
     test_data_quality_modules()
-    print("\n✓ Data Quality modülleri hazır:")
+    print("\n[OK] Data Quality modülleri hazır:")
     print("  - data_quality/outlier_handler.py")
     print("  - data_quality/data_validator.py")
     print("  - (robustness_tester.py zaten var: ai_training/model_validator.py)")

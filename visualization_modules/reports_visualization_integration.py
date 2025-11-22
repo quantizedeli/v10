@@ -64,7 +64,7 @@ class ReportsVisualizationIntegrationManager:
             'metadata': {}
         }
         
-        logger.info("✓ Reports-Visualization Integration Manager initialized")
+        logger.info("[OK] Reports-Visualization Integration Manager initialized")
     
     def generate_complete_thesis_output(self,
                                        results_df: pd.DataFrame,
@@ -117,7 +117,7 @@ class ReportsVisualizationIntegrationManager:
         duration = (datetime.now() - start_time).total_seconds()
         
         logger.info("\n" + "="*80)
-        logger.info("✓ THESIS OUTPUT GENERATION COMPLETED")
+        logger.info("[OK] THESIS OUTPUT GENERATION COMPLETED")
         logger.info("="*80)
         logger.info(f"Duration: {duration:.1f} seconds ({duration/60:.1f} minutes)")
         logger.info(f"Output directory: {self.output_dir}")
@@ -134,7 +134,7 @@ class ReportsVisualizationIntegrationManager:
             builder = ComprehensiveReportsBuilder(str(self.reports_dir))
             
             # Master Excel report
-            logger.info("  → Master Excel Report (15+ sheets)")
+            logger.info("  -> Master Excel Report (15+ sheets)")
             excel_file = builder.create_master_excel_report(
                 results_df, model_metrics, training_history, anomalies, config,
                 save_name='THESIS_MASTER_REPORT'
@@ -142,7 +142,7 @@ class ReportsVisualizationIntegrationManager:
             self.generated_outputs['reports'].append(str(excel_file))
             
             # JSON report
-            logger.info("  → JSON Report")
+            logger.info("  -> JSON Report")
             json_file = builder.create_json_report(
                 results_df, model_metrics, config,
                 save_name='THESIS_REPORT'
@@ -150,12 +150,12 @@ class ReportsVisualizationIntegrationManager:
             self.generated_outputs['reports'].append(str(json_file))
             
             # CSV exports
-            logger.info("  → CSV Exports")
+            logger.info("  -> CSV Exports")
             csv_files = builder.create_csv_exports(results_df, model_metrics)
             self.generated_outputs['reports'].extend([str(f) for f in csv_files])
             
             # HTML report
-            logger.info("  → HTML Summary Report")
+            logger.info("  -> HTML Summary Report")
             html_file = builder.create_html_summary_report(
                 results_df, model_metrics,
                 save_name='THESIS_SUMMARY'
@@ -163,7 +163,7 @@ class ReportsVisualizationIntegrationManager:
             self.generated_outputs['reports'].append(str(html_file))
             
         except ImportError:
-            logger.warning("  ⚠ Reports module not available")
+            logger.warning("  [WARNING] Reports module not available")
     
     def _export_data(self, results_df, model_metrics, predictions):
         """Veri export'ları"""
@@ -172,7 +172,7 @@ class ReportsVisualizationIntegrationManager:
         results_file = self.data_dir / 'results_all.parquet'
         results_df.to_parquet(results_file)
         self.generated_outputs['data_exports'].append(str(results_file))
-        logger.info(f"  ✓ Results exported: {results_file.name}")
+        logger.info(f"  [OK] Results exported: {results_file.name}")
         
         # Model metrics
         metrics_file = self.data_dir / 'model_metrics.json'
@@ -186,7 +186,7 @@ class ReportsVisualizationIntegrationManager:
                 }
             json.dump(metrics_clean, f, indent=2)
         self.generated_outputs['data_exports'].append(str(metrics_file))
-        logger.info(f"  ✓ Metrics exported: {metrics_file.name}")
+        logger.info(f"  [OK] Metrics exported: {metrics_file.name}")
         
         # Predictions (if available)
         if predictions:
@@ -195,7 +195,7 @@ class ReportsVisualizationIntegrationManager:
                 if isinstance(preds, np.ndarray):
                     pd.DataFrame({'prediction': preds}).to_csv(pred_file, index=False)
                 self.generated_outputs['data_exports'].append(str(pred_file))
-            logger.info(f"  ✓ Predictions exported: {len(predictions)} models")
+            logger.info(f"  [OK] Predictions exported: {len(predictions)} models")
     
     def _generate_visualizations(self, results_df, model_metrics, training_history,
                                 predictions, anomalies, feature_importance):
@@ -210,43 +210,43 @@ class ReportsVisualizationIntegrationManager:
             
             # Prediction data
             if 'r2' in results_df.columns and predictions:
-                logger.info("  → Prediction Visualizations")
+                logger.info("  -> Prediction Visualizations")
                 y_true = np.random.randn(100)  # Simulated
                 viz_manager.add_prediction_data(y_true, predictions, 'Target')
             
             # Model metrics
-            logger.info("  → Model Comparison Visualizations")
+            logger.info("  -> Model Comparison Visualizations")
             viz_manager.add_model_metrics(model_metrics)
             
             # Training history
             if training_history:
-                logger.info("  → Training Metrics Visualizations")
+                logger.info("  -> Training Metrics Visualizations")
                 viz_manager.add_training_history(training_history)
             
             # Anomalies
             if anomalies is not None and len(anomalies) > 0:
-                logger.info("  → Anomaly Analysis Visualizations")
+                logger.info("  -> Anomaly Analysis Visualizations")
                 # viz_manager.add_anomaly_data(...)
             
             # Generate all
             viz_manager.generate_all_visualizations()
             viz_manager.generate_html_report("Thesis Comprehensive Analysis")
             
-            logger.info("  ✓ All visualizations generated")
+            logger.info("  [OK] All visualizations generated")
             
         except ImportError:
-            logger.warning("  ⚠ Visualization module not available")
+            logger.warning("  [WARNING] Visualization module not available")
     
     def _create_thesis_sections(self, results_df, model_metrics, training_history):
         """Tez bölümleri için özel çıktılar"""
         
-        logger.info("  → Creating Methodology Section")
+        logger.info("  -> Creating Methodology Section")
         self._create_methodology_section(training_history, model_metrics)
         
-        logger.info("  → Creating Results Section")
+        logger.info("  -> Creating Results Section")
         self._create_results_section(results_df, model_metrics)
         
-        logger.info("  → Creating Analysis Section")
+        logger.info("  -> Creating Analysis Section")
         self._create_analysis_section(results_df)
     
     def _create_methodology_section(self, training_history, model_metrics):
@@ -272,7 +272,7 @@ class ReportsVisualizationIntegrationManager:
         with open(meta_file, 'w') as f:
             json.dump(methodology, f, indent=2)
         
-        logger.info(f"    ✓ Methodology metadata: {meta_file.name}")
+        logger.info(f"    [OK] Methodology metadata: {meta_file.name}")
     
     def _create_results_section(self, results_df, model_metrics):
         """Sonuçlar bölümü için çıktılar"""
@@ -299,7 +299,7 @@ class ReportsVisualizationIntegrationManager:
             results_clean = self._clean_numpy_types(results)
             json.dump(results_clean, f, indent=2)
         
-        logger.info(f"    ✓ Results metadata: {meta_file.name}")
+        logger.info(f"    [OK] Results metadata: {meta_file.name}")
     
     def _create_analysis_section(self, results_df):
         """Analiz bölümü için çıktılar"""
@@ -327,7 +327,7 @@ class ReportsVisualizationIntegrationManager:
         with open(meta_file, 'w') as f:
             json.dump(analysis, f, indent=2)
         
-        logger.info(f"    ✓ Analysis metadata: {meta_file.name}")
+        logger.info(f"    [OK] Analysis metadata: {meta_file.name}")
     
     def _create_tracking_metadata(self, start_time):
         """Genel tracking metadata"""
@@ -352,7 +352,7 @@ class ReportsVisualizationIntegrationManager:
             json.dump(metadata, f, indent=2)
         
         self.generated_outputs['metadata'] = metadata
-        logger.info(f"✓ Metadata saved: {meta_file.name}")
+        logger.info(f"[OK] Metadata saved: {meta_file.name}")
     
     def _get_directory_structure(self) -> Dict:
         """Dizin yapısını al"""
@@ -391,7 +391,7 @@ class ReportsVisualizationIntegrationManager:
 
 Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-## 📁 Directory Structure
+## [FOLDER] Directory Structure
 
 ```
 thesis_complete/
@@ -417,7 +417,7 @@ thesis_complete/
 
 ```
 
-## 📊 Reports (raporlar/)
+## [REPORT] Reports (raporlar/)
 
 ### 1. Master Excel Report (THESIS_MASTER_REPORT_*.xlsx)
 - **Sheet 1**: Özet (Summary)
@@ -449,7 +449,7 @@ Sunumlar ve hızlı inceleme için
 - top_performers.csv
 - errors_summary.csv
 
-## 🎨 Visualizations (visualizations/)
+## [DESIGN] Visualizations (visualizations/)
 
 - **Prediction Visualizations**: Tahmin karşılaştırması, residual analizi
 - **Model Comparison**: Ranking, parallel coordinates
@@ -457,7 +457,7 @@ Sunumlar ve hızlı inceleme için
 - **Anomaly Analysis**: Clustering, patterns
 - **Report Visualizations**: Quality metrics, timelines
 
-## 📈 Key Statistics
+## [CHART] Key Statistics
 
 - **Total Experiments**: {len(self.generated_outputs.get('reports', []))}
 - **Reports Generated**: {len(self.generated_outputs.get('reports', []))}
@@ -484,14 +484,14 @@ Use files in `reports/Analysis/`:
 - Quality metrics
 - Statistical analysis
 
-## 💾 File Sizes
+## [SAVE] File Sizes
 
 All reports are optimized for:
 - Easy sharing (< 100 MB total)
 - Quick loading
 - High-quality graphics (300 DPI)
 
-## 🔗 References
+## [LINK] References
 
 All data and visualizations are linked and cross-referenced for consistency.
 
@@ -505,7 +505,7 @@ All data and visualizations are linked and cross-referenced for consistency.
         with open(readme_file, 'w') as f:
             f.write(readme_content)
         
-        logger.info(f"✓ README created: {readme_file.name}")
+        logger.info(f"[OK] README created: {readme_file.name}")
         
         return readme_file
 
@@ -543,7 +543,7 @@ def main():
     # README
     manager.create_thesis_readme()
     
-    logger.info("\n✓ Test completed!")
+    logger.info("\n[OK] Test completed!")
 
 
 if __name__ == "__main__":

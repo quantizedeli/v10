@@ -10,7 +10,7 @@ Features:
 5. Best model recommendation
 6. Export reports
 
-ORTA ÖNCELİK #8 ✅
+ORTA ÖNCELİK #8 [SUCCESS]
 
 Location: visualization/model_comparison_dashboard.py
 """
@@ -110,9 +110,9 @@ class ModelComparisonDashboard:
         # Combine
         if all_results:
             self.results_df = pd.concat(all_results, ignore_index=True)
-            logger.info(f"✓ Loaded {len(self.results_df)} results")
+            logger.info(f"[OK] Loaded {len(self.results_df)} results")
         else:
-            logger.warning("⚠ No results loaded!")
+            logger.warning("[WARNING] No results loaded!")
             self.results_df = pd.DataFrame()
         
         return self.results_df
@@ -142,36 +142,36 @@ class ModelComparisonDashboard:
             logger.info("Analyzing all targets")
         
         # 1. Summary Statistics
-        logger.info("\n→ Computing summary statistics...")
+        logger.info("\n-> Computing summary statistics...")
         self._compute_summary_stats(df)
         
         # 2. Statistical Tests
-        logger.info("\n→ Running statistical tests...")
+        logger.info("\n-> Running statistical tests...")
         self._run_statistical_tests(df)
         
         # 3. Performance Ranking
-        logger.info("\n→ Creating performance ranking...")
+        logger.info("\n-> Creating performance ranking...")
         self._create_performance_ranking(df)
         
         # 4. Interactive Visualizations
         if PLOTLY_AVAILABLE:
-            logger.info("\n→ Creating interactive visualizations...")
+            logger.info("\n-> Creating interactive visualizations...")
             self._create_interactive_plots(df)
         
         # 5. Static Visualizations
-        logger.info("\n→ Creating static visualizations...")
+        logger.info("\n-> Creating static visualizations...")
         self._create_static_plots(df)
         
         # 6. Recommendations
-        logger.info("\n→ Generating recommendations...")
+        logger.info("\n-> Generating recommendations...")
         self._generate_recommendations(df)
         
         # 7. Export Report
-        logger.info("\n→ Exporting report...")
+        logger.info("\n-> Exporting report...")
         self._export_report()
         
         logger.info("\n" + "="*80)
-        logger.info("✓ DASHBOARD COMPLETED")
+        logger.info("[OK] DASHBOARD COMPLETED")
         logger.info("="*80)
     
     def _compute_summary_stats(self, df):
@@ -194,7 +194,7 @@ class ModelComparisonDashboard:
         
         self.comparison_report['summary_statistics'] = summary
         
-        logger.info(f"  ✓ Summary statistics: {len(summary)} models")
+        logger.info(f"  [OK] Summary statistics: {len(summary)} models")
         
         # Print top 5
         print("\n" + "="*80)
@@ -210,7 +210,7 @@ class ModelComparisonDashboard:
         models = df['Model'].unique()
         
         if len(models) < 2:
-            logger.warning("  ⚠ Need at least 2 models for statistical tests")
+            logger.warning("  [WARNING] Need at least 2 models for statistical tests")
             return
         
         # Pairwise t-tests
@@ -245,7 +245,7 @@ class ModelComparisonDashboard:
         
         self.comparison_report['statistical_tests'] = test_df
         
-        logger.info(f"  ✓ Completed {len(test_df)} pairwise tests")
+        logger.info(f"  [OK] Completed {len(test_df)} pairwise tests")
         
         # Print significant differences
         sig_tests = test_df[test_df['Significant'] == 'Yes']
@@ -296,7 +296,7 @@ class ModelComparisonDashboard:
         
         self.comparison_report['ranking'] = df_rank
         
-        logger.info(f"  ✓ Performance ranking created")
+        logger.info(f"  [OK] Performance ranking created")
         
         # Print ranking
         print("\n" + "="*80)
@@ -322,7 +322,7 @@ class ModelComparisonDashboard:
         # 4. Box Plots
         self._plot_interactive_boxplots(df, viz_dir)
         
-        logger.info(f"  ✓ Interactive plots saved: {viz_dir}")
+        logger.info(f"  [OK] Interactive plots saved: {viz_dir}")
     
     def _plot_interactive_performance(self, df, viz_dir):
         """Interactive performance bar chart"""
@@ -444,7 +444,7 @@ class ModelComparisonDashboard:
         # 3. Violin plots
         self._plot_violin_plots(df, viz_dir)
         
-        logger.info(f"  ✓ Static plots saved: {viz_dir}")
+        logger.info(f"  [OK] Static plots saved: {viz_dir}")
     
     def _plot_performance_with_errors(self, df, viz_dir):
         """Bar plot with error bars"""
@@ -572,7 +572,7 @@ class ModelComparisonDashboard:
         
         self.comparison_report['recommendations'] = recommendations
         
-        logger.info("  ✓ Recommendations generated")
+        logger.info("  [OK] Recommendations generated")
         
         # Print
         print("\n" + "="*80)
@@ -591,7 +591,7 @@ class ModelComparisonDashboard:
         with open(report_file, 'w') as f:
             json.dump(self.comparison_report, f, indent=2, default=str)
         
-        logger.info(f"  ✓ Report exported: {report_file}")
+        logger.info(f"  [OK] Report exported: {report_file}")
         
         # Summary text
         summary_file = self.output_dir / 'comparison_summary.txt'
@@ -615,7 +615,7 @@ class ModelComparisonDashboard:
                     f.write(f"\n{rec['type'].upper()}: {rec['model']}\n")
                     f.write(f"  {rec['reason']}\n")
         
-        logger.info(f"  ✓ Summary exported: {summary_file}")
+        logger.info(f"  [OK] Summary exported: {summary_file}")
 
 
 # ============================================================================
@@ -659,11 +659,11 @@ def test_dashboard():
     dashboard.results_df = results_df
     dashboard.create_comparison_dashboard()
     
-    print("\n✓ Dashboard test completed!")
+    print("\n[OK] Dashboard test completed!")
     print(f"Output: test_dashboard/")
 
 
 if __name__ == "__main__":
     test_dashboard()
-    print("\n✅ Model Comparison Dashboard - ORTA ÖNCELİK #8 COMPLETE")
+    print("\n[SUCCESS] Model Comparison Dashboard - ORTA ÖNCELİK #8 COMPLETE")
     print("Location: visualization/model_comparison_dashboard.py")

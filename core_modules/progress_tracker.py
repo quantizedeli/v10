@@ -56,7 +56,7 @@ class ProgressTracker:
         )
         
         logger.info(f"\n{'='*70}")
-        logger.info(f"🚀 {self.task_name.upper()} BAŞLIYOR")
+        logger.info(f"[START] {self.task_name.upper()} BAŞLIYOR")
         logger.info(f"{'='*70}")
         logger.info(f"Toplam görev: {self.total_tasks}")
         logger.info(f"Başlangıç: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -118,7 +118,7 @@ class ProgressTracker:
         self.pbar.close()
         
         logger.info(f"\n{'='*70}")
-        logger.info(f"✅ {self.task_name.upper()} TAMAMLANDI")
+        logger.info(f"[SUCCESS] {self.task_name.upper()} TAMAMLANDI")
         logger.info(f"{'='*70}")
         logger.info(f"Toplam görev: {self.current_task}/{self.total_tasks}")
         logger.info(f"Toplam süre: {total_time_str}")
@@ -162,7 +162,7 @@ class ProgressTracker:
         with open(self.log_file, 'w', encoding='utf-8') as f:
             json.dump(log_data, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"📄 Detaylı log kaydedildi: {self.log_file}")
+        logger.info(f"[FILE] Detaylı log kaydedildi: {self.log_file}")
 
 
 class ModelTrainingTracker(ProgressTracker):
@@ -279,7 +279,7 @@ class MultiStageTracker:
         self.project_name = project_name
         
         logger.info("\n" + "="*70)
-        logger.info(f"🎯 {project_name.upper()}")
+        logger.info(f"[TARGET] {project_name.upper()}")
         logger.info("="*70)
         logger.info(f"Toplam aşama: {len(self.stages)}")
         for stage, tasks in self.stages.items():
@@ -328,7 +328,7 @@ class MultiStageTracker:
         total_time_str = str(timedelta(seconds=int(total_time)))
         
         logger.info("\n" + "="*70)
-        logger.info(f"🏆 {self.project_name.upper()} TAMAMLANDI")
+        logger.info(f"[BEST] {self.project_name.upper()} TAMAMLANDI")
         logger.info("="*70)
         logger.info(f"Toplam süre: {total_time_str}")
         logger.info("\nAşama süreleri:")
@@ -373,7 +373,7 @@ class MultiStageTracker:
         with open(log_file, 'w', encoding='utf-8') as f:
             json.dump(log_data, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"📄 Proje özeti kaydedildi: {log_file}")
+        logger.info(f"[FILE] Proje özeti kaydedildi: {log_file}")
 
 
 def main():
@@ -431,7 +431,7 @@ def main():
     
     multi_tracker.finish_project()
     
-    print("\n✅ Tüm testler tamamlandı")
+    print("\n[SUCCESS] Tüm testler tamamlandı")
 
 
 if __name__ == "__main__":

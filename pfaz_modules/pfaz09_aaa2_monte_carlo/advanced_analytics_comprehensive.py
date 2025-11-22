@@ -175,12 +175,12 @@ class UniversalSHAPAnalyzer:
                                   'GradientBoosting']:
                 # Tree-based: TreeExplainer
                 self.explainer = shap.TreeExplainer(self.model)
-                logger.info("    ✓ TreeExplainer created")
+                logger.info("    [OK] TreeExplainer created")
             
             elif self.model_type in ['DNN', 'BNN', 'PINN']:
                 # Deep learning: DeepExplainer
                 self.explainer = shap.DeepExplainer(self.model, X_background)
-                logger.info("    ✓ DeepExplainer created")
+                logger.info("    [OK] DeepExplainer created")
             
             else:
                 # Universal: KernelExplainer (slower but works for all)
@@ -188,7 +188,7 @@ class UniversalSHAPAnalyzer:
                     self.model.predict, 
                     shap.sample(X_background, min(100, len(X_background)))
                 )
-                logger.info("    ✓ KernelExplainer created (universal)")
+                logger.info("    [OK] KernelExplainer created (universal)")
             
             return True
         
@@ -219,7 +219,7 @@ class UniversalSHAPAnalyzer:
             else:
                 self.expected_value = 0.0
             
-            logger.info(f"    ✓ SHAP values calculated: {self.shap_values.shape}")
+            logger.info(f"    [OK] SHAP values calculated: {self.shap_values.shape}")
             return True
         
         except Exception as e:
@@ -241,7 +241,7 @@ class UniversalSHAPAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Summary plot: {save_path.name}")
+        logger.info(f"    [OK] Summary plot: {save_path.name}")
         return save_path
     
     def plot_bar(self, max_display: int = 20):
@@ -259,7 +259,7 @@ class UniversalSHAPAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Bar plot: {save_path.name}")
+        logger.info(f"    [OK] Bar plot: {save_path.name}")
         return save_path
     
     def plot_waterfall(self, X_explain: np.ndarray, sample_idx: int = 0):
@@ -283,7 +283,7 @@ class UniversalSHAPAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Waterfall plot: {save_path.name}")
+        logger.info(f"    [OK] Waterfall plot: {save_path.name}")
         return save_path
     
     def get_feature_importance(self) -> pd.DataFrame:
@@ -319,7 +319,7 @@ class UniversalSHAPAnalyzer:
         save_path = self.output_dir / 'shap_values.csv'
         shap_df.to_csv(save_path, index=False)
         
-        logger.info(f"    ✓ SHAP values exported: {save_path.name}")
+        logger.info(f"    [OK] SHAP values exported: {save_path.name}")
         return save_path
 
 
@@ -346,13 +346,13 @@ class FeatureImportanceSystem:
     
     def shap_importance(self, shap_analyzer: UniversalSHAPAnalyzer) -> pd.DataFrame:
         """Get SHAP-based importance"""
-        logger.info("  → SHAP importance...")
+        logger.info("  -> SHAP importance...")
         
         importance_df = shap_analyzer.get_feature_importance()
         
         if len(importance_df) > 0:
             self.importance_results['shap'] = importance_df
-            logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+            logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
         
         return importance_df
     
@@ -360,7 +360,7 @@ class FeatureImportanceSystem:
                               y_test: np.ndarray, feature_names: List[str],
                               n_repeats: int = 10) -> pd.DataFrame:
         """Permutation importance"""
-        logger.info("  → Permutation importance...")
+        logger.info("  -> Permutation importance...")
         
         try:
             result = permutation_importance(
@@ -384,7 +384,7 @@ class FeatureImportanceSystem:
             
             self.importance_results['permutation'] = importance_df
             
-            logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+            logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
             
             return importance_df
         
@@ -395,7 +395,7 @@ class FeatureImportanceSystem:
     def model_based_importance(self, model, model_type: str, 
                               feature_names: List[str]) -> pd.DataFrame:
         """Model's native feature importance"""
-        logger.info("  → Model-based importance...")
+        logger.info("  -> Model-based importance...")
         
         try:
             if hasattr(model, 'feature_importances_'):
@@ -421,7 +421,7 @@ class FeatureImportanceSystem:
             
             self.importance_results['model_based'] = importance_df
             
-            logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+            logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
             
             return importance_df
         
@@ -432,7 +432,7 @@ class FeatureImportanceSystem:
     def correlation_importance(self, X: np.ndarray, y: np.ndarray,
                               feature_names: List[str]) -> pd.DataFrame:
         """Correlation-based importance"""
-        logger.info("  → Correlation importance...")
+        logger.info("  -> Correlation importance...")
         
         correlations = []
         for i, fname in enumerate(feature_names):
@@ -452,13 +452,13 @@ class FeatureImportanceSystem:
         
         self.importance_results['correlation'] = importance_df
         
-        logger.info(f"    ✓ Top feature: {importance_df.iloc[0]['Feature']}")
+        logger.info(f"    [OK] Top feature: {importance_df.iloc[0]['Feature']}")
         
         return importance_df
     
     def unified_ranking(self, feature_names: List[str]) -> pd.DataFrame:
         """Create unified ranking from all methods"""
-        logger.info("  → Creating unified ranking...")
+        logger.info("  -> Creating unified ranking...")
         
         if len(self.importance_results) == 0:
             logger.warning("    No importance results available")
@@ -487,8 +487,8 @@ class FeatureImportanceSystem:
         save_path = self.output_dir / 'unified_feature_ranking.csv'
         unified_df.to_csv(save_path, index=False)
         
-        logger.info(f"    ✓ Unified ranking created")
-        logger.info(f"    ✓ Top 3 features:")
+        logger.info(f"    [OK] Unified ranking created")
+        logger.info(f"    [OK] Top 3 features:")
         for i in range(min(3, len(unified_df))):
             logger.info(f"       {i+1}. {unified_df.iloc[i]['Feature']}")
         
@@ -543,7 +543,7 @@ class FeatureImportanceSystem:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"    ✓ Comparison plot: {save_path.name}")
+        logger.info(f"    [OK] Comparison plot: {save_path.name}")
         return save_path
 
 
@@ -610,13 +610,13 @@ class AdvancedAnalyticsComprehensive:
         try:
             # Phase 1: SHAP Analysis
             if self.config['shap']['enabled'] and SHAP_AVAILABLE:
-                logger.info("\n→ Phase 1: SHAP Analysis...")
+                logger.info("\n-> Phase 1: SHAP Analysis...")
                 results['shap'] = self._run_shap_analysis(
                     model, model_type, X_train, X_test, feature_names
                 )
             
             # Phase 2: Feature Importance (Multiple Methods)
-            logger.info("\n→ Phase 2: Feature Importance Analysis...")
+            logger.info("\n-> Phase 2: Feature Importance Analysis...")
             results['feature_importance'] = self._run_feature_importance(
                 model, model_type, X_train, y_train, X_test, y_test, feature_names
             )
@@ -624,31 +624,31 @@ class AdvancedAnalyticsComprehensive:
             # Phase 3-10: To be continued in next section...
             
             # Phase 3: Clustering Analysis
-            logger.info("\n→ Phase 3: Clustering Analysis...")
+            logger.info("\n-> Phase 3: Clustering Analysis...")
             results['clustering'] = self._run_clustering_analysis(
                 X_train, y_train, X_test, y_test, feature_names
             )
             
             # Phase 4: Correlation Analysis
-            logger.info("\n→ Phase 4: Correlation Analysis...")
+            logger.info("\n-> Phase 4: Correlation Analysis...")
             results['correlation'] = self._run_correlation_analysis(
                 X_train, y_train, feature_names
             )
             
             # Phase 5: Sensitivity Analysis
-            logger.info("\n→ Phase 5: Sensitivity Analysis...")
+            logger.info("\n-> Phase 5: Sensitivity Analysis...")
             results['sensitivity'] = self._run_sensitivity_analysis(
                 model, X_test, y_test
             )
             
             # Phase 6: Cross-Validation
-            logger.info("\n→ Phase 6: Cross-Validation...")
+            logger.info("\n-> Phase 6: Cross-Validation...")
             results['cross_validation'] = self._run_cross_validation(
                 model, model_type, X_train, y_train
             )
             
             # Phase 7: Generate Reports
-            logger.info("\n→ Phase 7: Generating Reports...")
+            logger.info("\n-> Phase 7: Generating Reports...")
             results['reports'] = self._generate_reports(results, target, model_type)
             
             end_time = datetime.now()
@@ -656,12 +656,12 @@ class AdvancedAnalyticsComprehensive:
             results['duration_seconds'] = duration
             results['success'] = True
             
-            logger.info(f"\n✅ Analysis complete: {duration:.1f}s")
+            logger.info(f"\n[SUCCESS] Analysis complete: {duration:.1f}s")
             
             return results
         
         except Exception as e:
-            logger.error(f"\n❌ Analysis failed: {e}")
+            logger.error(f"\n[ERROR] Analysis failed: {e}")
             import traceback
             traceback.print_exc()
             results['success'] = False
@@ -797,7 +797,7 @@ def main():
         feature_names, target='TEST'
     )
     
-    logger.info("\n✅ Test complete!")
+    logger.info("\n[SUCCESS] Test complete!")
     return results
 
 
@@ -848,7 +848,7 @@ if __name__ == "__main__":
                 results['kmeans']['plot'] = str(save_path)
         
         # Feature clustering
-        logger.info("  → Feature clustering...")
+        logger.info("  -> Feature clustering...")
         
         # Correlation-based clustering
         corr_matrix = np.corrcoef(X_train.T)
@@ -872,7 +872,7 @@ if __name__ == "__main__":
             'linkage_matrix_shape': linkage_matrix.shape
         }
         
-        logger.info("  ✓ Clustering analysis complete")
+        logger.info("  [OK] Clustering analysis complete")
         
         return results
     
@@ -887,7 +887,7 @@ if __name__ == "__main__":
         
         # Pearson correlation
         if 'pearson' in self.config['correlation']['methods']:
-            logger.info("  → Pearson correlation...")
+            logger.info("  -> Pearson correlation...")
             
             corr_matrix = np.corrcoef(X_train.T)
             
@@ -937,7 +937,7 @@ if __name__ == "__main__":
         
         # Spearman correlation
         if 'spearman' in self.config['correlation']['methods']:
-            logger.info("  → Spearman correlation...")
+            logger.info("  -> Spearman correlation...")
             
             spearman_matrix = np.zeros((len(feature_names), len(feature_names)))
             for i in range(len(feature_names)):
@@ -957,7 +957,7 @@ if __name__ == "__main__":
             }
         
         # Feature-target correlation
-        logger.info("  → Feature-target correlations...")
+        logger.info("  -> Feature-target correlations...")
         
         target_corr = []
         for i, fname in enumerate(feature_names):
@@ -983,7 +983,7 @@ if __name__ == "__main__":
             'top_3_features': target_corr_df['feature'].head(3).tolist()
         }
         
-        logger.info("  ✓ Correlation analysis complete")
+        logger.info("  [OK] Correlation analysis complete")
         
         return results
     
@@ -1000,7 +1000,7 @@ if __name__ == "__main__":
         y_pred_original = model.predict(X_test)
         
         # Noise sensitivity
-        logger.info("  → Noise sensitivity...")
+        logger.info("  -> Noise sensitivity...")
         
         noise_results = {}
         for noise_level in self.config['sensitivity']['noise_levels']:
@@ -1026,7 +1026,7 @@ if __name__ == "__main__":
         results['noise_sensitivity'] = noise_results
         
         # Dropout sensitivity
-        logger.info("  → Feature dropout sensitivity...")
+        logger.info("  -> Feature dropout sensitivity...")
         
         dropout_results = {}
         for dropout_prob in self.config['sensitivity']['dropout_probs']:
@@ -1059,7 +1059,7 @@ if __name__ == "__main__":
         
         results['overall_robustness_score'] = float(overall_robustness)
         
-        logger.info(f"  ✓ Overall robustness: {overall_robustness:.3f}")
+        logger.info(f"  [OK] Overall robustness: {overall_robustness:.3f}")
         
         return results
     
@@ -1074,7 +1074,7 @@ if __name__ == "__main__":
         
         # K-Fold CV
         if 'kfold' in self.config['cross_validation']['strategies']:
-            logger.info("  → K-Fold cross-validation...")
+            logger.info("  -> K-Fold cross-validation...")
             
             kfold = KFold(n_splits=self.config['cross_validation']['n_folds'],
                          shuffle=True, random_state=42)
@@ -1095,7 +1095,7 @@ if __name__ == "__main__":
         
         # Stratified K-Fold (binned targets)
         if 'stratified' in self.config['cross_validation']['strategies']:
-            logger.info("  → Stratified K-Fold...")
+            logger.info("  -> Stratified K-Fold...")
             
             # Bin targets for stratification
             n_bins = 5
@@ -1118,7 +1118,7 @@ if __name__ == "__main__":
             }
         
         # Learning curves
-        logger.info("  → Learning curves...")
+        logger.info("  -> Learning curves...")
         
         train_sizes = np.linspace(0.1, 1.0, 10)
         train_sizes_abs, train_scores, val_scores = learning_curve(
@@ -1165,7 +1165,7 @@ if __name__ == "__main__":
         
         results['learning_curve']['plot'] = str(save_path)
         
-        logger.info("  ✓ Cross-validation complete")
+        logger.info("  [OK] Cross-validation complete")
         
         return results
     
@@ -1180,7 +1180,7 @@ if __name__ == "__main__":
         
         # Excel Report
         if self.config['output']['excel'] and EXCEL_AVAILABLE:
-            logger.info("  → Generating Excel report...")
+            logger.info("  -> Generating Excel report...")
             
             excel_file = report_dir / f'Advanced_Analytics_{target}_{model_type}.xlsx'
             
@@ -1234,14 +1234,14 @@ if __name__ == "__main__":
                             sens_df.to_excel(writer, sheet_name='Sensitivity', index=False)
                 
                 report_files['excel'] = str(excel_file)
-                logger.info(f"    ✓ Excel report: {excel_file.name}")
+                logger.info(f"    [OK] Excel report: {excel_file.name}")
             
             except Exception as e:
                 logger.error(f"    Excel generation failed: {e}")
         
         # JSON Export
         if self.config['output']['json']:
-            logger.info("  → Exporting JSON...")
+            logger.info("  -> Exporting JSON...")
             
             json_file = report_dir / f'advanced_analytics_{target}_{model_type}.json'
             
@@ -1253,12 +1253,12 @@ if __name__ == "__main__":
                     json.dump(json_results, f, indent=2)
                 
                 report_files['json'] = str(json_file)
-                logger.info(f"    ✓ JSON export: {json_file.name}")
+                logger.info(f"    [OK] JSON export: {json_file.name}")
             
             except Exception as e:
                 logger.error(f"    JSON export failed: {e}")
         
-        logger.info("  ✓ Reports generated")
+        logger.info("  [OK] Reports generated")
         
         return report_files
     
@@ -1311,7 +1311,7 @@ def main():
         feature_names, target='TEST'
     )
     
-    logger.info("\n✅ Test complete!")
+    logger.info("\n[SUCCESS] Test complete!")
     return results
 
 

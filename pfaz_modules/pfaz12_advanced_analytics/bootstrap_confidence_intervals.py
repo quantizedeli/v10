@@ -73,7 +73,7 @@ class BootstrapConfidenceIntervals:
         
         self.results = {}
         
-        logger.info(f"✓ BootstrapCI initialized (n={n_bootstrap}, CI={confidence_level*100}%)")
+        logger.info(f"[OK] BootstrapCI initialized (n={n_bootstrap}, CI={confidence_level*100}%)")
     
     # ========================================================================
     # BASIC BOOTSTRAP
@@ -94,7 +94,7 @@ class BootstrapConfidenceIntervals:
         Returns:
             dict with point_estimate, ci_lower, ci_upper, bootstrap_distribution
         """
-        logger.info(f"\n→ Bootstrap CI for statistic ({method})")
+        logger.info(f"\n-> Bootstrap CI for statistic ({method})")
         
         # Original statistic
         point_estimate = statistic(data)
@@ -200,12 +200,12 @@ class BootstrapConfidenceIntervals:
         Returns:
             dict with CIs for each metric
         """
-        logger.info(f"\n→ Bootstrap model performance ({len(metrics)} metrics)")
+        logger.info(f"\n-> Bootstrap model performance ({len(metrics)} metrics)")
         
         results = {}
         
         for metric_name in metrics:
-            logger.info(f"  → Metric: {metric_name}")
+            logger.info(f"  -> Metric: {metric_name}")
             
             # Define metric function
             if metric_name == 'r2':
@@ -280,7 +280,7 @@ class BootstrapConfidenceIntervals:
         Returns:
             dict with difference CI and p-value
         """
-        logger.info(f"\n→ Bootstrap model comparison: {model_a_name} vs {model_b_name}")
+        logger.info(f"\n-> Bootstrap model comparison: {model_a_name} vs {model_b_name}")
         logger.info(f"  Metric: {metric}")
         
         # Define metric
@@ -372,7 +372,7 @@ class BootstrapConfidenceIntervals:
         Returns:
             dict with prediction intervals for each test point
         """
-        logger.info(f"\n→ Bootstrap prediction intervals ({len(X_test)} test points)")
+        logger.info(f"\n-> Bootstrap prediction intervals ({len(X_test)} test points)")
         
         n_train = len(X_train)
         n_test = len(X_test)
@@ -426,7 +426,7 @@ class BootstrapConfidenceIntervals:
             logger.warning("Plotting not available")
             return None
         
-        logger.info(f"\n→ Creating bootstrap distribution plot...")
+        logger.info(f"\n-> Creating bootstrap distribution plot...")
         
         fig, ax = plt.subplots(figsize=(12, 6))
         
@@ -464,7 +464,7 @@ class BootstrapConfidenceIntervals:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -473,7 +473,7 @@ class BootstrapConfidenceIntervals:
     
     def export_to_excel(self, filename: str = 'bootstrap_results.xlsx') -> Path:
         """Export bootstrap results to Excel"""
-        logger.info(f"\n→ Exporting to {filename}...")
+        logger.info(f"\n-> Exporting to {filename}...")
         
         try:
             import xlsxwriter
@@ -532,7 +532,7 @@ class BootstrapConfidenceIntervals:
                 }])
                 comp_data.to_excel(writer, sheet_name='Model_Comparison', index=False)
         
-        logger.info(f"  ✓ Exported to: {filepath}")
+        logger.info(f"  [OK] Exported to: {filepath}")
         return filepath
 
 
@@ -581,4 +581,4 @@ if __name__ == "__main__":
     # Export
     bootstrap.export_to_excel()
     
-    logger.info("\n✓ Testing complete! Check test_bootstrap_results/")
+    logger.info("\n[OK] Testing complete! Check test_bootstrap_results/")

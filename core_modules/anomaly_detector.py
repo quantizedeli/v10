@@ -108,7 +108,7 @@ class AnomalyDetector:
         
         # İstatistikler
         n_anomalies = df['is_anomaly'].sum()
-        logger.info(f"\n✓ Tespit edilen anomali: {n_anomalies} ({n_anomalies/len(df)*100:.1f}%)")
+        logger.info(f"\n[OK] Tespit edilen anomali: {n_anomalies} ({n_anomalies/len(df)*100:.1f}%)")
         
         # Rapor kaydet
         self._save_anomaly_report(df)
@@ -204,7 +204,7 @@ class AnomalyDetector:
             df_z_dist = df_z_dist.sort_values('Count', ascending=False)
             df_z_dist.to_excel(writer, sheet_name='By_Proton_Number', index=False)
         
-        logger.info(f"✓ Anomali raporu kaydedildi: {output_file}")
+        logger.info(f"[OK] Anomali raporu kaydedildi: {output_file}")
         
         # Görselleştirme
         self._plot_anomalies(df)
@@ -259,7 +259,7 @@ class AnomalyDetector:
         plt.savefig(self.output_dir / 'anomaly_visualization.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Anomali görselleştirmeleri kaydedildi")
+        logger.info(f"[OK] Anomali görselleştirmeleri kaydedildi")
 
 
 def main():
@@ -287,7 +287,7 @@ def main():
     detector = AnomalyDetector(contamination=0.1, output_dir='test_anomaly')
     df_result = detector.detect_anomalies(df, ['Z', 'N', 'SPIN', 'MM', 'Q'])
     
-    print("\n✓ Anomaly detection test completed")
+    print("\n[OK] Anomaly detection test completed")
     print(f"  Detected anomalies: {df_result['is_anomaly'].sum()}")
     print(f"  Example explanation: {df_result[df_result['is_anomaly']]['anomaly_reason'].iloc[0]}")
 

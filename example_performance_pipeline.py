@@ -257,7 +257,7 @@ def run_complete_pipeline():
 
     data_time = time.time() - overall_start
 
-    print(f"\n✓ Data preparation complete in {data_time:.2f}s")
+    print(f"\n[OK] Data preparation complete in {data_time:.2f}s")
     print(f"  Training samples: {len(X_train)}")
     print(f"  Validation samples: {len(X_val)}")
     print(f"  Features: {X_train.shape[1]}")
@@ -289,7 +289,7 @@ def run_complete_pipeline():
         xgb_config
     )
 
-    print(f"\n✓ XGBoost Results:")
+    print(f"\n[OK] XGBoost Results:")
     print(f"  R² Score: {xgb_metrics['r2']:.4f}")
     print(f"  RMSE: {xgb_metrics['rmse']:.4f}")
     print(f"  MAE: {xgb_metrics['mae']:.4f}")
@@ -316,7 +316,7 @@ def run_complete_pipeline():
         dnn_config
     )
 
-    print(f"\n✓ DNN Results:")
+    print(f"\n[OK] DNN Results:")
     print(f"  R² Score: {dnn_metrics['r2']:.4f}")
     print(f"  RMSE: {dnn_metrics['rmse']:.4f}")
     print(f"  MAE: {dnn_metrics['mae']:.4f}")
@@ -348,10 +348,10 @@ def run_complete_pipeline():
           f"{dnn_metrics['mae']:<10.4f} {dnn_metrics['training_time']:<10.2f}")
 
     print("\n" + "="*80)
-    print("✓ PIPELINE COMPLETED SUCCESSFULLY!")
+    print("[OK] PIPELINE COMPLETED SUCCESSFULLY!")
     print("="*80)
 
-    print("\n💡 TIP: Run this script again to see the caching speedup!")
+    print("\n[TIP] TIP: Run this script again to see the caching speedup!")
     print("   Data preparation will be 90%+ faster on subsequent runs.")
 
     return {

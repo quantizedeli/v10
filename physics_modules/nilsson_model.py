@@ -136,7 +136,7 @@ u
         plt.savefig(output_dir / filename, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Nilsson diyagramı kaydedildi: {output_dir / filename}")
+        logger.info(f"[OK] Nilsson diyagramı kaydedildi: {output_dir / filename}")
     
     def _calculate_levels_for_shell(self, N, delta_range):
         """Bir shell için tüm seviyeleri hesapla"""
@@ -218,7 +218,7 @@ class NilssonDiagramVisualizer:
         # 4. Shape coexistence bölgeleri
         self._plot_shape_coexistence()
         
-        logger.info("✓ Tüm Nilsson diyagramları tamamlandı")
+        logger.info("[OK] Tüm Nilsson diyagramları tamamlandı")
     
     def _plot_shape_coexistence(self):
         """Shape coexistence (şekil eşyaşamı) bölgelerini vurgula"""
@@ -383,7 +383,7 @@ def plot_single_particle_levels(Z_or_N, particle_type='proton',
     plt.savefig(output_dir / filename, dpi=300, bbox_inches='tight')
     plt.close()
     
-    logger.info(f"✓ Tek-parçacık seviyeleri kaydedildi: {output_dir / filename}")
+    logger.info(f"[OK] Tek-parçacık seviyeleri kaydedildi: {output_dir / filename}")
 
 
 def main():
@@ -404,7 +404,7 @@ def main():
     plot_single_particle_levels(Z_or_N=82, particle_type='proton',
                                 output_dir='output/test_nilsson')
     
-    print("\n✓ Tüm Nilsson testleri tamamlandı")
+    print("\n[OK] Tüm Nilsson testleri tamamlandı")
 
 
 if __name__ == "__main__":

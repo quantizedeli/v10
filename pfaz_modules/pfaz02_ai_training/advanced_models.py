@@ -40,7 +40,7 @@ class GPUOptimizer:
             gpu_name = torch.cuda.get_device_name(device_id)
             total_memory = torch.cuda.get_device_properties(device_id).total_memory / 1e9
             
-            logger.info(f"\n🎮 GPU ENABLED")
+            logger.info(f"\n[INTERACTIVE] GPU ENABLED")
             logger.info(f"   Device: {gpu_name}")
             logger.info(f"   Total Memory: {total_memory:.2f} GB")
             logger.info(f"   Device ID: {device_id}")
@@ -54,7 +54,7 @@ class GPUOptimizer:
             
             return device
         else:
-            logger.info("💻 Using CPU (GPU disabled or unavailable)")
+            logger.info("[PC] Using CPU (GPU disabled or unavailable)")
             return torch.device('cpu')
     
     def to_device(self, tensor_or_model):
@@ -105,7 +105,7 @@ class BayesianNeuralNetwork:
         # For uncertainty estimation
         self.mc_dropout = True
         
-        logger.info(f"BNN initialized: {input_dim} inputs → {hidden_layers} → 1 output")
+        logger.info(f"BNN initialized: {input_dim} inputs -> {hidden_layers} -> 1 output")
         logger.info(f"MC Samples: {self.n_samples}")
         logger.info(f"Device: {self.gpu_optimizer.device}")
     
@@ -214,11 +214,11 @@ class BayesianNeuralNetwork:
         # GPU stats
         if self.gpu_optimizer.device.type == 'cuda':
             mem_stats = self.gpu_optimizer.get_memory_stats()
-            logger.info(f"\n📊 GPU Memory Usage:")
+            logger.info(f"\n[REPORT] GPU Memory Usage:")
             logger.info(f"   Allocated: {mem_stats['allocated_gb']:.2f} GB")
             logger.info(f"   Peak: {mem_stats['max_allocated_gb']:.2f} GB")
         
-        logger.info(f"✅ BNN Training completed - Best Val Loss: {best_val_loss:.6f}")
+        logger.info(f"[SUCCESS] BNN Training completed - Best Val Loss: {best_val_loss:.6f}")
         
         return {
             'best_val_loss': best_val_loss,
@@ -290,7 +290,7 @@ class PhysicsInformedNN:
         # Scaler
         self.scaler = torch.cuda.amp.GradScaler() if self.gpu_optimizer.use_amp else None
         
-        logger.info(f"PINN initialized: {input_dim} inputs → {hidden_layers} → 1 output")
+        logger.info(f"PINN initialized: {input_dim} inputs -> {hidden_layers} -> 1 output")
         logger.info(f"Physics weight: {self.physics_weight}")
         logger.info(f"Device: {self.gpu_optimizer.device}")
     
@@ -452,11 +452,11 @@ class PhysicsInformedNN:
         # GPU stats
         if self.gpu_optimizer.device.type == 'cuda':
             mem_stats = self.gpu_optimizer.get_memory_stats()
-            logger.info(f"\n📊 GPU Memory Usage:")
+            logger.info(f"\n[REPORT] GPU Memory Usage:")
             logger.info(f"   Allocated: {mem_stats['allocated_gb']:.2f} GB")
             logger.info(f"   Peak: {mem_stats['max_allocated_gb']:.2f} GB")
         
-        logger.info(f"✅ PINN Training completed - Best Val Loss: {best_val_loss:.6f}")
+        logger.info(f"[SUCCESS] PINN Training completed - Best Val Loss: {best_val_loss:.6f}")
         
         return {
             'best_val_loss': best_val_loss,
@@ -529,7 +529,7 @@ class EnsembleRegressor:
         mlp.fit(X_train, y_train)
         self.models['MLP'] = mlp
         
-        logger.info(f"✅ Ensemble built with {len(self.models)} models")
+        logger.info(f"[SUCCESS] Ensemble built with {len(self.models)} models")
         
         return self
     
@@ -631,7 +631,7 @@ class HybridModel:
         self.nn_weight = best_nn_weight
         self.ml_weight = 1 - best_nn_weight
         
-        logger.info(f"✅ Optimal weights: NN={self.nn_weight:.2f}, ML={self.ml_weight:.2f}")
+        logger.info(f"[SUCCESS] Optimal weights: NN={self.nn_weight:.2f}, ML={self.ml_weight:.2f}")
         logger.info(f"Validation RMSE: {best_rmse:.6f}")
         
         return {
@@ -684,4 +684,4 @@ if __name__ == "__main__":
     hybrid = HybridModel(input_dim=5, config=config)
     hybrid_results = hybrid.train(X_train, y_train, X_val, y_val)
     
-    print("\n✅ All models tested successfully!")
+    print("\n[SUCCESS] All models tested successfully!")

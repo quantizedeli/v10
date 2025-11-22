@@ -56,11 +56,11 @@ def example_1_basic_checkpoint():
             description=f"Example training, task {i+1}/{total_tasks}"
         )
 
-        print(f"✓ Task {i+1}/{total_tasks} completed")
+        print(f"[OK] Task {i+1}/{total_tasks} completed")
 
         # Simulate crash at task 5
         if i == 4:
-            print("\n💥 Simulating crash...")
+            print("\n[BOOM] Simulating crash...")
             break
 
     # Resume from checkpoint
@@ -68,18 +68,18 @@ def example_1_basic_checkpoint():
     state = cm.resume_from_checkpoint(pfaz_id=99)
 
     if state:
-        print(f"✓ Resumed successfully!")
+        print(f"[OK] Resumed successfully!")
         print(f"  Completed: {len(state['completed_tasks'])} tasks")
         print(f"  Next task: {state['current_task']}")
 
         # Continue from where we left off
         for i in range(state['current_task'], total_tasks):
             completed.append(i)
-            print(f"✓ Task {i+1}/{total_tasks} completed (resumed)")
+            print(f"[OK] Task {i+1}/{total_tasks} completed (resumed)")
 
     # Clean up
     cm.delete_checkpoint(pfaz_id=99)
-    print("\n✓ Example 1 complete!")
+    print("\n[OK] Example 1 complete!")
 
 
 def example_2_automl_optimization():
@@ -106,7 +106,7 @@ def example_2_automl_optimization():
     y_train = X_train[:, :5].sum(axis=1) + np.random.randn(len(X_train)) * 0.1
     y_val = X_val[:, :5].sum(axis=1) + np.random.randn(len(X_val)) * 0.1
 
-    print(f"✓ Generated data: {len(X_train)} train, {len(X_val)} val samples")
+    print(f"[OK] Generated data: {len(X_train)} train, {len(X_val)} val samples")
 
     # Create optimizer
     optimizer = AutoMLOptimizer(
@@ -116,11 +116,11 @@ def example_2_automl_optimization():
     )
 
     # Run optimization (quick demo with 20 trials)
-    print("\n🔍 Running optimization (20 trials)...")
+    print("\n[SEARCH] Running optimization (20 trials)...")
     study = optimizer.optimize(n_trials=20)
 
     # Print results
-    print(f"\n✓ Optimization complete!")
+    print(f"\n[OK] Optimization complete!")
     print(f"  Best R²: {study.best_value:.4f}")
     print(f"  Best parameters:")
     for param, value in study.best_params.items():
@@ -131,16 +131,16 @@ def example_2_automl_optimization():
     output_dir.mkdir(parents=True, exist_ok=True)
 
     optimizer.save_results(study, str(output_dir / 'example_results.json'))
-    print(f"\n✓ Results saved to {output_dir}/example_results.json")
+    print(f"\n[OK] Results saved to {output_dir}/example_results.json")
 
     # Create visualizations
     try:
         visualize_optimization(study, output_dir=str(output_dir / 'plots'))
-        print(f"✓ Visualizations saved to {output_dir}/plots/")
+        print(f"[OK] Visualizations saved to {output_dir}/plots/")
     except Exception as e:
-        print(f"⚠️  Visualization skipped: {e}")
+        print(f"[WARNING]  Visualization skipped: {e}")
 
-    print("\n✓ Example 2 complete!")
+    print("\n[OK] Example 2 complete!")
 
 
 def example_3_combined_workflow():
@@ -159,7 +159,7 @@ def example_3_combined_workflow():
     print("="*70)
 
     # Step 1: Use AutoML to find best parameters
-    print("\n📊 STEP 1: AutoML Optimization")
+    print("\n[REPORT] STEP 1: AutoML Optimization")
     print("-" * 70)
 
     # Generate sample data
@@ -175,10 +175,10 @@ def example_3_combined_workflow():
     optimizer = AutoMLOptimizer(X_train, y_train, X_val, y_val, model_type='rf')
     study = optimizer.optimize(n_trials=15)
 
-    print(f"✓ Found best parameters (R² = {study.best_value:.4f})")
+    print(f"[OK] Found best parameters (R² = {study.best_value:.4f})")
 
     # Step 2: Generate configs using best parameters as starting point
-    print("\n🎯 STEP 2: Generate Training Configurations")
+    print("\n[TARGET] STEP 2: Generate Training Configurations")
     print("-" * 70)
 
     best_params = study.best_params
@@ -197,10 +197,10 @@ def example_3_combined_workflow():
         config['max_depth'] = max(5, min(50, config['max_depth']))
         configs.append(config)
 
-    print(f"✓ Generated {len(configs)} configurations")
+    print(f"[OK] Generated {len(configs)} configurations")
 
     # Step 3: Train with checkpoints
-    print("\n💾 STEP 3: Training with Checkpoints")
+    print("\n[SAVE] STEP 3: Training with Checkpoints")
     print("-" * 70)
 
     try:
@@ -209,22 +209,22 @@ def example_3_combined_workflow():
             target='Example_Target',
             pfaz_id=98
         )
-        print(f"✓ Trained {len(results)} models with checkpointing")
+        print(f"[OK] Trained {len(results)} models with checkpointing")
     except Exception as e:
-        print(f"⚠️  Training simulation completed: {e}")
+        print(f"[WARNING]  Training simulation completed: {e}")
 
     # Step 4: Summary
-    print("\n📋 STEP 4: Summary")
+    print("\n[LIST] STEP 4: Summary")
     print("-" * 70)
-    print(f"✓ AutoML found best parameters")
-    print(f"✓ Generated {len(configs)} config variations")
-    print(f"✓ Training completed with checkpoint support")
+    print(f"[OK] AutoML found best parameters")
+    print(f"[OK] Generated {len(configs)} config variations")
+    print(f"[OK] Training completed with checkpoint support")
 
     # Clean up
     cm = CheckpointManager()
     cm.delete_checkpoint(pfaz_id=98)
 
-    print("\n✓ Example 3 complete!")
+    print("\n[OK] Example 3 complete!")
 
 
 def example_4_multi_target_optimization():
@@ -264,7 +264,7 @@ def example_4_multi_target_optimization():
     results = {}
 
     for target in ['MM', 'QM', 'Beta_2']:
-        print(f"\n🔍 Optimizing for {target}...")
+        print(f"\n[SEARCH] Optimizing for {target}...")
 
         optimizer = AutoMLOptimizer(
             X_train, y_targets[target],
@@ -275,17 +275,17 @@ def example_4_multi_target_optimization():
         study = optimizer.optimize(n_trials=10)  # Quick demo
         results[target] = study
 
-        print(f"✓ {target}: Best R² = {study.best_value:.4f}")
+        print(f"[OK] {target}: Best R² = {study.best_value:.4f}")
 
     # Summary
-    print("\n📊 Multi-Target Optimization Summary:")
+    print("\n[REPORT] Multi-Target Optimization Summary:")
     print("-" * 70)
     for target, study in results.items():
         print(f"{target:10s}: R² = {study.best_value:.4f} "
               f"(n_estimators={study.best_params['n_estimators']}, "
               f"max_depth={study.best_params['max_depth']})")
 
-    print("\n✓ Example 4 complete!")
+    print("\n[OK] Example 4 complete!")
 
 
 def run_all_examples():
@@ -312,7 +312,7 @@ def run_all_examples():
             traceback.print_exc()
 
     print("\n" + "="*70)
-    print("✓ ALL EXAMPLES COMPLETE")
+    print("[OK] ALL EXAMPLES COMPLETE")
     print("="*70)
 
 

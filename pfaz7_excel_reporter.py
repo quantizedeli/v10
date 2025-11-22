@@ -46,7 +46,7 @@ class PFAZ7ExcelReporter:
         self.ensemble_results = []
         self.base_model_results = []
 
-        logger.info(f"✓ PFAZ7ExcelReporter initialized")
+        logger.info(f"[OK] PFAZ7ExcelReporter initialized")
         logger.info(f"  Output: {self.output_path}")
 
     def add_ensemble_result(self,
@@ -74,7 +74,7 @@ class PFAZ7ExcelReporter:
         }
 
         self.ensemble_results.append(result)
-        logger.info(f"  ✓ Added: {ensemble_name} (R²={r2:.4f})")
+        logger.info(f"  [OK] Added: {ensemble_name} (R²={r2:.4f})")
 
     def add_base_model_result(self,
                              model_id: str,
@@ -128,7 +128,7 @@ class PFAZ7ExcelReporter:
             # Sheet 8: Recommendations
             self._create_recommendations_sheet(writer)
 
-        logger.info(f"\n✅ Excel report generated: {self.output_path}")
+        logger.info(f"\n[SUCCESS] Excel report generated: {self.output_path}")
         logger.info(f"   Sheets: 8")
         logger.info(f"   Ensembles: {len(self.ensemble_results)}")
         logger.info(f"   Base Models: {len(self.base_model_results)}")
@@ -389,7 +389,7 @@ def create_sample_report():
     # Generate report
     reporter.generate_report()
 
-    logger.info("\n✅ Sample report created successfully!")
+    logger.info("\n[SUCCESS] Sample report created successfully!")
     return reporter
 
 

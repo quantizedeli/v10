@@ -103,12 +103,12 @@ class ModelLoader:
                     'file_path': model_file
                 }
                 
-                logger.debug(f"✅ Loaded: {model_id}")
+                logger.debug(f"[SUCCESS] Loaded: {model_id}")
             
             except Exception as e:
-                logger.error(f"❌ Failed to load {model_file}: {e}")
+                logger.error(f"[ERROR] Failed to load {model_file}: {e}")
         
-        logger.info(f"✅ Successfully loaded {len(models)} models for {dataset_name}")
+        logger.info(f"[SUCCESS] Successfully loaded {len(models)} models for {dataset_name}")
         
         return models
 
@@ -158,15 +158,15 @@ class AllNucleiDatasetLoader:
                 try:
                     df = pd.read_csv(data_file)
                     datasets[dataset_name] = df
-                    logger.info(f"✅ Loaded: {dataset_name} ({len(df)} nuclei)")
+                    logger.info(f"[SUCCESS] Loaded: {dataset_name} ({len(df)} nuclei)")
                 
                 except Exception as e:
-                    logger.error(f"❌ Failed to load {dataset_name}: {e}")
+                    logger.error(f"[ERROR] Failed to load {dataset_name}: {e}")
         
         if not datasets:
             logger.warning("No ALL nuclei datasets found!")
         else:
-            logger.info(f"✅ Total datasets loaded: {len(datasets)}")
+            logger.info(f"[SUCCESS] Total datasets loaded: {len(datasets)}")
         
         return datasets
 
@@ -334,10 +334,10 @@ class AllNucleiPredictor:
                     ])
                     model_errors[model_id] = overall_error
                     
-                    logger.info(f"  ✅ {model_id}: MAE = {overall_error:.4f}")
+                    logger.info(f"  [SUCCESS] {model_id}: MAE = {overall_error:.4f}")
                 
                 except Exception as e:
-                    logger.error(f"  ❌ {model_id}: Prediction failed - {e}")
+                    logger.error(f"  [ERROR] {model_id}: Prediction failed - {e}")
             
             # Find best model for each nucleus
             if model_errors:
@@ -381,7 +381,7 @@ class AllNucleiPredictor:
             # Store results
             self.predictions[dataset_name] = results_df
             
-            logger.info(f"✅ Predictions completed for {dataset_name}")
+            logger.info(f"[SUCCESS] Predictions completed for {dataset_name}")
             logger.info(f"   Results shape: {results_df.shape}")
         
         logger.info("\n" + "=" * 80)
@@ -416,7 +416,7 @@ class AllNucleiPredictor:
                     sheet_name = dataset_name[:31]  # Excel sheet name limit
                     df.to_excel(writer, sheet_name=sheet_name, index=False)
             
-            logger.info(f"✅ Excel report saved: {excel_path}")
+            logger.info(f"[SUCCESS] Excel report saved: {excel_path}")
     
     def _generate_formatted_excel(self, excel_path: Path):
         """Generate formatted Excel with styling"""
@@ -470,7 +470,7 @@ class AllNucleiPredictor:
         
         # Save
         wb.save(excel_path)
-        logger.info(f"✅ Formatted Excel report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Formatted Excel report saved: {excel_path}")
     
     def save_csv_predictions(self):
         """Save predictions as CSV files (one per dataset)"""
@@ -478,7 +478,7 @@ class AllNucleiPredictor:
         for dataset_name, df in self.predictions.items():
             csv_path = self.output_dir / f"{dataset_name}_predictions.csv"
             df.to_csv(csv_path, index=False)
-            logger.info(f"✅ CSV saved: {csv_path}")
+            logger.info(f"[SUCCESS] CSV saved: {csv_path}")
     
     def generate_summary_statistics(self) -> pd.DataFrame:
         """Generate summary statistics across all datasets"""
@@ -515,7 +515,7 @@ class AllNucleiPredictor:
         # Save
         summary_path = self.output_dir / 'prediction_summary_statistics.csv'
         summary_df.to_csv(summary_path, index=False)
-        logger.info(f"✅ Summary statistics saved: {summary_path}")
+        logger.info(f"[SUCCESS] Summary statistics saved: {summary_path}")
         
         return summary_df
 
@@ -561,7 +561,7 @@ def main():
     print("\nSummary Statistics:")
     print(summary.to_string(index=False))
     
-    print("\n✅ ALL NUCLEI PREDICTION COMPLETED!")
+    print("\n[SUCCESS] ALL NUCLEI PREDICTION COMPLETED!")
 
 
 if __name__ == "__main__":

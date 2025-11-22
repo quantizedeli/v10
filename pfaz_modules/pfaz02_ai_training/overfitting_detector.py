@@ -344,7 +344,7 @@ class OverfittingDetector:
             
             if analysis['has_overfitting']:
                 logger.warning(
-                    f"⚠️  {result['dataset_name']}/{result['model_type']}/{result['config_id']}: "
+                    f"[WARNING]  {result['dataset_name']}/{result['model_type']}/{result['config_id']}: "
                     f"Overfitting detected ({analysis['severity']})"
                 )
         
@@ -369,35 +369,35 @@ class OverfittingDetector:
         suggestions = []
         
         if not analysis['has_overfitting']:
-            return ["✅ No significant overfitting detected"]
+            return ["[SUCCESS] No significant overfitting detected"]
         
         severity = analysis['severity']
         
         if severity == 'extreme':
-            suggestions.append("🔴 CRITICAL: Extreme overfitting detected!")
-            suggestions.append("→ Reduce model complexity significantly")
-            suggestions.append("→ Increase dropout rates")
-            suggestions.append("→ Use stronger regularization (L1/L2)")
-            suggestions.append("→ Consider using more training data")
-            suggestions.append("→ Try early stopping at epoch {}".format(analysis.get('divergence_epoch', 'N/A')))
+            suggestions.append("[ERROR] CRITICAL: Extreme overfitting detected!")
+            suggestions.append("-> Reduce model complexity significantly")
+            suggestions.append("-> Increase dropout rates")
+            suggestions.append("-> Use stronger regularization (L1/L2)")
+            suggestions.append("-> Consider using more training data")
+            suggestions.append("-> Try early stopping at epoch {}".format(analysis.get('divergence_epoch', 'N/A')))
         
         elif severity == 'severe':
             suggestions.append("🟠 Severe overfitting detected")
-            suggestions.append("→ Increase dropout rates (try +0.1 to +0.2)")
-            suggestions.append("→ Add L2 regularization")
-            suggestions.append("→ Reduce model layers or units")
-            suggestions.append("→ Use data augmentation if possible")
+            suggestions.append("-> Increase dropout rates (try +0.1 to +0.2)")
+            suggestions.append("-> Add L2 regularization")
+            suggestions.append("-> Reduce model layers or units")
+            suggestions.append("-> Use data augmentation if possible")
         
         elif severity == 'moderate':
             suggestions.append("🟡 Moderate overfitting detected")
-            suggestions.append("→ Slightly increase dropout")
-            suggestions.append("→ Consider early stopping")
-            suggestions.append("→ Try batch normalization")
+            suggestions.append("-> Slightly increase dropout")
+            suggestions.append("-> Consider early stopping")
+            suggestions.append("-> Try batch normalization")
         
         elif severity == 'mild':
-            suggestions.append("🟢 Mild overfitting - generally acceptable")
-            suggestions.append("→ Monitor in production")
-            suggestions.append("→ Consider ensemble methods")
+            suggestions.append("[OK] Mild overfitting - generally acceptable")
+            suggestions.append("-> Monitor in production")
+            suggestions.append("-> Consider ensemble methods")
         
         return suggestions
     
@@ -430,7 +430,7 @@ class OverfittingDetector:
         # Create summary chart
         self._create_summary_chart(charts_dir)
         
-        logger.info(f"✅ Charts saved to {charts_dir}")
+        logger.info(f"[SUCCESS] Charts saved to {charts_dir}")
     
     def _create_single_chart(self, analysis: Dict, output_dir: Path):
         """Create chart for single training"""
@@ -483,7 +483,7 @@ class OverfittingDetector:
         plt.savefig(output_dir / 'overfitting_summary.png', dpi=150, bbox_inches='tight')
         plt.close()
         
-        logger.info("✅ Summary chart created")
+        logger.info("[SUCCESS] Summary chart created")
     
     def generate_excel_report(self, filename: str = 'Overfitting_Analysis.xlsx'):
         """Generate comprehensive Excel report"""
@@ -502,7 +502,7 @@ class OverfittingDetector:
             # Fallback to simple Excel
             self._generate_simple_excel(excel_path)
         
-        logger.info(f"✅ Excel report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Excel report saved: {excel_path}")
     
     def _generate_simple_excel(self, excel_path: Path):
         """Generate simple Excel without formatting"""
@@ -706,7 +706,7 @@ def main():
     print("\nGenerating Excel report...")
     detector.generate_excel_report()
     
-    print("\n✅ OVERFITTING DETECTION TEST COMPLETED!")
+    print("\n[SUCCESS] OVERFITTING DETECTION TEST COMPLETED!")
     print(f"Output directory: {detector.output_dir}")
 
 

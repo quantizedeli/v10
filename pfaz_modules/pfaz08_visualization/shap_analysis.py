@@ -79,7 +79,7 @@ class SHAPAnalyzer:
         # 5. Force Plot (interaktif HTML)
         self._plot_force(explainer, shap_values, X_test, feature_names, save_dir)
         
-        logger.info(f"✓ SHAP analizi tamamlandı: {save_dir}")
+        logger.info(f"[OK] SHAP analizi tamamlandı: {save_dir}")
     
     def _create_explainer(self, model, X_train):
         """Model tipine göre uygun explainer oluştur"""
@@ -276,7 +276,7 @@ class SHAPAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Feature importance karşılaştırması kaydedildi: {save_path}")
+        logger.info(f"[OK] Feature importance karşılaştırması kaydedildi: {save_path}")
 
 
 class PermutationImportanceAnalyzer:
@@ -323,7 +323,7 @@ class PermutationImportanceAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Permutation importance kaydedildi: {save_path}")
+        logger.info(f"[OK] Permutation importance kaydedildi: {save_path}")
         
         return result
 
@@ -369,7 +369,7 @@ def main():
         'RandomForest_Test'
     )
     
-    print("\n✓ Test tamamlandı")
+    print("\n[OK] Test tamamlandı")
 
 
 if __name__ == "__main__":

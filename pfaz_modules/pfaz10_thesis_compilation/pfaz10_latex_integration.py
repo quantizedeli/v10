@@ -52,7 +52,7 @@ class LaTeXIntegrator:
         self.figure_counter = 0
         self.table_counter = 0
         
-        logger.info("✓ LaTeX Integrator initialized")
+        logger.info("[OK] LaTeX Integrator initialized")
     
     def create_single_figure(self, 
                             image_path: str,
@@ -373,7 +373,7 @@ class LaTeXIntegrator:
         output_file = self.thesis_dir / filename
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(content)
-        logger.info(f"✓ Saved LaTeX snippet: {filename}")
+        logger.info(f"[OK] Saved LaTeX snippet: {filename}")
 
 
 class BibTeXManager:
@@ -397,7 +397,7 @@ class BibTeXManager:
         if self.bib_file.exists():
             self._load_entries()
         
-        logger.info("✓ BibTeX Manager initialized")
+        logger.info("[OK] BibTeX Manager initialized")
     
     def add_article(self,
                    authors: str,
@@ -436,7 +436,7 @@ class BibTeXManager:
         entry += "\n}\n"
         
         self.entries.append(entry)
-        logger.info(f"✓ Added article: {citation_key}")
+        logger.info(f"[OK] Added article: {citation_key}")
         
         return citation_key
     
@@ -466,7 +466,7 @@ class BibTeXManager:
         entry += "\n}\n"
         
         self.entries.append(entry)
-        logger.info(f"✓ Added book: {citation_key}")
+        logger.info(f"[OK] Added book: {citation_key}")
         
         return citation_key
     
@@ -496,7 +496,7 @@ class BibTeXManager:
         entry += "\n}\n"
         
         self.entries.append(entry)
-        logger.info(f"✓ Added online: {citation_key}")
+        logger.info(f"[OK] Added online: {citation_key}")
         
         return citation_key
     
@@ -518,14 +518,14 @@ class BibTeXManager:
         entries = content.split('@')[1:]
         self.entries = ['@' + entry for entry in entries]
         
-        logger.info(f"✓ Loaded {len(self.entries)} existing entries")
+        logger.info(f"[OK] Loaded {len(self.entries)} existing entries")
     
     def save(self):
         """Save all entries to BibTeX file"""
         with open(self.bib_file, 'w', encoding='utf-8') as f:
             f.write('\n'.join(self.entries))
         
-        logger.info(f"✓ Saved {len(self.entries)} entries to {self.bib_file}")
+        logger.info(f"[OK] Saved {len(self.entries)} entries to {self.bib_file}")
     
     def add_nuclear_physics_references(self):
         """Add common nuclear physics references"""
@@ -571,7 +571,7 @@ class BibTeXManager:
             citation_key="mayer1949"
         )
         
-        logger.info("✓ Added standard nuclear physics references")
+        logger.info("[OK] Added standard nuclear physics references")
 
 
 # ============================================================================
@@ -630,7 +630,7 @@ def main():
     bib_manager.add_nuclear_physics_references()
     bib_manager.save()
     
-    print("\n✓ LaTeX Integration Test Complete")
+    print("\n[OK] LaTeX Integration Test Complete")
 
 
 if __name__ == "__main__":

@@ -3,10 +3,10 @@ QM Filter Manager
 Target Bazlı QM Filtreleme Sistemi
 
 Bu modül, hedef değişkenlere göre QM (Quadrupole Moment) filtrele sistemi sağlar:
-- MM target: QM olmayan çekirdekler kullanılabilir ✓
-- QM target: QM olmayan çekirdekler kullanılamaz ✗
-- MM_QM target: QM olmayan çekirdekler kullanılamaz ✗
-- Beta_2 target: Q'ya bağlı feature varsa QM gerekli ✗ (yoksa kullanılabilir ✓)
+- MM target: QM olmayan çekirdekler kullanılabilir [OK]
+- QM target: QM olmayan çekirdekler kullanılamaz [FAIL]
+- MM_QM target: QM olmayan çekirdekler kullanılamaz [FAIL]
+- Beta_2 target: Q'ya bağlı feature varsa QM gerekli [FAIL] (yoksa kullanılabilir [OK])
 """
 
 import pandas as pd
@@ -40,7 +40,7 @@ class QMFilterManager:
         # QM sütununu bul
         qm_col = self._find_qm_column(df)
         if qm_col is None:
-            logger.warning("⚠️ QM sütunu bulunamadı, filtreleme yapılamıyor")
+            logger.warning("[WARNING] QM sütunu bulunamadı, filtreleme yapılamıyor")
             return df, {'status': 'no_qm_column', 'removed': 0}
         
         df_filtered = df.copy()
@@ -49,39 +49,39 @@ class QMFilterManager:
         
         # Filtreleme mantığı
         if target_name == 'MM':
-            # MM için QM yoksa sorun değil ✓
+            # MM için QM yoksa sorun değil [OK]
             filter_result = 'no_filtering_needed'
-            logger.info(f"✓ Target: MM → QM filtresi UYGULANMADI (QM olmayan çekirdekler kullanılabilir)")
+            logger.info(f"[OK] Target: MM -> QM filtresi UYGULANMADI (QM olmayan çekirdekler kullanılabilir)")
             
         elif target_name == 'QM':
-            # QM hedefi, QM olmayan çıkar ✗
+            # QM hedefi, QM olmayan çıkar [FAIL]
             df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
             removed_nuclei = removed
             filter_result = 'qm_required'
-            logger.info(f"✓ Target: QM → QM filtresi UYGULAN DI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
+            logger.info(f"[OK] Target: QM -> QM filtresi UYGULAN DI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
             
         elif target_name == 'MM_QM':
-            # MM_QM hedefi, QM olmayan çıkar ✗
+            # MM_QM hedefi, QM olmayan çıkar [FAIL]
             df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
             removed_nuclei = removed
             filter_result = 'qm_required'
-            logger.info(f"✓ Target: MM_QM → QM filtresi UYGULANDI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
+            logger.info(f"[OK] Target: MM_QM -> QM filtresi UYGULANDI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
             
         elif target_name == 'Beta_2':
             # Beta_2 için Q'ya bağlı feature kontrolü
             if features and self._has_q_dependent_features(features):
-                # Q'ya bağlı feature varsa QM gerekli ✗
+                # Q'ya bağlı feature varsa QM gerekli [FAIL]
                 df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
                 removed_nuclei = removed
                 filter_result = 'qm_required_for_features'
-                logger.info(f"✓ Target: Beta_2 + Q-bağlı features → QM filtresi UYGULANDI ({len(removed)} çekirdek çıkarıldı)")
+                logger.info(f"[OK] Target: Beta_2 + Q-bağlı features -> QM filtresi UYGULANDI ({len(removed)} çekirdek çıkarıldı)")
             else:
-                # Q'ya bağlı feature yoksa QM gerekmez ✓
+                # Q'ya bağlı feature yoksa QM gerekmez [OK]
                 filter_result = 'no_filtering_needed'
-                logger.info(f"✓ Target: Beta_2 → QM filtresi UYGULANMADI (Q-bağlı feature yok)")
+                logger.info(f"[OK] Target: Beta_2 -> QM filtresi UYGULANMADI (Q-bağlı feature yok)")
         
         else:
-            logger.warning(f"⚠️ Bilinmeyen target: {target_name}, filtreleme yapılmadı")
+            logger.warning(f"[WARNING] Bilinmeyen target: {target_name}, filtreleme yapılmadı")
             filter_result = 'unknown_target'
         
         final_count = len(df_filtered)
@@ -178,7 +178,7 @@ class QMFilterManager:
                         sheet_name = f'Removed_{target}'[:31]
                         removed_df.to_excel(writer, sheet_name=sheet_name, index=False)
         
-        logger.info(f"✓ QM filtreleme raporu kaydedildi: {output_path}")
+        logger.info(f"[OK] QM filtreleme raporu kaydedildi: {output_path}")
 
 
 def main():

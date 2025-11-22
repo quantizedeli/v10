@@ -87,7 +87,7 @@ class VisualizationIntegrationManager:
             'statistics': {}
         }
         
-        logger.info("✓ Visualization Integration Manager initialized")
+        logger.info("[OK] Visualization Integration Manager initialized")
     
     def _default_config(self) -> Dict:
         """Varsayılan konfigürasyon"""
@@ -178,7 +178,7 @@ class VisualizationIntegrationManager:
         if self.config['modules']['production_readiness']:
             self.visualizers['production_readiness'] = ProductionReadinessDashboard(base_dir / 'production_readiness')
         
-        logger.info(f"✓ Initialized {len(self.visualizers)} visualizer modules")
+        logger.info(f"[OK] Initialized {len(self.visualizers)} visualizer modules")
     
     def add_robustness_data(self, 
                            predictions: pd.DataFrame,
@@ -192,7 +192,7 @@ class VisualizationIntegrationManager:
             'noisy_predictions': noisy_predictions,
             'cv_results': cv_results
         }
-        logger.info("✓ Added robustness data")
+        logger.info("[OK] Added robustness data")
     
     def add_shap_data(self,
                      feature_names: List[str],
@@ -204,7 +204,7 @@ class VisualizationIntegrationManager:
             'values': shap_values,
             'X': X
         }
-        logger.info("✓ Added SHAP data")
+        logger.info("[OK] Added SHAP data")
     
     def add_anomaly_data(self,
                         normal_data: pd.DataFrame,
@@ -218,7 +218,7 @@ class VisualizationIntegrationManager:
             'features': feature_cols,
             'mask': anomaly_mask
         }
-        logger.info("✓ Added anomaly data")
+        logger.info("[OK] Added anomaly data")
     
     def add_prediction_data(self,
                            experimental: np.ndarray,
@@ -232,28 +232,28 @@ class VisualizationIntegrationManager:
             'target_name': target_name,
             'X': X
         }
-        logger.info("✓ Added prediction data")
+        logger.info("[OK] Added prediction data")
     
     def add_model_metrics(self, models_metrics: Dict[str, Dict]):
         """Model metriklerini ekle"""
         self.project_data['model_metrics'] = models_metrics
-        logger.info("✓ Added model metrics")
+        logger.info("[OK] Added model metrics")
     
     def add_training_history(self, history_dict: Dict):
         """Eğitim geçmişini ekle"""
         self.project_data['training_history'] = history_dict
-        logger.info("✓ Added training history")
+        logger.info("[OK] Added training history")
     
     def add_datasets_info(self, datasets_info: Dict, datasets_features: Dict):
         """Veri setleri bilgisini ekle"""
         self.project_data['datasets_info'] = datasets_info
         self.project_data['datasets_features'] = datasets_features
-        logger.info("✓ Added datasets info")
+        logger.info("[OK] Added datasets info")
     
     def add_log_data(self, log_df: pd.DataFrame):
         """Log verilerini ekle"""
         self.project_data['logs'] = log_df
-        logger.info("✓ Added log data")
+        logger.info("[OK] Added log data")
     
     def add_production_readiness_data(self,
                                      model_metrics: Dict,
@@ -265,7 +265,7 @@ class VisualizationIntegrationManager:
             'robustness_scores': robustness_scores,
             'resource_requirements': resource_requirements
         }
-        logger.info("✓ Added production readiness data")
+        logger.info("[OK] Added production readiness data")
     
     def generate_all_visualizations(self):
         """Tüm görselleştirmeleri oluştur"""
@@ -275,7 +275,7 @@ class VisualizationIntegrationManager:
         
         # 1. Robustness
         if 'robustness' in self.project_data and 'robustness' in self.visualizers:
-            logger.info("\n→ Robustness Visualizations")
+            logger.info("\n-> Robustness Visualizations")
             try:
                 data = self.project_data['robustness']
                 self.visualizers['robustness'].plot_perturbation_sensitivity(
@@ -286,22 +286,22 @@ class VisualizationIntegrationManager:
                 )
                 self.visualizers['robustness'].plot_cross_validation_stability(data['cv_results'])
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 2. SHAP
         if 'shap' in self.project_data and 'shap' in self.visualizers:
-            logger.info("\n→ SHAP Visualizations")
+            logger.info("\n-> SHAP Visualizations")
             try:
                 data = self.project_data['shap']
                 self.visualizers['shap'].plot_shap_summary(
                     data['features'], data['values'], data['X']
                 )
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 3. Anomaly
         if 'anomaly' in self.project_data and 'anomaly' in self.visualizers:
-            logger.info("\n→ Anomaly Analysis")
+            logger.info("\n-> Anomaly Analysis")
             try:
                 data = self.project_data['anomaly']
                 self.visualizers['anomaly'].plot_anomaly_characteristics(
@@ -313,11 +313,11 @@ class VisualizationIntegrationManager:
                         data['mask'], data['features']
                     )
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 4. Predictions
         if 'predictions' in self.project_data and 'predictions' in self.visualizers:
-            logger.info("\n→ Prediction Visualizations")
+            logger.info("\n-> Prediction Visualizations")
             try:
                 data = self.project_data['predictions']
                 self.visualizers['predictions'].plot_prediction_comparison(
@@ -327,29 +327,29 @@ class VisualizationIntegrationManager:
                     data['experimental'], data['models'], data['target_name']
                 )
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 5. Model Comparison
         if 'model_metrics' in self.project_data and 'model_comparison' in self.visualizers:
-            logger.info("\n→ Model Comparison")
+            logger.info("\n-> Model Comparison")
             try:
                 self.visualizers['model_comparison'].plot_model_ranking(self.project_data['model_metrics'])
                 self.visualizers['model_comparison'].plot_parallel_coordinates(self.project_data['model_metrics'])
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 6. Training Metrics
         if 'training_history' in self.project_data and 'training_metrics' in self.visualizers:
-            logger.info("\n→ Training Metrics")
+            logger.info("\n-> Training Metrics")
             try:
                 self.visualizers['training_metrics'].plot_training_curves(self.project_data['training_history'])
                 self.visualizers['training_metrics'].plot_training_convergence(self.project_data['training_history'])
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 7. Data Catalog
         if 'datasets_info' in self.project_data and 'data_catalog' in self.visualizers:
-            logger.info("\n→ Data Catalog")
+            logger.info("\n-> Data Catalog")
             try:
                 self.visualizers['data_catalog'].plot_dataset_overview(self.project_data['datasets_info'])
                 if 'datasets_features' in self.project_data:
@@ -357,32 +357,32 @@ class VisualizationIntegrationManager:
                         self.project_data['datasets_features']
                     )
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 8. Log Analytics
         if 'logs' in self.project_data and 'log_analytics' in self.visualizers:
-            logger.info("\n→ Log Analytics")
+            logger.info("\n-> Log Analytics")
             try:
                 self.visualizers['log_analytics'].plot_log_statistics(self.project_data['logs'])
                 error_logs = self.project_data['logs'][self.project_data['logs']['level'] == 'ERROR']
                 if len(error_logs) > 0:
                     self.visualizers['log_analytics'].plot_error_analysis(error_logs)
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         # 9. Production Readiness
         if 'production' in self.project_data and 'production_readiness' in self.visualizers:
-            logger.info("\n→ Production Readiness")
+            logger.info("\n-> Production Readiness")
             try:
                 data = self.project_data['production']
                 self.visualizers['production_readiness'].create_production_readiness_report(
                     data['model_metrics'], data['robustness_scores'], data['resource_requirements']
                 )
             except Exception as e:
-                logger.error(f"  ✗ Error: {e}")
+                logger.error(f"  [FAIL] Error: {e}")
         
         logger.info("\n" + "="*80)
-        logger.info("✓ VISUALIZATION GENERATION COMPLETED")
+        logger.info("[OK] VISUALIZATION GENERATION COMPLETED")
         logger.info("="*80)
     
     def generate_html_report(self, report_title: str = "Thesis Visualization Report"):
@@ -459,7 +459,7 @@ class VisualizationIntegrationManager:
         with open(html_file, 'w') as f:
             f.write(html_content)
         
-        logger.info(f"✓ HTML report saved: {html_file}")
+        logger.info(f"[OK] HTML report saved: {html_file}")
     
     def generate_summary_statistics(self):
         """Özet istatistikler oluştur"""
@@ -494,14 +494,14 @@ class VisualizationIntegrationManager:
         with open(summary_file, 'w') as f:
             json.dump(summary, f, indent=2)
         
-        logger.info(f"✓ Summary statistics saved: {summary_file}")
+        logger.info(f"[OK] Summary statistics saved: {summary_file}")
     
     def save_config(self):
         """Konfigürasyonu kaydet"""
         config_file = self.output_base_dir / 'visualization_config.json'
         with open(config_file, 'w') as f:
             json.dump(self.config, f, indent=2)
-        logger.info(f"✓ Config saved: {config_file}")
+        logger.info(f"[OK] Config saved: {config_file}")
 
 
 # =============================================================================
@@ -545,7 +545,7 @@ def example_usage():
     manager.generate_summary_statistics()
     manager.save_config()
     
-    logger.info(f"\n✓ All outputs saved to: {manager.output_base_dir}")
+    logger.info(f"\n[OK] All outputs saved to: {manager.output_base_dir}")
 
 
 if __name__ == "__main__":

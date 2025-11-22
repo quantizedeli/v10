@@ -82,7 +82,7 @@ class CICDPipelineGenerator:
         with open(workflow_path, 'w') as f:
             yaml.dump(workflow, f, default_flow_style=False, sort_keys=False)
         
-        logger.info(f"✓ Generated: {workflow_path}")
+        logger.info(f"[OK] Generated: {workflow_path}")
         return workflow_path
     
     def generate_deploy_workflow(self) -> Path:
@@ -162,7 +162,7 @@ class CICDPipelineGenerator:
         with open(workflow_path, 'w') as f:
             yaml.dump(workflow, f, default_flow_style=False, sort_keys=False)
         
-        logger.info(f"✓ Generated: {workflow_path}")
+        logger.info(f"[OK] Generated: {workflow_path}")
         return workflow_path
     
     def generate_code_quality_workflow(self) -> Path:
@@ -191,7 +191,7 @@ class CICDPipelineGenerator:
         with open(workflow_path, 'w') as f:
             yaml.dump(workflow, f, default_flow_style=False, sort_keys=False)
         
-        logger.info(f"✓ Generated: {workflow_path}")
+        logger.info(f"[OK] Generated: {workflow_path}")
         return workflow_path
     
     def generate_pre_commit_config(self) -> Path:
@@ -226,7 +226,7 @@ class CICDPipelineGenerator:
         with open(config_path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)
         
-        logger.info(f"✓ Generated: {config_path}")
+        logger.info(f"[OK] Generated: {config_path}")
         return config_path
     
     def generate_all(self):
@@ -242,7 +242,7 @@ class CICDPipelineGenerator:
         self.generate_pre_commit_config()
         
         logger.info("\n" + "="*70)
-        logger.info("✅ CI/CD PIPELINE CONFIGURED")
+        logger.info("[SUCCESS] CI/CD PIPELINE CONFIGURED")
         logger.info("="*70)
         logger.info("\nNext steps:")
         logger.info("1. Commit .github/workflows/ to repository")

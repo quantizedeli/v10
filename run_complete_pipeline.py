@@ -31,7 +31,7 @@ def print_banner():
     ║                                                                   ║
     ║   NUCLEAR PHYSICS AI-ASSISTED DATA ANALYSIS PROJECT              ║
     ║                                                                   ║
-    ║   🚀 OTOMATIK PIPELINE - TÜM MODÜLLER 🚀                          ║
+    ║   [START] OTOMATIK PIPELINE - TÜM MODÜLLER [START]                          ║
     ║                                                                   ║
     ║   Tüm modülleri sırayla çalıştırır:                              ║
     ║   1. Veri Yükleme & Temizleme                                    ║
@@ -61,12 +61,12 @@ def step_1_load_and_clean_data(input_file='aaa2.txt', output_dir='output'):
         
         # Veriyi yükle
         raw_data = loader.load_data()
-        logger.info(f"✓ {len(raw_data)} satır yüklendi")
+        logger.info(f"[OK] {len(raw_data)} satır yüklendi")
         
         # Veriyi temizle
         logger.info("Veri temizleniyor...")
         cleaned_data = loader.clean_data()
-        logger.info(f"✓ {len(cleaned_data)} satır temizlendi")
+        logger.info(f"[OK] {len(cleaned_data)} satır temizlendi")
         
         # Kaydet
         output_path = Path(output_dir)
@@ -74,12 +74,12 @@ def step_1_load_and_clean_data(input_file='aaa2.txt', output_dir='output'):
         
         output_file = output_path / 'cleaned_data.csv'
         cleaned_data.to_csv(output_file, index=False, encoding='utf-8')
-        logger.info(f"✓ Temizlenmiş veri kaydedildi: {output_file}")
+        logger.info(f"[OK] Temizlenmiş veri kaydedildi: {output_file}")
         
         return cleaned_data
         
     except Exception as e:
-        logger.error(f"✗ ADIM 1 BAŞARISIZ: {e}", exc_info=True)
+        logger.error(f"[FAIL] ADIM 1 BAŞARISIZ: {e}", exc_info=True)
         raise
 
 
@@ -95,17 +95,17 @@ def step_2_theoretical_calculations(cleaned_data, output_dir='output'):
         calculator = TheoreticalCalculator()
         
         enriched_data = calculator.calculate_all_properties(cleaned_data)
-        logger.info(f"✓ {len(enriched_data)} nükleus için hesaplamalar tamamlandı")
+        logger.info(f"[OK] {len(enriched_data)} nükleus için hesaplamalar tamamlandı")
         
         # Kaydet
         output_file = Path(output_dir) / 'enriched_data.csv'
         enriched_data.to_csv(output_file, index=False, encoding='utf-8')
-        logger.info(f"✓ Zenginleştirilmiş veri kaydedildi: {output_file}")
+        logger.info(f"[OK] Zenginleştirilmiş veri kaydedildi: {output_file}")
         
         return enriched_data
         
     except Exception as e:
-        logger.error(f"✗ ADIM 2 BAŞARISIZ: {e}", exc_info=True)
+        logger.error(f"[FAIL] ADIM 2 BAŞARISIZ: {e}", exc_info=True)
         raise
 
 
@@ -121,7 +121,7 @@ def step_3_anomaly_detection(enriched_data, output_dir='output'):
         detector = AnomalyDetector()
         
         final_data = detector.detect_all_anomalies(enriched_data)
-        logger.info(f"✓ Anomali tespiti tamamlandı")
+        logger.info(f"[OK] Anomali tespiti tamamlandı")
         
         # İstatistikler
         normal_count = len(final_data[final_data['is_anomaly'] == False])
@@ -132,12 +132,12 @@ def step_3_anomaly_detection(enriched_data, output_dir='output'):
         # Kaydet
         output_file = Path(output_dir) / 'final_data.csv'
         final_data.to_csv(output_file, index=False, encoding='utf-8')
-        logger.info(f"✓ Final veri kaydedildi: {output_file}")
+        logger.info(f"[OK] Final veri kaydedildi: {output_file}")
         
         return final_data
         
     except Exception as e:
-        logger.error(f"✗ ADIM 3 BAŞARISIZ: {e}", exc_info=True)
+        logger.error(f"[FAIL] ADIM 3 BAŞARISIZ: {e}", exc_info=True)
         raise
 
 
@@ -153,12 +153,12 @@ def step_4_generate_datasets(final_data, output_dir='output'):
         generator = DatasetGenerator(final_data, output_dir=f"{output_dir}/datasets")
         
         datasets = generator.generate_all_datasets()
-        logger.info(f"✓ {len(datasets)} dataset oluşturuldu")
+        logger.info(f"[OK] {len(datasets)} dataset oluşturuldu")
         
         return datasets
         
     except Exception as e:
-        logger.error(f"✗ ADIM 4 BAŞARISIZ: {e}", exc_info=True)
+        logger.error(f"[FAIL] ADIM 4 BAŞARISIZ: {e}", exc_info=True)
         raise
 
 
@@ -174,12 +174,12 @@ def step_5_train_ai_models(datasets, output_dir='output'):
         pipeline = ModelTrainingPipeline(output_dir=f"{output_dir}/trained_models")
         
         results = pipeline.train_all_datasets(datasets)
-        logger.info(f"✓ {len(results)} model eğitildi")
+        logger.info(f"[OK] {len(results)} model eğitildi")
         
         return results
         
     except Exception as e:
-        logger.error(f"✗ ADIM 5 BAŞARISIZ: {e}", exc_info=True)
+        logger.error(f"[FAIL] ADIM 5 BAŞARISIZ: {e}", exc_info=True)
         raise
 
 
@@ -196,16 +196,16 @@ def step_6_train_anfis(datasets, output_dir='output'):
         
         # MATLAB kontrolü
         if not trainer.matlab_interface.matlab_available:
-            logger.warning("⚠ MATLAB bulunamadı, ANFIS eğitimi atlanıyor")
+            logger.warning("[WARNING] MATLAB bulunamadı, ANFIS eğitimi atlanıyor")
             return None
         
         results = trainer.train_selected_datasets(datasets)
-        logger.info(f"✓ {len(results)} ANFIS modeli eğitildi")
+        logger.info(f"[OK] {len(results)} ANFIS modeli eğitildi")
         
         return results
         
     except Exception as e:
-        logger.warning(f"⚠ ADIM 6 ATLANIYOR: {e}")
+        logger.warning(f"[WARNING] ADIM 6 ATLANIYOR: {e}")
         return None
 
 
@@ -221,10 +221,10 @@ def step_7_visualization(results, output_dir='output'):
         viz = VisualizationManager(output_dir=f"{output_dir}/visualizations")
         
         viz.create_all_visualizations(results)
-        logger.info(f"✓ Görselleştirmeler tamamlandı")
+        logger.info(f"[OK] Görselleştirmeler tamamlandı")
         
     except Exception as e:
-        logger.error(f"✗ ADIM 7 BAŞARISIZ: {e}", exc_info=True)
+        logger.error(f"[FAIL] ADIM 7 BAŞARISIZ: {e}", exc_info=True)
         raise
 
 
@@ -240,10 +240,10 @@ def step_8_reporting(results, output_dir='output'):
         reporter = ReportingManager(output_dir=f"{output_dir}/reports")
         
         reporter.generate_all_reports(results)
-        logger.info(f"✓ Raporlar tamamlandı")
+        logger.info(f"[OK] Raporlar tamamlandı")
         
     except Exception as e:
-        logger.error(f"✗ ADIM 8 BAŞARISIZ: {e}", exc_info=True)
+        logger.error(f"[FAIL] ADIM 8 BAŞARISIZ: {e}", exc_info=True)
         raise
 
 
@@ -368,7 +368,7 @@ def main():
         duration = end_time - start_time
         
         logger.info("\n" + "="*80)
-        logger.info("✓ PIPELINE BAŞARIYLA TAMAMLANDI!")
+        logger.info("[OK] PIPELINE BAŞARIYLA TAMAMLANDI!")
         logger.info("="*80)
         logger.info(f"Başlangıç: {start_time}")
         logger.info(f"Bitiş: {end_time}")
@@ -377,7 +377,7 @@ def main():
         logger.info("="*80 + "\n")
         
     except Exception as e:
-        logger.error(f"\n✗ Pipeline başarısız oldu: {e}", exc_info=True)
+        logger.error(f"\n[FAIL] Pipeline başarısız oldu: {e}", exc_info=True)
         raise
 
 

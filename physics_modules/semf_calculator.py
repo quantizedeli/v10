@@ -325,7 +325,7 @@ class TheoreticalCalculator:
         df = df.copy()
         
         # 1. SEMF hesaplamaları
-        logger.info("  → SEMF hesaplamaları...")
+        logger.info("  -> SEMF hesaplamaları...")
         semf_results = df.apply(
             lambda row: self.semf.calculate_binding_energy(
                 row['A'], row['Z'], row['N']
@@ -335,7 +335,7 @@ class TheoreticalCalculator:
             df[key] = semf_results.apply(lambda x: x[key])
         
         # 2. Ayırma enerjileri
-        logger.info("  → Ayırma enerjileri...")
+        logger.info("  -> Ayırma enerjileri...")
         sep_results = df.apply(
             lambda row: self.semf.calculate_separation_energies(
                 row['A'], row['Z'], row['N']
@@ -345,7 +345,7 @@ class TheoreticalCalculator:
             df[key] = sep_results.apply(lambda x: x[key])
         
         # 3. Kabuk modeli özellikleri
-        logger.info("  → Kabuk modeli özellikleri...")
+        logger.info("  -> Kabuk modeli özellikleri...")
         shell_results = df.apply(
             lambda row: self.shell.calculate_shell_properties(
                 row['Z'], row['N']
@@ -355,7 +355,7 @@ class TheoreticalCalculator:
             df[key] = shell_results.apply(lambda x: x[key])
         
         # 4. Schmidt momentler
-        logger.info("  → Schmidt momentler...")
+        logger.info("  -> Schmidt momentler...")
         schmidt_results = df.apply(
             lambda row: self.schmidt.calculate_schmidt_moments(
                 row['Z'], row['N'], row['SPIN'], row['PARITY'], row['MM']
@@ -365,7 +365,7 @@ class TheoreticalCalculator:
             df[key] = schmidt_results.apply(lambda x: x[key])
         
         # 5. Deformasyon parametreleri
-        logger.info("  → Deformasyon parametreleri...")
+        logger.info("  -> Deformasyon parametreleri...")
         
         # β₂ hesapla (Q'dan)
         df['beta_2_calc'] = df.apply(
@@ -390,7 +390,7 @@ class TheoreticalCalculator:
         )
         
         # 6. Ek özellikler
-        logger.info("  → Ek özellikler...")
+        logger.info("  -> Ek özellikler...")
         
         # Nükleer yarıçap
         df['nuclear_radius'] = R0 * (df['A'] ** (1/3))
@@ -410,7 +410,7 @@ class TheoreticalCalculator:
         # Fermi enerjisi (yaklaşık)
         df['fermi_energy'] = 33.0 * (df['A'] ** (2/3)) / (R0**2 * df['A'])
         
-        logger.info(f"✓ Teorik hesaplamalar tamamlandı: {len(df.columns)} özellik")
+        logger.info(f"[OK] Teorik hesaplamalar tamamlandı: {len(df.columns)} özellik")
         
         return df
 

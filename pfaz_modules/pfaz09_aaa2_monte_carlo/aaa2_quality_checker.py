@@ -55,8 +55,8 @@ class AAA2DataQualityChecker:
         df = pd.read_csv(filepath, sep='\t', encoding='utf-8')
         df.columns = df.columns.str.strip()
         
-        logger.info(f"   ✓ Toplam satır: {len(df)}")
-        logger.info(f"   ✓ Sütunlar: {list(df.columns)}")
+        logger.info(f"   [OK] Toplam satır: {len(df)}")
+        logger.info(f"   [OK] Sütunlar: {list(df.columns)}")
         
         # 2. Eksik değer kontrolü
         logger.info("\n2. Eksik değer kontrolü...")
@@ -116,7 +116,7 @@ class AAA2DataQualityChecker:
                         'issue': f'Missing value in {col}'
                     })
         
-        logger.info(f"   → Eksik değer sayısı: {len(self.issues['missing_values'])}")
+        logger.info(f"   -> Eksik değer sayısı: {len(self.issues['missing_values'])}")
     
     def _check_zero_values(self, df):
         """MM sütununda sıfır değerleri tespit et"""
@@ -133,7 +133,7 @@ class AAA2DataQualityChecker:
                     'issue': f'MM=0 (A={row["A"]}, odd-A check required)'
                 })
         
-        logger.info(f"   → MM=0 sayısı: {len(self.issues['zero_values'])}")
+        logger.info(f"   -> MM=0 sayısı: {len(self.issues['zero_values'])}")
     
     def _check_text_and_dates(self, df):
         """Sayısal sütunlarda metin/tarih kontrolü"""
@@ -163,7 +163,7 @@ class AAA2DataQualityChecker:
                             'issue': f'Text found in {col}: "{val_str}"'
                         })
         
-        logger.info(f"   → Metin içeren sayısal veri: {len(self.issues['text_in_numeric'])}")
+        logger.info(f"   -> Metin içeren sayısal veri: {len(self.issues['text_in_numeric'])}")
     
     def _check_parity(self, df):
         """PARITY değerlerini kontrol et (sadece -1 ve +1 olmalı)"""
@@ -181,7 +181,7 @@ class AAA2DataQualityChecker:
                 'issue': f'Invalid PARITY: {row["PARITY"]} (must be -1 or +1)'
             })
         
-        logger.info(f"   → Geçersiz PARITY: {len(self.issues['parity_errors'])}")
+        logger.info(f"   -> Geçersiz PARITY: {len(self.issues['parity_errors'])}")
     
     def _check_azn_consistency(self, df):
         """A = Z + N kontrolü"""
@@ -203,7 +203,7 @@ class AAA2DataQualityChecker:
                 'issue': f'A≠Z+N (A={row["A"]}, Z+N={row["A_calc"]})'
             })
         
-        logger.info(f"   → A≠Z+N uyuşmazlığı: {len(self.issues['azn_mismatch'])}")
+        logger.info(f"   -> A≠Z+N uyuşmazlığı: {len(self.issues['azn_mismatch'])}")
     
     def _check_mm_zero_odd_a(self, df):
         """Tek-A çekirdekler için MM=0 kontrolü"""
@@ -228,7 +228,7 @@ class AAA2DataQualityChecker:
                 'issue': f'MM=0 for odd-A nucleus (A={row["A"]}, physically inconsistent)'
             })
         
-        logger.info(f"   → MM=0 tek-A: {len(self.issues['mm_zero_odd_a'])}")
+        logger.info(f"   -> MM=0 tek-A: {len(self.issues['mm_zero_odd_a'])}")
     
     def _check_qm_missing(self, df):
         """Q (Quadrupole Moment) eksik değerleri tespit et"""
@@ -249,7 +249,7 @@ class AAA2DataQualityChecker:
                 'issue': 'QM (Q) value missing'
             })
         
-        logger.info(f"   → QM eksik: {len(self.issues['qm_missing'])}")
+        logger.info(f"   -> QM eksik: {len(self.issues['qm_missing'])}")
     
     def _calculate_statistics(self, df):
         """Veri seti istatistikleri"""
@@ -265,10 +265,10 @@ class AAA2DataQualityChecker:
             'parity_negative': (df['PARITY'] == -1).sum() if 'PARITY' in df.columns else 0,
         }
         
-        logger.info(f"   ✓ Toplam çekirdek: {stats['total_nuclei']}")
-        logger.info(f"   ✓ A aralığı: {stats['A_range']}")
-        logger.info(f"   ✓ MM mevcut: {stats['mm_available']} ({stats['mm_available']/stats['total_nuclei']*100:.1f}%)")
-        logger.info(f"   ✓ QM mevcut: {stats['qm_available']} ({stats['qm_available']/stats['total_nuclei']*100:.1f}%)")
+        logger.info(f"   [OK] Toplam çekirdek: {stats['total_nuclei']}")
+        logger.info(f"   [OK] A aralığı: {stats['A_range']}")
+        logger.info(f"   [OK] MM mevcut: {stats['mm_available']} ({stats['mm_available']/stats['total_nuclei']*100:.1f}%)")
+        logger.info(f"   [OK] QM mevcut: {stats['qm_available']} ({stats['qm_available']/stats['total_nuclei']*100:.1f}%)")
         
         return stats
     
@@ -317,7 +317,7 @@ class AAA2DataQualityChecker:
             # Sheet 11: Tam veri
             df.to_excel(writer, sheet_name='Full_Data', index=False)
         
-        logger.info(f"   ✓ Excel raporu kaydedildi: {report_path}")
+        logger.info(f"   [OK] Excel raporu kaydedildi: {report_path}")
         return report_path
 
 

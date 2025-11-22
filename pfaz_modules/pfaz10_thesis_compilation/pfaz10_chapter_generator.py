@@ -29,7 +29,7 @@ class DetailedChapterGenerator:
         
     def generate_chapter3_methodology(self):
         """Bölüm 3: Yöntem - Detaylı"""
-        logger.info("  ✓ Generating detailed Chapter 3: Yöntem...")
+        logger.info("  [OK] Generating detailed Chapter 3: Yöntem...")
         
         content = r"""\chapter{Yöntem}
 \label{ch:yontem}
@@ -548,12 +548,12 @@ Paralel işleme ve GPU hızlandırma ile süre önemli ölçüde azaltılmışt�
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"    ✓ Chapter 3 saved: {chapter_file}")
+        logger.info(f"    [OK] Chapter 3 saved: {chapter_file}")
         return chapter_file
     
     def generate_chapter4_results(self):
         """Bölüm 4: Bulgular - Detaylı"""
-        logger.info("  ✓ Generating detailed Chapter 4: Bulgular...")
+        logger.info("  [OK] Generating detailed Chapter 4: Bulgular...")
         
         content = r"""\chapter{Bulgular}
 \label{ch:bulgular}
@@ -1002,7 +1002,7 @@ Bu bölümde elde edilen ana bulgular:
         with open(chapter_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"    ✓ Chapter 4 saved: {chapter_file}")
+        logger.info(f"    [OK] Chapter 4 saved: {chapter_file}")
         return chapter_file
 
 
@@ -1023,8 +1023,8 @@ def generate_all_detailed_chapters(chapters_dir: Path, results_summary: Dict):
     generator.generate_chapter3_methodology()
     generator.generate_chapter4_results()
     
-    logger.info("\n✓ All detailed chapters generated!")
+    logger.info("\n[OK] All detailed chapters generated!")
 
 
 if __name__ == "__main__":
-    print("✓ PFAZ 10 Step 2: Detailed Chapter Generator Module Ready")
+    print("[OK] PFAZ 10 Step 2: Detailed Chapter Generator Module Ready")

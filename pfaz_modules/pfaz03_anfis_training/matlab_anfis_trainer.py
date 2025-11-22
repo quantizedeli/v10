@@ -45,7 +45,7 @@ class MATLABAnfisTrainer:
             try:
                 logger.info("Starting MATLAB engine...")
                 self.engine = matlab.engine.start_matlab()
-                logger.info("✅ MATLAB engine started successfully")
+                logger.info("[SUCCESS] MATLAB engine started successfully")
             except Exception as e:
                 logger.error(f"Failed to start MATLAB engine: {e}")
                 raise
@@ -108,7 +108,7 @@ class MATLABAnfisTrainer:
                 'gbellmf',
                 'linear'
             )
-            logger.info("✅ Initial FIS generated")
+            logger.info("[SUCCESS] Initial FIS generated")
         except Exception as e:
             logger.error(f"Failed to generate FIS: {e}")
             raise
@@ -196,7 +196,7 @@ class MATLABAnfisTrainer:
                 
                 # Early stopping
                 if tracker.should_early_stop(patience=patience_limit):
-                    logger.info(f"\n⚠️  Early stopping at epoch {epoch + 1}")
+                    logger.info(f"\n[WARNING]  Early stopping at epoch {epoch + 1}")
                     break
             
             tracker.finish()

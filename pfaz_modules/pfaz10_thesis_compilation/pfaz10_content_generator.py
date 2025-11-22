@@ -48,7 +48,7 @@ class ComprehensiveContentGenerator:
         # Load all results
         self.results = self._load_all_results()
         
-        logger.info("✓ Comprehensive Content Generator initialized")
+        logger.info("[OK] Comprehensive Content Generator initialized")
     
     def _load_all_results(self) -> Dict:
         """Load all results from previous phases"""
@@ -74,7 +74,7 @@ class ComprehensiveContentGenerator:
                 try:
                     with open(filepath, 'r') as f:
                         results[key] = json.load(f)
-                    logger.info(f"✓ Loaded {filename}")
+                    logger.info(f"[OK] Loaded {filename}")
                 except:
                     logger.warning(f"Could not load {filename}")
         
@@ -90,7 +90,7 @@ class ComprehensiveContentGenerator:
         Returns:
             Abstract LaTeX code
         """
-        logger.info(f"→ Generating abstract ({language})...")
+        logger.info(f"-> Generating abstract ({language})...")
         
         if language == 'en':
             content = r"""\chapter*{Abstract}
@@ -192,7 +192,7 @@ Sinir Ağları, Topluluk Yöntemleri, Nükleer Yapı, Kuantum Çok-Cisim Problem
     
     def generate_introduction(self) -> str:
         """Generate comprehensive introduction chapter"""
-        logger.info("→ Generating introduction...")
+        logger.info("-> Generating introduction...")
         
         content = r"""\chapter{Introduction}
 
@@ -313,7 +313,7 @@ detailed statistical tests, visualization gallery, and code documentation.
     
     def generate_literature_review(self) -> str:
         """Generate literature review chapter"""
-        logger.info("→ Generating literature review...")
+        logger.info("-> Generating literature review...")
         
         content = r"""\chapter{Literature Review}
 
@@ -495,7 +495,7 @@ This thesis addresses these gaps through:
         output_file = self.output_dir / filename
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(content)
-        logger.info(f"✓ Saved chapter: {filename}")
+        logger.info(f"[OK] Saved chapter: {filename}")
     
     def generate_all_chapters(self):
         """Generate and save all thesis chapters"""
@@ -515,7 +515,7 @@ This thesis addresses these gaps through:
         for filename, content in chapters.items():
             self.save_chapter(content, filename)
         
-        logger.info("\n✓ All chapters generated successfully")
+        logger.info("\n[OK] All chapters generated successfully")
 
 
 # ============================================================================
@@ -534,7 +534,7 @@ def main():
     # Generate all chapters
     generator.generate_all_chapters()
     
-    print("\n✓ Content Generation Complete")
+    print("\n[OK] Content Generation Complete")
 
 
 if __name__ == "__main__":

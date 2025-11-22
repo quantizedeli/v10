@@ -49,7 +49,7 @@ class AutoMLOptimizer:
         self.y_val = y_val
         self.model_type = model_type.lower()
 
-        logger.info(f"✓ AutoML Optimizer initialized: {model_type.upper()}")
+        logger.info(f"[OK] AutoML Optimizer initialized: {model_type.upper()}")
         logger.info(f"  Train: {len(X_train)} samples")
         logger.info(f"  Val: {len(X_val)} samples")
 
@@ -350,7 +350,7 @@ class AutoMLOptimizer:
         with open(output_path, 'w') as f:
             json.dump(results, f, indent=2)
 
-        logger.info(f"💾 Results saved: {output_path}")
+        logger.info(f"[SAVE] Results saved: {output_path}")
 
 
 # ============================================================================
@@ -373,41 +373,41 @@ def visualize_optimization(study: optuna.Study, output_dir='automl_plots'):
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True)
 
-    logger.info(f"\n📊 Generating visualizations...")
+    logger.info(f"\n[REPORT] Generating visualizations...")
 
     try:
         # 1. Optimization history
         fig = vis.plot_optimization_history(study)
         fig.write_html(str(output_dir / 'optimization_history.html'))
-        logger.info(f"  ✓ optimization_history.html")
+        logger.info(f"  [OK] optimization_history.html")
     except Exception as e:
-        logger.warning(f"  ✗ optimization_history.html: {e}")
+        logger.warning(f"  [FAIL] optimization_history.html: {e}")
 
     try:
         # 2. Parameter importances
         fig = vis.plot_param_importances(study)
         fig.write_html(str(output_dir / 'param_importances.html'))
-        logger.info(f"  ✓ param_importances.html")
+        logger.info(f"  [OK] param_importances.html")
     except Exception as e:
-        logger.warning(f"  ✗ param_importances.html: {e}")
+        logger.warning(f"  [FAIL] param_importances.html: {e}")
 
     try:
         # 3. Parallel coordinate plot
         fig = vis.plot_parallel_coordinate(study)
         fig.write_html(str(output_dir / 'parallel_coordinate.html'))
-        logger.info(f"  ✓ parallel_coordinate.html")
+        logger.info(f"  [OK] parallel_coordinate.html")
     except Exception as e:
-        logger.warning(f"  ✗ parallel_coordinate.html: {e}")
+        logger.warning(f"  [FAIL] parallel_coordinate.html: {e}")
 
     try:
         # 4. Contour plot
         fig = vis.plot_contour(study)
         fig.write_html(str(output_dir / 'contour.html'))
-        logger.info(f"  ✓ contour.html")
+        logger.info(f"  [OK] contour.html")
     except Exception as e:
-        logger.warning(f"  ✗ contour.html: {e}")
+        logger.warning(f"  [FAIL] contour.html: {e}")
 
-    logger.info(f"✓ Visualizations saved to {output_dir}/")
+    logger.info(f"[OK] Visualizations saved to {output_dir}/")
 
 
 # ============================================================================
@@ -517,7 +517,7 @@ def cli_automl():
     # Visualize
     visualize_optimization(study, output_dir=f'automl_{args.model}_plots')
 
-    print(f"\n✓ Optimization complete!")
+    print(f"\n[OK] Optimization complete!")
     print(f"  Best R²: {study.best_value:.4f}")
     print(f"  Results: {output_file}")
 

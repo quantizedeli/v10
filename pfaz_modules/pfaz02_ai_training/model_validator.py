@@ -124,7 +124,7 @@ class CrossValidationAnalyzer:
         cv_df = pd.DataFrame(self.cv_results)
         cv_df.to_csv(self.output_dir / 'cv_detailed.csv', index=False)
         
-        logger.info(f"✓ CV results saved: {self.output_dir}")
+        logger.info(f"[OK] CV results saved: {self.output_dir}")
     
     def _plot_cv_results(self, scoring):
         """Plot CV results"""
@@ -171,7 +171,7 @@ class CrossValidationAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ CV plot saved: {save_path}")
+        logger.info(f"[OK] CV plot saved: {save_path}")
 
 
 # ============================================================================
@@ -225,7 +225,7 @@ class LearningCurveAnalyzer:
         # Save
         self._save_results()
         
-        logger.info("✓ Learning curve tamamlandı")
+        logger.info("[OK] Learning curve tamamlandı")
     
     def _plot_learning_curve(self):
         """Plot learning curve"""
@@ -262,7 +262,7 @@ class LearningCurveAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Learning curve plot: {save_path}")
+        logger.info(f"[OK] Learning curve plot: {save_path}")
     
     def _save_results(self):
         """Save learning curve data"""
@@ -278,7 +278,7 @@ class LearningCurveAnalyzer:
         save_path = self.output_dir / 'learning_curve_data.csv'
         df.to_csv(save_path, index=False)
         
-        logger.info(f"✓ Learning curve data: {save_path}")
+        logger.info(f"[OK] Learning curve data: {save_path}")
 
 
 # ============================================================================
@@ -326,7 +326,7 @@ class ValidationCurveAnalyzer:
         # Save
         self._save_results(param_name, param_range, train_scores, test_scores)
         
-        logger.info("✓ Validation curve tamamlandı")
+        logger.info("[OK] Validation curve tamamlandı")
     
     def _plot_validation_curve(self, param_name, param_range, train_scores, test_scores):
         """Plot validation curve"""
@@ -362,7 +362,7 @@ class ValidationCurveAnalyzer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Validation curve plot: {save_path}")
+        logger.info(f"[OK] Validation curve plot: {save_path}")
     
     def _save_results(self, param_name, param_range, train_scores, test_scores):
         """Save validation curve data"""
@@ -378,7 +378,7 @@ class ValidationCurveAnalyzer:
         save_path = self.output_dir / f'validation_curve_{param_name}.csv'
         df.to_csv(save_path, index=False)
         
-        logger.info(f"✓ Validation curve data: {save_path}")
+        logger.info(f"[OK] Validation curve data: {save_path}")
 
 
 # ============================================================================
@@ -414,7 +414,7 @@ class RobustnessTester:
             noise_levels: Noise levels (as fraction of std)
         """
         
-        logger.info("\n→ Noise Sensitivity Test")
+        logger.info("\n-> Noise Sensitivity Test")
         
         results = {
             'noise_level': [],
@@ -464,7 +464,7 @@ class RobustnessTester:
         df = pd.DataFrame(results)
         df.to_csv(self.output_dir / 'noise_sensitivity.csv', index=False)
         
-        logger.info("✓ Noise sensitivity test tamamlandı")
+        logger.info("[OK] Noise sensitivity test tamamlandı")
     
     def test_outlier_sensitivity(self, X_train, y_train, X_test, y_test, 
                                  outlier_fractions=[0.01, 0.05, 0.1]):
@@ -475,7 +475,7 @@ class RobustnessTester:
             outlier_fractions: Fraction of samples to corrupt
         """
         
-        logger.info("\n→ Outlier Sensitivity Test")
+        logger.info("\n-> Outlier Sensitivity Test")
         
         results = {
             'outlier_fraction': [],
@@ -538,7 +538,7 @@ class RobustnessTester:
         df = pd.DataFrame(results)
         df.to_csv(self.output_dir / 'outlier_sensitivity.csv', index=False)
         
-        logger.info("✓ Outlier sensitivity test tamamlandı")
+        logger.info("[OK] Outlier sensitivity test tamamlandı")
     
     def test_feature_perturbation(self, X_test, y_test, feature_names=None, 
                                   perturbation_levels=[0.05, 0.1, 0.2]):
@@ -548,7 +548,7 @@ class RobustnessTester:
         Test each feature's importance by perturbing it
         """
         
-        logger.info("\n→ Feature Perturbation Test")
+        logger.info("\n-> Feature Perturbation Test")
         
         if feature_names is None:
             feature_names = [f'F{i}' for i in range(X_test.shape[1])]
@@ -591,7 +591,7 @@ class RobustnessTester:
         df = pd.DataFrame(results)
         df.to_csv(self.output_dir / 'feature_perturbation.csv', index=False)
         
-        logger.info("✓ Feature perturbation test tamamlandı")
+        logger.info("[OK] Feature perturbation test tamamlandı")
     
     def _plot_noise_sensitivity(self, results):
         """Plot noise sensitivity"""
@@ -626,7 +626,7 @@ class RobustnessTester:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Noise plot: {save_path}")
+        logger.info(f"[OK] Noise plot: {save_path}")
     
     def _plot_outlier_sensitivity(self, results):
         """Plot outlier sensitivity"""
@@ -661,7 +661,7 @@ class RobustnessTester:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Outlier plot: {save_path}")
+        logger.info(f"[OK] Outlier plot: {save_path}")
     
     def _plot_feature_perturbation(self, results, perturbation_levels):
         """Plot feature perturbation"""
@@ -697,7 +697,7 @@ class RobustnessTester:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Feature perturbation plot: {save_path}")
+        logger.info(f"[OK] Feature perturbation plot: {save_path}")
     
     def generate_report(self):
         """Generate comprehensive robustness report"""
@@ -721,7 +721,7 @@ class RobustnessTester:
         with open(self.output_dir / 'robustness_report.json', 'w') as f:
             json.dump(report, f, indent=2)
         
-        logger.info(f"✓ Robustness report: {self.output_dir / 'robustness_report.json'}")
+        logger.info(f"[OK] Robustness report: {self.output_dir / 'robustness_report.json'}")
 
 
 # ============================================================================
@@ -754,18 +754,18 @@ class ModelValidator:
         logger.info("="*80)
         
         # 1. Cross-Validation
-        logger.info("\n→ CROSS-VALIDATION")
+        logger.info("\n-> CROSS-VALIDATION")
         cv_analyzer = CrossValidationAnalyzer(self.model, self.model_name, self.output_dir)
         cv_results = cv_analyzer.run_cv(X_train, y_train, cv=5)
         
         # 2. Learning Curve
-        logger.info("\n→ LEARNING CURVE")
+        logger.info("\n-> LEARNING CURVE")
         lc_analyzer = LearningCurveAnalyzer(self.model, self.model_name, self.output_dir)
         lc_analyzer.compute_learning_curve(X_train, y_train, cv=5)
         
         # 3. Robustness Tests
         if run_robustness:
-            logger.info("\n→ ROBUSTNESS TESTS")
+            logger.info("\n-> ROBUSTNESS TESTS")
             robustness_tester = RobustnessTester(self.model, self.model_name, self.output_dir / 'robustness')
             
             robustness_tester.test_noise_sensitivity(X_test, y_test)
@@ -774,7 +774,7 @@ class ModelValidator:
             robustness_tester.generate_report()
         
         logger.info("\n" + "="*80)
-        logger.info("✓ VALIDATION TAMAMLANDI")
+        logger.info("[OK] VALIDATION TAMAMLANDI")
         logger.info("="*80)
 
 
@@ -815,7 +815,7 @@ def test_model_validation():
     validator = ModelValidator(model, 'RandomForest', output_dir='test_validation')
     validator.validate_all(X_train, y_train, X_test, y_test, feature_names, run_robustness=True)
     
-    print("\n✓ Test tamamlandı!")
+    print("\n[OK] Test tamamlandı!")
 
 
 if __name__ == "__main__":

@@ -248,7 +248,7 @@ class AdaptiveLearningStrategy:
         with open(report_file, 'w') as f:
             json.dump(stats, f, indent=2)
         
-        logger.info(f"✓ Adaptive learning report: {report_file}")
+        logger.info(f"[OK] Adaptive learning report: {report_file}")
         
         # Print summary
         print("\n" + "="*80)
@@ -406,12 +406,12 @@ def test_adaptive_strategy():
     # Generate report
     strategy.generate_report()
     
-    print("\n✓ Test completed!")
+    print("\n[OK] Test completed!")
 
 
 if __name__ == "__main__":
     test_adaptive_strategy()
-    print("\n✅ Adaptive Strategy - COMPLETE")
+    print("\n[SUCCESS] Adaptive Strategy - COMPLETE")
     print("Location: adaptive_learning/adaptive_strategy.py")
 
 # ==================== EKLEME BAŞI ====================

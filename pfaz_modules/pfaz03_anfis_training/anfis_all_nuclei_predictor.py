@@ -277,7 +277,7 @@ class ANFISAllNucleiPredictor:
                 'model_stats': model_predictions
             }
             
-            logger.info(f"✅ {dataset_name}: {len(models)} models, {len(df)} nuclei")
+            logger.info(f"[SUCCESS] {dataset_name}: {len(models)} models, {len(df)} nuclei")
         
         logger.info("\n" + "=" * 80)
         logger.info(f"PREDICTIONS COMPLETED FOR {len(self.predictions)} DATASETS")
@@ -312,7 +312,7 @@ class ANFISAllNucleiPredictor:
         else:
             self._generate_simple_excel(excel_path)
         
-        logger.info(f"✅ Excel report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Excel report saved: {excel_path}")
     
     def _generate_simple_excel(self, excel_path: Path):
         """Generate simple Excel without formatting"""
@@ -449,7 +449,7 @@ def main():
     summary = predictor.generate_summary_statistics()
     print(summary.head())
     
-    print("\n✅ TEST COMPLETED!")
+    print("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

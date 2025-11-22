@@ -46,7 +46,7 @@ class AnomalyVisualizationsComplete:
     def __init__(self, output_dir='visualizations/anomaly_complete'):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"✓ AnomalyVisualizationsComplete initialized: {self.output_dir}")
+        logger.info(f"[OK] AnomalyVisualizationsComplete initialized: {self.output_dir}")
     
     def plot_anomaly_feature_radar_charts(self,
                                          anomaly_data: pd.DataFrame,
@@ -60,7 +60,7 @@ class AnomalyVisualizationsComplete:
                 Columns: NUCLEUS, A, Z, N, + feature_cols, anomaly_score
             feature_cols: List of feature column names to plot
         """
-        logger.info("\n→ Creating anomaly feature radar charts...")
+        logger.info("\n-> Creating anomaly feature radar charts...")
         
         # Select top anomalies
         top_anomalies = anomaly_data.nlargest(6, 'anomaly_score')
@@ -134,7 +134,7 @@ class AnomalyVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_outlier_detection_comparison(self,
@@ -158,7 +158,7 @@ class AnomalyVisualizationsComplete:
             feature_x: Feature for x-axis
             feature_y: Feature for y-axis
         """
-        logger.info("\n→ Creating outlier detection comparison...")
+        logger.info("\n-> Creating outlier detection comparison...")
         
         fig, axes = plt.subplots(2, 3, figsize=(18, 12))
         fig.suptitle(f'Outlier Detection Methods Comparison\n{feature_x} vs {feature_y}', 
@@ -242,7 +242,7 @@ class AnomalyVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         
         # Also create a summary comparison
         self._plot_method_agreement_summary(outlier_methods, consensus_votes)
@@ -307,7 +307,7 @@ class AnomalyVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: method_agreement_summary.png")
+        logger.info(f"  [OK] Saved: method_agreement_summary.png")
     
     def generate_all_anomaly_plots(self,
                                    anomaly_data: pd.DataFrame = None,
@@ -332,7 +332,7 @@ class AnomalyVisualizationsComplete:
                 )
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed radar charts: {e}")
+                logger.error(f"  [FAIL] Failed radar charts: {e}")
         
         # 2. Outlier detection comparison
         if data is not None and outlier_methods is not None:
@@ -342,10 +342,10 @@ class AnomalyVisualizationsComplete:
                 )
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed outlier comparison: {e}")
+                logger.error(f"  [FAIL] Failed outlier comparison: {e}")
         
         logger.info("\n" + "="*70)
-        logger.info(f"✓ ANOMALY VISUALIZATIONS COMPLETE: {len(generated_plots)}/2")
+        logger.info(f"[OK] ANOMALY VISUALIZATIONS COMPLETE: {len(generated_plots)}/2")
         logger.info("="*70)
         
         return generated_plots
@@ -427,4 +427,4 @@ if __name__ == "__main__":
         feature_y='Z'
     )
     
-    logger.info("\n✓ Test complete! Check test_output/anomaly/")
+    logger.info("\n[OK] Test complete! Check test_output/anomaly/")

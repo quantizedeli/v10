@@ -408,13 +408,13 @@ def main():
     available_models = load_available_models()
     
     if not any(available_models.values()):
-        st.error("❌ No trained models found in `trained_models/` directory!")
+        st.error("[ERROR] No trained models found in `trained_models/` directory!")
         st.info("ℹ️ Please train models first using the training pipeline.")
         return
     
     # Sidebar
     with st.sidebar:
-        st.header("⚙️ Configuration")
+        st.header("[SETTING] Configuration")
         
         # Target selection
         target = st.selectbox(
@@ -478,7 +478,7 @@ def main():
 def single_nucleus_mode(target: str, model_info: Dict):
     """Single nucleus prediction interface"""
     
-    st.header("🎯 Single Nucleus Prediction")
+    st.header("[TARGET] Single Nucleus Prediction")
     
     # Input form
     col1, col2, col3 = st.columns([2, 2, 1])
@@ -512,16 +512,16 @@ def single_nucleus_mode(target: str, model_info: Dict):
     info_cols = st.columns(3)
     with info_cols[0]:
         if is_magic_Z:
-            st.success("✨ Magic Z")
+            st.success("[SPARKLE] Magic Z")
     with info_cols[1]:
         if is_magic_N:
-            st.success("✨ Magic N")
+            st.success("[SPARKLE] Magic N")
     with info_cols[2]:
         if is_magic_Z and is_magic_N:
-            st.success("⭐ Doubly Magic!")
+            st.success("[STAR] Doubly Magic!")
     
     # Predict button
-    if st.button("🚀 Predict", type="primary"):
+    if st.button("[START] Predict", type="primary"):
         with st.spinner("Loading model and predicting..."):
             # Load model
             model = load_model(model_info['path'])
@@ -536,7 +536,7 @@ def single_nucleus_mode(target: str, model_info: Dict):
             if prediction is not None:
                 # Display results
                 st.markdown("---")
-                st.subheader("📊 Prediction Results")
+                st.subheader("[REPORT] Prediction Results")
                 
                 result_cols = st.columns([2, 1, 1])
                 
@@ -557,7 +557,7 @@ def single_nucleus_mode(target: str, model_info: Dict):
                 
                 # Visualization
                 st.markdown("---")
-                st.subheader("📈 Visualization")
+                st.subheader("[CHART] Visualization")
                 
                 # Feature values
                 features_df = engine.prepare_features(A, Z)
@@ -577,7 +577,7 @@ def single_nucleus_mode(target: str, model_info: Dict):
 def batch_upload_mode(target: str, model_info: Dict):
     """Batch upload and prediction interface"""
     
-    st.header("📦 Batch Prediction")
+    st.header("[PACKAGE] Batch Prediction")
     
     # Instructions
     with st.expander("ℹ️ Instructions"):
@@ -612,14 +612,14 @@ def batch_upload_mode(target: str, model_info: Dict):
                 st.error("CSV must contain columns: A, Z")
                 return
             
-            st.success(f"✅ Loaded {len(nuclei_df)} nuclei")
+            st.success(f"[SUCCESS] Loaded {len(nuclei_df)} nuclei")
             
             # Preview
             with st.expander("Preview Data"):
                 st.dataframe(nuclei_df.head(10), use_container_width=True)
             
             # Predict button
-            if st.button("🚀 Run Batch Prediction", type="primary"):
+            if st.button("[START] Run Batch Prediction", type="primary"):
                 with st.spinner("Processing batch predictions..."):
                     # Load model
                     model = load_model(model_info['path'])
@@ -631,11 +631,11 @@ def batch_upload_mode(target: str, model_info: Dict):
                     engine = PredictionEngine()
                     results_df = engine.predict_batch(model, nuclei_df)
                     
-                    st.success("✅ Predictions complete!")
+                    st.success("[SUCCESS] Predictions complete!")
                     
                     # Display results
                     st.markdown("---")
-                    st.subheader("📊 Results")
+                    st.subheader("[REPORT] Results")
                     
                     # Metrics
                     metrics_cols = st.columns(4)
@@ -657,13 +657,13 @@ def batch_upload_mode(target: str, model_info: Dict):
                     
                     # N-Z chart
                     st.markdown("---")
-                    st.subheader("📈 N-Z Chart")
+                    st.subheader("[CHART] N-Z Chart")
                     fig = plot_nz_chart(results_df, target)
                     st.plotly_chart(fig, use_container_width=True)
                     
                     # Download results
                     st.markdown("---")
-                    st.subheader("💾 Download Results")
+                    st.subheader("[SAVE] Download Results")
                     
                     csv = results_df.to_csv(index=False)
                     st.download_button(

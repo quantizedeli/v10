@@ -122,7 +122,7 @@ class MasterThesisIntegration:
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
         
-        logger.info("✓ Directory structure created")
+        logger.info("[OK] Directory structure created")
     
     def execute_full_pipeline(self, 
                              author: Optional[str] = None,
@@ -186,7 +186,7 @@ class MasterThesisIntegration:
                 if 'warnings' in step_result:
                     results['warnings'].extend(step_result['warnings'])
                 
-                logger.info(f"✓ {step_name} completed successfully")
+                logger.info(f"[OK] {step_name} completed successfully")
             
             except Exception as e:
                 error_msg = f"Error in {step_name}: {str(e)}"
@@ -206,7 +206,7 @@ class MasterThesisIntegration:
                 results['steps_completed'].append("8. Compile PDF")
                 results['pdf_path'] = pdf_result.get('pdf_path')
                 results['files_generated'].append(pdf_result.get('pdf_path'))
-                logger.info("✓ PDF compilation completed successfully")
+                logger.info("[OK] PDF compilation completed successfully")
             except Exception as e:
                 error_msg = f"Error compiling PDF: {str(e)}"
                 logger.error(error_msg)
@@ -223,7 +223,7 @@ class MasterThesisIntegration:
     
     def _step1_collect_all_data(self) -> Dict:
         """Step 1: Collect all data from previous phases"""
-        logger.info("→ Scanning for PFAZ results...")
+        logger.info("-> Scanning for PFAZ results...")
         
         # Scan for PFAZ phase files
         pfaz_files = list(self.project_dir.glob('pfaz*.py'))
@@ -242,7 +242,7 @@ class MasterThesisIntegration:
                 with open(json_file, 'r') as f:
                     data = json.load(f)
                 self.collected_data['metrics'][json_file.stem] = data
-                logger.info(f"  ✓ Loaded: {json_file.name}")
+                logger.info(f"  [OK] Loaded: {json_file.name}")
             except Exception as e:
                 logger.warning(f"  Could not load {json_file.name}: {e}")
         
@@ -261,7 +261,7 @@ class MasterThesisIntegration:
     
     def _step2_generate_content(self) -> Dict:
         """Step 2: Generate all chapter content"""
-        logger.info("→ Generating chapter content...")
+        logger.info("-> Generating chapter content...")
         
         chapters_generated = []
         
@@ -304,7 +304,7 @@ Nuclear physics and machine learning.
 """
         self._save_chapter(intro, '01_introduction.tex')
         
-        logger.info("✓ Basic chapters generated")
+        logger.info("[OK] Basic chapters generated")
     
     def _save_chapter(self, content: str, filename: str):
         """Save chapter to file"""
@@ -314,7 +314,7 @@ Nuclear physics and machine learning.
     
     def _step3_integrate_figures(self) -> Dict:
         """Step 3: Integrate all figures"""
-        logger.info("→ Integrating figures...")
+        logger.info("-> Integrating figures...")
         
         # Copy figures from visualization directory
         figures_copied = 0
@@ -327,7 +327,7 @@ Nuclear physics and machine learning.
                 except Exception as e:
                     logger.warning(f"Could not copy {fig_file.name}: {e}")
         
-        logger.info(f"✓ Copied {figures_copied} figures")
+        logger.info(f"[OK] Copied {figures_copied} figures")
         
         return {
             'files': [],
@@ -336,7 +336,7 @@ Nuclear physics and machine learning.
     
     def _step4_generate_tables(self) -> Dict:
         """Step 4: Generate LaTeX tables from Excel"""
-        logger.info("→ Generating tables from Excel reports...")
+        logger.info("-> Generating tables from Excel reports...")
         
         tables_generated = 0
         
@@ -357,12 +357,12 @@ Nuclear physics and machine learning.
                     f.write(table_tex)
                 
                 tables_generated += 1
-                logger.info(f"  ✓ Generated table from {excel_file.name}")
+                logger.info(f"  [OK] Generated table from {excel_file.name}")
             
             except Exception as e:
                 logger.warning(f"  Could not process {excel_file.name}: {e}")
         
-        logger.info(f"✓ Generated {tables_generated} tables")
+        logger.info(f"[OK] Generated {tables_generated} tables")
         
         return {
             'files': [],
@@ -399,7 +399,7 @@ Nuclear physics and machine learning.
     
     def _step5_create_bibliography(self) -> Dict:
         """Step 5: Create bibliography"""
-        logger.info("→ Creating bibliography...")
+        logger.info("-> Creating bibliography...")
         
         # Import bibliography manager
         try:
@@ -409,11 +409,11 @@ Nuclear physics and machine learning.
             )
             bib_manager.add_nuclear_physics_references()
             bib_manager.save()
-            logger.info("✓ Bibliography created using BibTeX manager")
+            logger.info("[OK] Bibliography created using BibTeX manager")
         except ImportError:
             # Create basic bibliography
             self._create_basic_bibliography()
-            logger.info("✓ Basic bibliography created")
+            logger.info("[OK] Basic bibliography created")
         
         return {'files': [str(self.output_dir / 'references.bib')]}
     
@@ -441,7 +441,7 @@ Nuclear physics and machine learning.
     
     def _step6_generate_main_document(self) -> Dict:
         """Step 6: Generate main LaTeX document"""
-        logger.info("→ Generating main thesis document...")
+        logger.info("-> Generating main thesis document...")
         
         main_content = self._create_main_latex_content()
         
@@ -449,7 +449,7 @@ Nuclear physics and machine learning.
         with open(main_file, 'w', encoding='utf-8') as f:
             f.write(main_content)
         
-        logger.info(f"✓ Main document saved: {main_file}")
+        logger.info(f"[OK] Main document saved: {main_file}")
         
         # Generate compilation scripts
         self._generate_compilation_scripts()
@@ -521,11 +521,11 @@ pdflatex thesis_main.tex
         with open(bat_file, 'w') as f:
             f.write(bat_script)
         
-        logger.info("✓ Compilation scripts generated")
+        logger.info("[OK] Compilation scripts generated")
     
     def _step7_quality_checks(self) -> Dict:
         """Step 7: Perform quality checks"""
-        logger.info("→ Running quality checks...")
+        logger.info("-> Running quality checks...")
         
         checks = {
             'main_file_exists': (self.output_dir / 'thesis_main.tex').exists(),
@@ -537,9 +537,9 @@ pdflatex thesis_main.tex
         warnings = []
         for check, passed in checks.items():
             if passed:
-                logger.info(f"  ✓ {check}")
+                logger.info(f"  [OK] {check}")
             else:
-                warning = f"  ✗ {check}"
+                warning = f"  [FAIL] {check}"
                 logger.warning(warning)
                 warnings.append(warning)
         
@@ -547,7 +547,7 @@ pdflatex thesis_main.tex
     
     def _step8_compile_pdf(self) -> Dict:
         """Step 8: Compile LaTeX to PDF"""
-        logger.info("→ Compiling PDF...")
+        logger.info("-> Compiling PDF...")
         
         try:
             import os
@@ -580,7 +580,7 @@ pdflatex thesis_main.tex
             
             pdf_file = self.output_dir / 'thesis_main.pdf'
             if pdf_file.exists():
-                logger.info(f"✓ PDF created: {pdf_file}")
+                logger.info(f"[OK] PDF created: {pdf_file}")
                 return {'pdf_path': str(pdf_file)}
             else:
                 raise Exception("PDF file not created")
@@ -597,14 +597,14 @@ pdflatex thesis_main.tex
         report_file = self.output_dir / 'logs' / 'execution_report.json'
         with open(report_file, 'w') as f:
             json.dump(results, f, indent=2)
-        logger.info(f"✓ Execution report saved: {report_file}")
+        logger.info(f"[OK] Execution report saved: {report_file}")
     
     def _print_summary(self, results: Dict):
         """Print execution summary"""
         print("\n" + "="*80)
         print("THESIS GENERATION SUMMARY")
         print("="*80)
-        print(f"Status: {'SUCCESS ✓' if results['success'] else 'FAILED ✗'}")
+        print(f"Status: {'SUCCESS [OK]' if results['success'] else 'FAILED [FAIL]'}")
         print(f"Steps Completed: {len(results['steps_completed'])}/8")
         print(f"Files Generated: {len(results['files_generated'])}")
         print(f"Warnings: {len(results['warnings'])}")

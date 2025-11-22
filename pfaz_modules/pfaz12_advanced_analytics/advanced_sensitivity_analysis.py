@@ -73,7 +73,7 @@ class AdvancedSensitivityAnalysis:
         
         self.results = {}
         
-        logger.info(f"✓ AdvancedSensitivityAnalysis initialized")
+        logger.info(f"[OK] AdvancedSensitivityAnalysis initialized")
         
         if not SALIB_AVAILABLE:
             logger.warning("  SALib not available - using simplified methods")
@@ -109,7 +109,7 @@ class AdvancedSensitivityAnalysis:
             logger.error("SALib not available")
             return self._sobol_analysis_fallback(model_func, problem, n_samples)
         
-        logger.info(f"\n→ Sobol sensitivity analysis")
+        logger.info(f"\n-> Sobol sensitivity analysis")
         logger.info(f"  Variables: {problem['num_vars']}")
         logger.info(f"  Samples: {n_samples} × {2*(problem['num_vars']+1)} = "
                    f"{n_samples * 2 * (problem['num_vars']+1)}")
@@ -118,7 +118,7 @@ class AdvancedSensitivityAnalysis:
         param_values = saltelli.sample(problem, n_samples, 
                                        calc_second_order=calc_second_order)
         
-        logger.info(f"  → Evaluating model ({len(param_values)} evaluations)...")
+        logger.info(f"  -> Evaluating model ({len(param_values)} evaluations)...")
         
         # Evaluate model
         Y = np.zeros(len(param_values))
@@ -133,7 +133,7 @@ class AdvancedSensitivityAnalysis:
                 logger.info(f"    Progress: {i+1}/{len(param_values)}")
         
         # Analyze
-        logger.info(f"  → Computing Sobol indices...")
+        logger.info(f"  -> Computing Sobol indices...")
         Si = sobol.analyze(problem, Y, calc_second_order=calc_second_order)
         
         # Package results
@@ -183,7 +183,7 @@ class AdvancedSensitivityAnalysis:
                                  problem: Dict,
                                  n_samples: int) -> Dict:
         """Simplified Sobol analysis without SALib"""
-        logger.info("  → Using simplified Sobol estimation...")
+        logger.info("  -> Using simplified Sobol estimation...")
         
         bounds = np.array(problem['bounds'])
         n_vars = problem['num_vars']
@@ -259,7 +259,7 @@ class AdvancedSensitivityAnalysis:
             logger.warning("SALib not available - skipping Morris analysis")
             return {}
         
-        logger.info(f"\n→ Morris sensitivity analysis")
+        logger.info(f"\n-> Morris sensitivity analysis")
         logger.info(f"  Variables: {problem['num_vars']}")
         logger.info(f"  Trajectories: {n_trajectories}")
         
@@ -267,7 +267,7 @@ class AdvancedSensitivityAnalysis:
         param_values = morris_sample.sample(problem, n_trajectories, 
                                            num_levels=4)
         
-        logger.info(f"  → Evaluating model ({len(param_values)} evaluations)...")
+        logger.info(f"  -> Evaluating model ({len(param_values)} evaluations)...")
         
         # Evaluate
         Y = np.zeros(len(param_values))
@@ -277,7 +277,7 @@ class AdvancedSensitivityAnalysis:
             Y[i] = model_func(params_dict)
         
         # Analyze
-        logger.info(f"  → Computing Morris indices...")
+        logger.info(f"  -> Computing Morris indices...")
         Si = morris.analyze(problem, param_values, Y)
         
         # Package results
@@ -327,7 +327,7 @@ class AdvancedSensitivityAnalysis:
         Returns:
             dict with sensitivities for each parameter
         """
-        logger.info(f"\n→ Tornado diagram analysis")
+        logger.info(f"\n-> Tornado diagram analysis")
         logger.info(f"  Parameters: {len(param_ranges)}")
         
         # Baseline output
@@ -385,7 +385,7 @@ class AdvancedSensitivityAnalysis:
             logger.warning("Plotting not available")
             return None
         
-        logger.info(f"\n→ Creating Sobol indices plot...")
+        logger.info(f"\n-> Creating Sobol indices plot...")
         
         fig, axes = plt.subplots(1, 2, figsize=(16, 6))
         
@@ -440,7 +440,7 @@ class AdvancedSensitivityAnalysis:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     def plot_tornado_diagram(self,
@@ -452,7 +452,7 @@ class AdvancedSensitivityAnalysis:
             logger.warning("Plotting not available")
             return None
         
-        logger.info(f"\n→ Creating tornado diagram...")
+        logger.info(f"\n-> Creating tornado diagram...")
         
         fig, ax = plt.subplots(figsize=(12, 8))
         
@@ -505,7 +505,7 @@ class AdvancedSensitivityAnalysis:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -514,7 +514,7 @@ class AdvancedSensitivityAnalysis:
     
     def export_to_excel(self, filename: str = 'sensitivity_analysis.xlsx') -> Path:
         """Export results to Excel"""
-        logger.info(f"\n→ Exporting to {filename}...")
+        logger.info(f"\n-> Exporting to {filename}...")
         
         try:
             import xlsxwriter
@@ -576,7 +576,7 @@ class AdvancedSensitivityAnalysis:
                 
                 pd.DataFrame(data).to_excel(writer, sheet_name='Tornado', index=False)
         
-        logger.info(f"  ✓ Exported to: {filepath}")
+        logger.info(f"  [OK] Exported to: {filepath}")
         return filepath
 
 
@@ -636,4 +636,4 @@ if __name__ == "__main__":
     # Export
     sa.export_to_excel()
     
-    logger.info("\n✓ Testing complete! Check test_sensitivity_results/")
+    logger.info("\n[OK] Testing complete! Check test_sensitivity_results/")

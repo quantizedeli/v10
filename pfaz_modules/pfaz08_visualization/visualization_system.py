@@ -75,24 +75,24 @@ class UnifiedVisualizationManager:
         
         # 1. AI Model Visualizations
         if 'ai_results' in project_results and self.ai_viz:
-            logger.info("\n→ AI Model Visualizations")
+            logger.info("\n-> AI Model Visualizations")
             self._create_ai_visualizations(project_results['ai_results'])
         
         # 2. ANFIS Visualizations
         if 'anfis_results' in project_results and self.anfis_viz:
-            logger.info("\n→ ANFIS Visualizations")
+            logger.info("\n-> ANFIS Visualizations")
             self._create_anfis_visualizations(project_results['anfis_results'])
         
         # 3. Comparison Visualizations
-        logger.info("\n→ Comparison Visualizations")
+        logger.info("\n-> Comparison Visualizations")
         self._create_comparison_visualizations(project_results)
         
         # 4. Summary Dashboard
-        logger.info("\n→ Summary Dashboard")
+        logger.info("\n-> Summary Dashboard")
         self._create_summary_dashboard(project_results)
         
         logger.info("\n" + "="*80)
-        logger.info("✓ ALL VISUALIZATIONS COMPLETED")
+        logger.info("[OK] ALL VISUALIZATIONS COMPLETED")
         logger.info("="*80)
     
     def _create_ai_visualizations(self, ai_results):
@@ -185,7 +185,7 @@ class UnifiedVisualizationManager:
         plt.savefig(dash_dir / 'project_dashboard.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Dashboard: {dash_dir / 'project_dashboard.png'}")
+        logger.info(f"[OK] Dashboard: {dash_dir / 'project_dashboard.png'}")
     
     def _plot_ai_vs_anfis(self, results, viz_dir):
         """AI vs ANFIS comparison"""
@@ -366,11 +366,11 @@ def test_unified_visualization():
     viz_manager = UnifiedVisualizationManager(output_dir='test_unified_viz')
     viz_manager.create_all_visualizations(project_results)
     
-    print("\n✓ Unified visualization test tamamlandı!")
+    print("\n[OK] Unified visualization test tamamlandı!")
     print(f"  Output: test_unified_viz/")
 
 
 if __name__ == "__main__":
     test_unified_visualization()
-    print("\n✓ Visualization System UPDATED (16/17)")
+    print("\n[OK] Visualization System UPDATED (16/17)")
     print("  Location: visualization/visualization_system.py")

@@ -27,10 +27,10 @@ class RobustnessTester:
             'outlier_threshold': 2.0,  # Z-score
             'min_improvement': 0.01,   # Minimum R² improvement
             'retrain_thresholds': {
-                'critical': 0.3,    # R² < 0.3 → Kesinlikle retrain
-                'poor': 0.5,        # 0.3 < R² < 0.5 → Epoch artır
-                'acceptable': 0.7,  # 0.5 < R² < 0.7 → Normal
-                'good': 0.85        # R² > 0.85 → Mükemmel
+                'critical': 0.3,    # R² < 0.3 -> Kesinlikle retrain
+                'poor': 0.5,        # 0.3 < R² < 0.5 -> Epoch artır
+                'acceptable': 0.7,  # 0.5 < R² < 0.7 -> Normal
+                'good': 0.85        # R² > 0.85 -> Mükemmel
             },
             'replacement_strategy': 'nearest_neighbor',  # or 'random_sample'
             'max_outliers_per_iteration': 5
@@ -70,7 +70,7 @@ class RobustnessTester:
         used_indices = set()  # For replacement tracking
         
         for iteration in range(self.config['max_iterations']):
-            logger.info(f"\n🔄 Iteration {iteration + 1}/{self.config['max_iterations']}")
+            logger.info(f"\n[RUN] Iteration {iteration + 1}/{self.config['max_iterations']}")
             
             # Train model
             model.train(X_current, y_current, X_val, y_val)
@@ -89,7 +89,7 @@ class RobustnessTester:
                 best_r2 = val_r2
                 best_model = model
                 best_iteration = iteration
-                logger.info(f"   ✅ New best model! R² = {best_r2:.4f}")
+                logger.info(f"   [SUCCESS] New best model! R² = {best_r2:.4f}")
             
             # Detect outliers
             outliers, outlier_info = self._detect_outliers(
@@ -99,7 +99,7 @@ class RobustnessTester:
             logger.info(f"   Outliers detected: {len(outliers)}")
             
             if len(outliers) == 0:
-                logger.info(f"   🎯 No outliers - stopping at iteration {iteration + 1}")
+                logger.info(f"   [TARGET] No outliers - stopping at iteration {iteration + 1}")
                 break
             
             # Check if should continue
@@ -107,7 +107,7 @@ class RobustnessTester:
             logger.info(f"   Quality: {quality_level}")
             
             if quality_level in ['good', 'acceptable'] and iteration > 0:
-                logger.info(f"   ✅ Acceptable quality - stopping")
+                logger.info(f"   [SUCCESS] Acceptable quality - stopping")
                 break
             
             # Replace outliers
@@ -126,7 +126,7 @@ class RobustnessTester:
                     'outlier_details': outlier_info
                 })
                 
-                logger.info(f"   🔄 Replaced {len(replacements)} outliers")
+                logger.info(f"   [RUN] Replaced {len(replacements)} outliers")
             else:
                 # No replacement available - just remove
                 mask = np.ones(len(X_current), dtype=bool)
@@ -134,7 +134,7 @@ class RobustnessTester:
                 X_current = X_current[mask]
                 y_current = y_current[mask]
                 
-                logger.info(f"   ❌ Removed {np.sum(~mask)} outliers (no source data)")
+                logger.info(f"   [ERROR] Removed {np.sum(~mask)} outliers (no source data)")
                 
                 self.cleaning_history.append({
                     'iteration': iteration + 1,
@@ -150,7 +150,7 @@ class RobustnessTester:
                 improvement = val_r2 - prev_r2
                 
                 if improvement < self.config['min_improvement']:
-                    logger.info(f"   ⚠️ Minimal improvement ({improvement:.4f}) - stopping")
+                    logger.info(f"   [WARNING] Minimal improvement ({improvement:.4f}) - stopping")
                     break
         
         # Final results
@@ -165,8 +165,8 @@ class RobustnessTester:
         }
         
         logger.info("\n" + "="*60)
-        logger.info(f"✅ Best R²: {best_r2:.4f} at iteration {best_iteration + 1}")
-        logger.info(f"📊 Total modifications: {results['samples_modified']}")
+        logger.info(f"[SUCCESS] Best R²: {best_r2:.4f} at iteration {best_iteration + 1}")
+        logger.info(f"[REPORT] Total modifications: {results['samples_modified']}")
         logger.info("="*60)
         
         return results
@@ -240,7 +240,7 @@ class RobustnessTester:
         available_data = source_data[available_mask]
         
         if len(available_data) < 10:
-            logger.warning("   ⚠️ Insufficient replacement samples")
+            logger.warning("   [WARNING] Insufficient replacement samples")
             return X_new, y_new, []
         
         # Feature columns (assuming source_data has same features)

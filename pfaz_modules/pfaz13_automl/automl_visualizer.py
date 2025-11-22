@@ -92,13 +92,13 @@ class AutoMLVisualizer:
         # Plot style
         self._setup_plot_style()
         
-        logger.info(f"✓ AutoMLVisualizer initialized")
+        logger.info(f"[OK] AutoMLVisualizer initialized")
         logger.info(f"  Excel: {self.excel_path}")
         logger.info(f"  Output: {self.output_dir}")
     
     def _load_data(self):
         """Load data from Excel"""
-        logger.info(f"\n→ Loading data from Excel...")
+        logger.info(f"\n-> Loading data from Excel...")
         
         try:
             self.summary = pd.read_excel(self.excel_path, sheet_name='Summary')
@@ -121,7 +121,7 @@ class AutoMLVisualizer:
             except:
                 self.r2_vs_time = None
             
-            logger.info(f"  ✓ Loaded {len(self.all_trials)} trials")
+            logger.info(f"  [OK] Loaded {len(self.all_trials)} trials")
             
         except Exception as e:
             logger.error(f"  Failed to load Excel: {e}")
@@ -156,7 +156,7 @@ class AutoMLVisualizer:
         - Best R² so far (cumulative best)
         - Moving average
         """
-        logger.info("\n→ Creating optimization history plot...")
+        logger.info("\n-> Creating optimization history plot...")
         
         fig, ax = plt.subplots(figsize=(14, 7))
         
@@ -209,7 +209,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     def _generate_optimization_history_insight(self, completed) -> str:
@@ -245,7 +245,7 @@ class AutoMLVisualizer:
             logger.warning("  No parameter importance data available")
             return None
         
-        logger.info("\n→ Creating parameter importance plot...")
+        logger.info("\n-> Creating parameter importance plot...")
         
         fig, ax = plt.subplots(figsize=(12, 8))
         
@@ -286,7 +286,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -301,7 +301,7 @@ class AutoMLVisualizer:
             logger.warning("  No convergence data available")
             return None
         
-        logger.info("\n→ Creating convergence analysis plot...")
+        logger.info("\n-> Creating convergence analysis plot...")
         
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 10))
         
@@ -343,7 +343,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -360,7 +360,7 @@ class AutoMLVisualizer:
             logger.warning("  No R² vs time data available")
             return None
         
-        logger.info("\n→ Creating R² vs time trade-off plot...")
+        logger.info("\n-> Creating R² vs time trade-off plot...")
         
         fig, ax = plt.subplots(figsize=(12, 8))
         
@@ -401,7 +401,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -412,7 +412,7 @@ class AutoMLVisualizer:
         """
         Plot 5: Trial status distribution (Complete/Pruned/Failed)
         """
-        logger.info("\n→ Creating trial status distribution plot...")
+        logger.info("\n-> Creating trial status distribution plot...")
         
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
         
@@ -458,7 +458,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -469,7 +469,7 @@ class AutoMLVisualizer:
         """
         Plot 6: Compare top 5 configurations across metrics
         """
-        logger.info("\n→ Creating best configs comparison plot...")
+        logger.info("\n-> Creating best configs comparison plot...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         axes = axes.flatten()
@@ -478,8 +478,8 @@ class AutoMLVisualizer:
         df = self.best_trials.head(top_n)
         
         metrics = ['Val_R2', 'Val_RMSE', 'Val_MAE', 'Training_Time']
-        titles = ['Validation R² ↑', 'Validation RMSE ↓', 
-                 'Validation MAE ↓', 'Training Time ↓']
+        titles = ['Validation R² ^', 'Validation RMSE v', 
+                 'Validation MAE v', 'Training Time v']
         colors_list = ['green', 'red', 'red', 'orange']
         
         for i, (metric, title, color) in enumerate(zip(metrics, titles, colors_list)):
@@ -489,7 +489,7 @@ class AutoMLVisualizer:
                          color=color, alpha=0.7, edgecolor='black', linewidth=2)
             
             # Highlight best
-            if '↑' in title:  # Higher is better
+            if '^' in title:  # Higher is better
                 best_idx = df[metric].idxmax()
             else:  # Lower is better
                 best_idx = df[metric].idxmin()
@@ -518,7 +518,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -531,7 +531,7 @@ class AutoMLVisualizer:
         
         Shows what values were explored
         """
-        logger.info("\n→ Creating hyperparameter distributions plot...")
+        logger.info("\n-> Creating hyperparameter distributions plot...")
         
         # Get hyperparameter columns (start with 'HP_')
         hp_cols = [col for col in self.all_trials.columns if col.startswith('HP_')]
@@ -592,7 +592,7 @@ class AutoMLVisualizer:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_path}")
+        logger.info(f"  [OK] Saved: {save_path}")
         return save_path
     
     # ========================================================================
@@ -620,14 +620,14 @@ class AutoMLVisualizer:
         ]
         
         for name, func in plot_functions:
-            logger.info(f"\n→ Generating: {name}")
+            logger.info(f"\n-> Generating: {name}")
             try:
                 path = func()
                 if path:
                     plots.append(path)
-                    logger.info(f"  ✓ Created: {path.name}")
+                    logger.info(f"  [OK] Created: {path.name}")
             except Exception as e:
-                logger.error(f"  ✗ Failed: {e}")
+                logger.error(f"  [FAIL] Failed: {e}")
         
         logger.info(f"\n{'='*70}")
         logger.info(f"VISUALIZATION COMPLETE")
@@ -657,7 +657,7 @@ class AutoMLVisualizer:
                 f.write("-"*70 + "\n")
                 f.write(insight + "\n\n")
         
-        logger.info(f"\n✓ Insights exported to: {filepath}")
+        logger.info(f"\n[OK] Insights exported to: {filepath}")
         return filepath
 
 
@@ -689,6 +689,6 @@ if __name__ == "__main__":
         # Export insights
         visualizer.export_insights_to_txt()
         
-        logger.info(f"\n✓ Testing complete!")
+        logger.info(f"\n[OK] Testing complete!")
         logger.info(f"  Generated {len(plots)} plots")
         logger.info(f"  Check: test_automl_visualizations/")

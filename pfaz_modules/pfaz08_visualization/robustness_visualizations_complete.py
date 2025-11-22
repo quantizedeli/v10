@@ -46,7 +46,7 @@ class RobustnessVisualizationsComplete:
     def __init__(self, output_dir='visualizations/robustness_complete'):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        logger.info(f"✓ RobustnessVisualizationsComplete initialized: {self.output_dir}")
+        logger.info(f"[OK] RobustnessVisualizationsComplete initialized: {self.output_dir}")
     
     def plot_noise_sensitivity_detailed(self, 
                                        robustness_results: Dict[str, Dict],
@@ -64,7 +64,7 @@ class RobustnessVisualizationsComplete:
                 }
             }
         """
-        logger.info("\n→ Creating detailed noise sensitivity plot...")
+        logger.info("\n-> Creating detailed noise sensitivity plot...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Detailed Noise Sensitivity Analysis', 
@@ -203,7 +203,7 @@ class RobustnessVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_robustness_score_heatmap(self,
@@ -216,7 +216,7 @@ class RobustnessVisualizationsComplete:
             robustness_matrix: DataFrame with models as rows, targets as columns
                                Values are robustness scores (0-1)
         """
-        logger.info("\n→ Creating robustness score heatmap...")
+        logger.info("\n-> Creating robustness score heatmap...")
         
         fig, ax = plt.subplots(figsize=(14, 10))
         
@@ -262,7 +262,7 @@ class RobustnessVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def plot_perturbation_impact_analysis(self,
@@ -283,7 +283,7 @@ class RobustnessVisualizationsComplete:
                 ...
             }
         """
-        logger.info("\n→ Creating perturbation impact analysis...")
+        logger.info("\n-> Creating perturbation impact analysis...")
         
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle('Feature Perturbation Impact Analysis', 
@@ -392,7 +392,7 @@ class RobustnessVisualizationsComplete:
         plt.savefig(save_path, dpi=PLOT_CONFIG['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"  ✓ Saved: {save_name}.png")
+        logger.info(f"  [OK] Saved: {save_name}.png")
         return save_path
     
     def generate_all_robustness_plots(self, 
@@ -414,7 +414,7 @@ class RobustnessVisualizationsComplete:
                 path = self.plot_noise_sensitivity_detailed(robustness_results)
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed noise sensitivity: {e}")
+                logger.error(f"  [FAIL] Failed noise sensitivity: {e}")
         
         # 2. Robustness score heatmap
         if robustness_matrix is not None:
@@ -422,7 +422,7 @@ class RobustnessVisualizationsComplete:
                 path = self.plot_robustness_score_heatmap(robustness_matrix)
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed heatmap: {e}")
+                logger.error(f"  [FAIL] Failed heatmap: {e}")
         
         # 3. Perturbation impact
         if perturbation_results is not None and feature_names is not None:
@@ -432,10 +432,10 @@ class RobustnessVisualizationsComplete:
                 )
                 generated_plots.append(path)
             except Exception as e:
-                logger.error(f"  ✗ Failed perturbation: {e}")
+                logger.error(f"  [FAIL] Failed perturbation: {e}")
         
         logger.info("\n" + "="*70)
-        logger.info(f"✓ ROBUSTNESS VISUALIZATIONS COMPLETE: {len(generated_plots)}/3")
+        logger.info(f"[OK] ROBUSTNESS VISUALIZATIONS COMPLETE: {len(generated_plots)}/3")
         logger.info("="*70)
         
         return generated_plots
@@ -508,4 +508,4 @@ if __name__ == "__main__":
         feature_names=features
     )
     
-    logger.info("\n✓ Test complete! Check test_output/robustness/")
+    logger.info("\n[OK] Test complete! Check test_output/robustness/")

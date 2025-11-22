@@ -87,47 +87,47 @@ class ThesisOrchestrator:
         logger.info("="*80)
         
         # PFAZ 0: Configuration
-        logger.info("\n→ PFAZ 0: Configuration")
+        logger.info("\n-> PFAZ 0: Configuration")
         self.results_summary['pfaz0'] = self._collect_pfaz0()
         
         # PFAZ 1: Dataset Generation
-        logger.info("\n→ PFAZ 1: Dataset Generation")
+        logger.info("\n-> PFAZ 1: Dataset Generation")
         self.results_summary['pfaz1'] = self._collect_pfaz1()
         
         # PFAZ 2: AI Training
-        logger.info("\n→ PFAZ 2: AI Training")
+        logger.info("\n-> PFAZ 2: AI Training")
         self.results_summary['pfaz2'] = self._collect_pfaz2()
         
         # PFAZ 3: ANFIS Training
-        logger.info("\n→ PFAZ 3: ANFIS Training")
+        logger.info("\n-> PFAZ 3: ANFIS Training")
         self.results_summary['pfaz3'] = self._collect_pfaz3()
         
         # PFAZ 4: Unknown Predictions
-        logger.info("\n→ PFAZ 4: Unknown Predictions")
+        logger.info("\n-> PFAZ 4: Unknown Predictions")
         self.results_summary['pfaz4'] = self._collect_pfaz4()
         
         # PFAZ 5: Cross-Model Analysis
-        logger.info("\n→ PFAZ 5: Cross-Model Analysis")
+        logger.info("\n-> PFAZ 5: Cross-Model Analysis")
         self.results_summary['pfaz5'] = self._collect_pfaz5()
         
         # PFAZ 6: Final Reporting
-        logger.info("\n→ PFAZ 6: Final Reporting")
+        logger.info("\n-> PFAZ 6: Final Reporting")
         self.results_summary['pfaz6'] = self._collect_pfaz6()
         
         # PFAZ 7: Ensemble Methods
-        logger.info("\n→ PFAZ 7: Ensemble Methods")
+        logger.info("\n-> PFAZ 7: Ensemble Methods")
         self.results_summary['pfaz7'] = self._collect_pfaz7()
         
         # PFAZ 8: Visualization
-        logger.info("\n→ PFAZ 8: Visualization")
+        logger.info("\n-> PFAZ 8: Visualization")
         self.results_summary['pfaz8'] = self._collect_pfaz8()
         
         # PFAZ 9: AAA2 & Monte Carlo
-        logger.info("\n→ PFAZ 9: AAA2 & Monte Carlo")
+        logger.info("\n-> PFAZ 9: AAA2 & Monte Carlo")
         self.results_summary['pfaz9'] = self._collect_pfaz9()
         
         # PFAZ 12: Advanced Analytics
-        logger.info("\n→ PFAZ 12: Advanced Analytics")
+        logger.info("\n-> PFAZ 12: Advanced Analytics")
         self.results_summary['pfaz12'] = self._collect_pfaz12()
         
         # Save summary
@@ -135,7 +135,7 @@ class ThesisOrchestrator:
         with open(summary_file, 'w', encoding='utf-8') as f:
             json.dump(self.results_summary, f, indent=2, ensure_ascii=False)
         
-        logger.info(f"\n✓ Results summary saved: {summary_file}")
+        logger.info(f"\n[OK] Results summary saved: {summary_file}")
     
     def _collect_pfaz0(self) -> Dict:
         """PFAZ 0: Temel yapılandırma bilgileri"""
@@ -301,7 +301,7 @@ class ThesisOrchestrator:
             self.collect_all_results()
         
         # Generate components
-        logger.info("\n→ Generating thesis components...")
+        logger.info("\n-> Generating thesis components...")
         
         self._generate_preamble()
         self._generate_frontmatter()
@@ -323,14 +323,14 @@ class ThesisOrchestrator:
         # Generate compilation scripts
         self._generate_compile_scripts()
         
-        logger.info("\n✓ Thesis generation complete!")
+        logger.info("\n[OK] Thesis generation complete!")
         
         main_file = self.thesis_dir / 'thesis_main.tex'
         return main_file
     
     def _generate_preamble(self):
         """LaTeX preamble oluştur"""
-        logger.info("  ✓ Generating preamble...")
+        logger.info("  [OK] Generating preamble...")
         
         preamble = r"""\documentclass[12pt,a4paper,oneside]{book}
 
@@ -417,7 +417,7 @@ class ThesisOrchestrator:
     
     def _generate_frontmatter(self):
         """Ön sayfa oluştur"""
-        logger.info("  ✓ Generating frontmatter...")
+        logger.info("  [OK] Generating frontmatter...")
         
         frontmatter = r"""\begin{titlepage}
 \centering
@@ -475,7 +475,7 @@ Aileme sonsuz destekleri için minnettarım.
     
     def _generate_abstract_turkish(self):
         """Türkçe özet oluştur"""
-        logger.info("  ✓ Generating Turkish abstract...")
+        logger.info("  [OK] Generating Turkish abstract...")
         
         abstract_tr = r"""\chapter*{Özet}
 \addcontentsline{toc}{chapter}{Özet}
@@ -538,7 +538,7 @@ moment, kuadrupol moment, deformasyon, topluluk öğrenme
     
     def _generate_abstract_english(self):
         """İngilizce özet oluştur"""
-        logger.info("  ✓ Generating English abstract...")
+        logger.info("  [OK] Generating English abstract...")
         
         abstract_en = r"""\chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
@@ -601,7 +601,7 @@ magnetic moment, quadrupole moment, deformation, ensemble learning
     
     def _generate_chapter1_giris(self):
         """Bölüm 1: Giriş"""
-        logger.info("  ✓ Generating Chapter 1: Giriş...")
+        logger.info("  [OK] Generating Chapter 1: Giriş...")
         
         # Content will be generated in next step
         chapter1 = r"""\chapter{Giriş}
@@ -682,7 +682,7 @@ Bu çalışmanın temel katkıları şunlardır:
     
     def _generate_chapter2_literatur(self):
         """Bölüm 2: Literatür Taraması"""
-        logger.info("  ✓ Generating Chapter 2: Literatür Taraması...")
+        logger.info("  [OK] Generating Chapter 2: Literatür Taraması...")
         
         chapter2 = r"""\chapter{Literatür Taraması}
 \label{ch:literatur}
@@ -782,12 +782,12 @@ stratejileri ve kapsamlı doğrulama çalışmaları yoluyla ele almaktadır.
     
     def _generate_chapter3_yontem(self):
         """Bölüm 3: Yöntem"""
-        logger.info("  ✓ Generating Chapter 3: Yöntem...")
+        logger.info("  [OK] Generating Chapter 3: Yöntem...")
         
         # Content saved to file
         chapter3_file = self.thesis_dir / 'chapters' / '05_yontem.tex'
         
-        logger.info(f"    → Chapter 3 will be comprehensive - creating placeholder")
+        logger.info(f"    -> Chapter 3 will be comprehensive - creating placeholder")
         
         chapter3 = r"""\chapter{Yöntem}
 \label{ch:yontem}
@@ -809,7 +809,7 @@ Veri seti, Atomik Kütle Değerlendirmesi (AME) \cite{wang2017} ve nükleer yap�
     
     def _generate_chapter4_bulgular(self):
         """Bölüm 4: Bulgular"""
-        logger.info("  ✓ Generating Chapter 4: Bulgular...")
+        logger.info("  [OK] Generating Chapter 4: Bulgular...")
         
         chapter4_file = self.thesis_dir / 'chapters' / '06_bulgular.tex'
         
@@ -828,7 +828,7 @@ Veri seti, Atomik Kütle Değerlendirmesi (AME) \cite{wang2017} ve nükleer yap�
     
     def _generate_chapter5_tartisma(self):
         """Bölüm 5: Tartışma"""
-        logger.info("  ✓ Generating Chapter 5: Tartışma...")
+        logger.info("  [OK] Generating Chapter 5: Tartışma...")
         
         chapter5_file = self.thesis_dir / 'chapters' / '07_tartisma.tex'
         
@@ -845,7 +845,7 @@ Veri seti, Atomik Kütle Değerlendirmesi (AME) \cite{wang2017} ve nükleer yap�
     
     def _generate_chapter6_sonuc(self):
         """Bölüm 6: Sonuç"""
-        logger.info("  ✓ Generating Chapter 6: Sonuç...")
+        logger.info("  [OK] Generating Chapter 6: Sonuç...")
         
         chapter6_file = self.thesis_dir / 'chapters' / '08_sonuc.tex'
         
@@ -862,7 +862,7 @@ Veri seti, Atomik Kütle Değerlendirmesi (AME) \cite{wang2017} ve nükleer yap�
     
     def _generate_appendices(self):
         """Ekler bölümü"""
-        logger.info("  ✓ Generating appendices...")
+        logger.info("  [OK] Generating appendices...")
         
         appendices = r"""\appendix
 
@@ -880,7 +880,7 @@ Veri seti, Atomik Kütle Değerlendirmesi (AME) \cite{wang2017} ve nükleer yap�
     
     def _generate_bibliography(self):
         """Kaynakça"""
-        logger.info("  ✓ Generating bibliography...")
+        logger.info("  [OK] Generating bibliography...")
         
         bibliography = r"""@article{mayer1949,
   author = {Mayer, M. G.},
@@ -910,7 +910,7 @@ Veri seti, Atomik Kütle Değerlendirmesi (AME) \cite{wang2017} ve nükleer yap�
     
     def _generate_main_file(self):
         """Ana LaTeX dosyası"""
-        logger.info("  ✓ Generating main thesis file...")
+        logger.info("  [OK] Generating main thesis file...")
         
         main_content = r"""\input{preamble.tex}
 
@@ -957,13 +957,13 @@ Veri seti, Atomik Kütle Değerlendirmesi (AME) \cite{wang2017} ve nükleer yap�
     
     def _copy_figures(self):
         """Figürleri kopyala"""
-        logger.info("  ✓ Copying figures...")
+        logger.info("  [OK] Copying figures...")
         # Placeholder - figures will be copied from visualization outputs
         pass
     
     def _generate_compile_scripts(self):
         """Derleme scriptleri oluştur"""
-        logger.info("  ✓ Generating compilation scripts...")
+        logger.info("  [OK] Generating compilation scripts...")
         
         # Linux/Mac script
         bash_script = """#!/bin/bash
@@ -1022,7 +1022,7 @@ pause
             main_file = self.thesis_dir / 'thesis_main.tex'
             
             for i in range(3):  # Run 3 times for references
-                logger.info(f"\n→ pdflatex run {i+1}/3...")
+                logger.info(f"\n-> pdflatex run {i+1}/3...")
                 result = subprocess.run(
                     ['pdflatex', '-interaction=nonstopmode', str(main_file.name)],
                     cwd=self.thesis_dir,
@@ -1037,7 +1037,7 @@ pause
                     return None
             
             # Run bibtex
-            logger.info("\n→ Running bibtex...")
+            logger.info("\n-> Running bibtex...")
             subprocess.run(
                 ['bibtex', 'thesis_main'],
                 cwd=self.thesis_dir,
@@ -1046,7 +1046,7 @@ pause
             )
             
             # Final pdflatex
-            logger.info("\n→ Final pdflatex run...")
+            logger.info("\n-> Final pdflatex run...")
             subprocess.run(
                 ['pdflatex', '-interaction=nonstopmode', str(main_file.name)],
                 cwd=self.thesis_dir,
@@ -1057,7 +1057,7 @@ pause
             pdf_file = self.thesis_dir / 'thesis_main.pdf'
             
             if pdf_file.exists():
-                logger.info(f"\n✓ PDF created: {pdf_file}")
+                logger.info(f"\n[OK] PDF created: {pdf_file}")
                 
                 if cleanup:
                     self._cleanup_latex_aux_files()
@@ -1079,7 +1079,7 @@ pause
     
     def _cleanup_latex_aux_files(self):
         """LaTeX ara dosyalarını temizle"""
-        logger.info("\n→ Cleaning up auxiliary files...")
+        logger.info("\n-> Cleaning up auxiliary files...")
         
         extensions = ['.aux', '.log', '.toc', '.lof', '.lot', '.out', '.bbl', '.blg']
         
@@ -1090,7 +1090,7 @@ pause
                 except:
                     pass
         
-        logger.info("  ✓ Cleanup complete")
+        logger.info("  [OK] Cleanup complete")
 
 
 # ============================================================================
@@ -1111,24 +1111,24 @@ def main():
     )
     
     # Collect results
-    print("\n→ Collecting all PFAZ results...")
+    print("\n-> Collecting all PFAZ results...")
     orchestrator.collect_all_results()
     
     # Get author info
-    print("\n→ Author information:")
+    print("\n-> Author information:")
     author = input("  Yazar Adı (Enter = varsayılan): ").strip() or "Yazar Adı"
     supervisor = input("  Danışman Adı (Enter = varsayılan): ").strip() or "Danışman Adı"
     university = input("  Üniversite Adı (Enter = varsayılan): ").strip() or "Üniversite Adı"
     
     # Generate thesis
-    print("\n→ Generating complete thesis...")
+    print("\n-> Generating complete thesis...")
     main_file = orchestrator.generate_complete_thesis(
         author_name=author,
         supervisor_name=supervisor,
         university=university
     )
     
-    print(f"\n✓ Thesis generated: {main_file}")
+    print(f"\n[OK] Thesis generated: {main_file}")
     
     # Compile option
     compile_opt = input("\nPDF'e derlemek ister misiniz? (LaTeX gerekli) [y/N]: ").strip().lower()
@@ -1136,15 +1136,15 @@ def main():
     if compile_opt == 'y':
         pdf_file = orchestrator.compile_pdf(cleanup=True)
         if pdf_file:
-            print(f"\n✓ PDF hazır: {pdf_file}")
+            print(f"\n[OK] PDF hazır: {pdf_file}")
         else:
-            print("\n⚠ PDF derlenemedi. Manuel derleme:")
+            print("\n[WARNING] PDF derlenemedi. Manuel derleme:")
             print("  cd output/thesis")
             print("  ./compile.sh  (Linux/Mac)")
             print("  compile.bat   (Windows)")
     
     print("\n" + "="*80)
-    print("✅ PFAZ 10: THESIS ORCHESTRATOR - COMPLETE!")
+    print("[SUCCESS] PFAZ 10: THESIS ORCHESTRATOR - COMPLETE!")
     print("="*80)
     print(f"\nÇıktılar:")
     print(f"  - Main file: {main_file}")

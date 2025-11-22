@@ -189,7 +189,7 @@ class ANFISPerformanceAnalyzer:
             with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
                 summary_df.to_excel(writer, sheet_name='Config_Summary', index=False)
         
-        logger.info(f"✅ Excel report saved: {excel_path}")
+        logger.info(f"[SUCCESS] Excel report saved: {excel_path}")
 
 
 def main():
@@ -214,7 +214,7 @@ def main():
     print("\nGenerating Excel report...")
     analyzer.generate_excel_report()
     
-    print("\n✅ TEST COMPLETED!")
+    print("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

@@ -86,7 +86,7 @@ class AdvancedVotingEnsemble:
         self.models = {}
         self.model_performances = {}
         
-        logger.info("✓ AdvancedVotingEnsemble initialized")
+        logger.info("[OK] AdvancedVotingEnsemble initialized")
     
     def add_model(self, model_id: str, model: object, 
                   X_val: np.ndarray, y_val: np.ndarray):
@@ -106,11 +106,11 @@ class AdvancedVotingEnsemble:
             'inverse_rmse': 1.0 / (rmse + 1e-10)
         }
         
-        logger.info(f"  ✓ {model_id}: R²={r2:.4f}, RMSE={rmse:.4f}")
+        logger.info(f"  [OK] {model_id}: R²={r2:.4f}, RMSE={rmse:.4f}")
     
     def simple_voting(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Simple voting ensemble (equal weights)"""
-        logger.info("\n→ Simple Voting Ensemble")
+        logger.info("\n-> Simple Voting Ensemble")
         
         predictions = np.array([model.predict(X_test) for model in self.models.values()])
         ensemble_pred = np.mean(predictions, axis=0)
@@ -131,7 +131,7 @@ class AdvancedVotingEnsemble:
     
     def weighted_voting_r2(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Weighted voting based on R² scores"""
-        logger.info("\n→ Weighted Voting (R² optimization)")
+        logger.info("\n-> Weighted Voting (R² optimization)")
         
         # Calculate weights based on R²
         r2_scores = np.array([perf['r2'] for perf in self.model_performances.values()])
@@ -156,7 +156,7 @@ class AdvancedVotingEnsemble:
     
     def weighted_voting_inverse_error(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Weighted voting based on inverse RMSE"""
-        logger.info("\n→ Weighted Voting (Inverse Error)")
+        logger.info("\n-> Weighted Voting (Inverse Error)")
         
         # Calculate weights based on inverse RMSE
         inv_rmse = np.array([perf['inverse_rmse'] for perf in self.model_performances.values()])
@@ -181,7 +181,7 @@ class AdvancedVotingEnsemble:
     
     def rank_based_voting(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Rank-based voting ensemble"""
-        logger.info("\n→ Rank-Based Voting")
+        logger.info("\n-> Rank-Based Voting")
         
         predictions = np.array([model.predict(X_test) for model in self.models.values()])
         
@@ -210,7 +210,7 @@ class AdvancedVotingEnsemble:
     def dynamic_weight_adjustment(self, X_test: np.ndarray, y_test: np.ndarray, 
                                   n_iterations: int = 10) -> Dict:
         """Dynamic weight adjustment based on iterative optimization"""
-        logger.info("\n→ Dynamic Weight Adjustment")
+        logger.info("\n-> Dynamic Weight Adjustment")
         
         predictions = np.array([model.predict(X_test) for model in self.models.values()])
         
@@ -294,16 +294,16 @@ class AdvancedStackingEnsemble:
         self.meta_models = {}
         self.oof_predictions = None
         
-        logger.info(f"✓ AdvancedStackingEnsemble initialized (CV folds: {cv_folds})")
+        logger.info(f"[OK] AdvancedStackingEnsemble initialized (CV folds: {cv_folds})")
     
     def add_base_model(self, model_id: str, model: object):
         """Add base model"""
         self.base_models[model_id] = model
-        logger.info(f"  ✓ Added base model: {model_id}")
+        logger.info(f"  [OK] Added base model: {model_id}")
     
     def generate_oof_predictions(self, X_train: np.ndarray, y_train: np.ndarray):
         """Generate out-of-fold predictions for meta-model training"""
-        logger.info("\n→ Generating Out-of-Fold Predictions")
+        logger.info("\n-> Generating Out-of-Fold Predictions")
         
         n_samples = len(X_train)
         n_models = len(self.base_models)
@@ -313,7 +313,7 @@ class AdvancedStackingEnsemble:
         kf = KFold(n_splits=self.cv_folds, shuffle=True, random_state=42)
         
         for i, (model_id, model) in enumerate(self.base_models.items()):
-            logger.info(f"  → Model {i+1}/{n_models}: {model_id}")
+            logger.info(f"  -> Model {i+1}/{n_models}: {model_id}")
             
             for fold, (train_idx, val_idx) in enumerate(kf.split(X_train)):
                 X_fold_train = X_train[train_idx]
@@ -330,13 +330,13 @@ class AdvancedStackingEnsemble:
         
         self.oof_predictions = oof_preds
         
-        logger.info(f"✓ OOF predictions generated: shape={oof_preds.shape}")
+        logger.info(f"[OK] OOF predictions generated: shape={oof_preds.shape}")
         
         return oof_preds
     
     def train_meta_models(self, y_train: np.ndarray):
         """Train multiple meta-models"""
-        logger.info("\n→ Training Meta-Models")
+        logger.info("\n-> Training Meta-Models")
         
         # Meta-model definitions
         meta_model_configs = {
@@ -349,7 +349,7 @@ class AdvancedStackingEnsemble:
         }
         
         for name, meta_model in meta_model_configs.items():
-            logger.info(f"  → Training {name} meta-model...")
+            logger.info(f"  -> Training {name} meta-model...")
             meta_model.fit(self.oof_predictions, y_train)
             self.meta_models[name] = meta_model
             
@@ -358,7 +358,7 @@ class AdvancedStackingEnsemble:
             r2 = r2_score(y_train, oof_pred)
             logger.info(f"    OOF R²: {r2:.4f}")
         
-        logger.info(f"✓ {len(self.meta_models)} meta-models trained")
+        logger.info(f"[OK] {len(self.meta_models)} meta-models trained")
     
     def predict(self, X_test: np.ndarray, meta_model_name: str) -> np.ndarray:
         """Predict using stacking ensemble"""
@@ -374,7 +374,7 @@ class AdvancedStackingEnsemble:
     
     def evaluate_all_meta_models(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Evaluate all meta-models"""
-        logger.info("\n→ Evaluating All Meta-Models")
+        logger.info("\n-> Evaluating All Meta-Models")
         
         results = {}
         
@@ -418,13 +418,13 @@ class AdvancedBoostingEnsemble:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        logger.info("✓ AdvancedBoostingEnsemble initialized")
+        logger.info("[OK] AdvancedBoostingEnsemble initialized")
     
     def train_adaboost(self, X_train: np.ndarray, y_train: np.ndarray,
                        X_test: np.ndarray, y_test: np.ndarray,
                        n_estimators: int = 100) -> Dict:
         """Train AdaBoost ensemble"""
-        logger.info(f"\n→ Training AdaBoost (n_estimators={n_estimators})")
+        logger.info(f"\n-> Training AdaBoost (n_estimators={n_estimators})")
         
         model = AdaBoostRegressor(
             n_estimators=n_estimators,
@@ -458,10 +458,10 @@ class AdvancedBoostingEnsemble:
                        n_iterations: int = 1000) -> Dict:
         """Train CatBoost ensemble (if available)"""
         if not CATBOOST_AVAILABLE:
-            logger.warning("  ⚠️ CatBoost not available, skipping")
+            logger.warning("  [WARNING] CatBoost not available, skipping")
             return None
         
-        logger.info(f"\n→ Training CatBoost (n_iterations={n_iterations})")
+        logger.info(f"\n-> Training CatBoost (n_iterations={n_iterations})")
         
         model = CatBoostRegressor(
             iterations=n_iterations,
@@ -509,12 +509,12 @@ class EnsembleDiversityAnalyzer:
     """
     
     def __init__(self):
-        logger.info("✓ EnsembleDiversityAnalyzer initialized")
+        logger.info("[OK] EnsembleDiversityAnalyzer initialized")
     
     def analyze_diversity(self, predictions_dict: Dict[str, np.ndarray], 
                           y_true: np.ndarray) -> Dict:
         """Analyze ensemble diversity"""
-        logger.info("\n→ Analyzing Ensemble Diversity")
+        logger.info("\n-> Analyzing Ensemble Diversity")
         
         model_names = list(predictions_dict.keys())
         predictions = np.array([predictions_dict[name] for name in model_names])
@@ -592,7 +592,7 @@ class ComprehensiveEnsembleEvaluator:
         
         self.results = []
         
-        logger.info("✓ ComprehensiveEnsembleEvaluator initialized")
+        logger.info("[OK] ComprehensiveEnsembleEvaluator initialized")
     
     def add_result(self, result: Dict):
         """Add ensemble result"""
@@ -622,7 +622,7 @@ class ComprehensiveEnsembleEvaluator:
         # Save
         save_path = self.output_dir / 'ensemble_comparison.xlsx'
         df.to_excel(save_path, index=False)
-        logger.info(f"\n✓ Comparison saved: {save_path}")
+        logger.info(f"\n[OK] Comparison saved: {save_path}")
         
         return df
     
@@ -637,7 +637,7 @@ class ComprehensiveEnsembleEvaluator:
         else:
             raise ValueError(f"Unknown metric: {metric}")
         
-        logger.info(f"\n✅ BEST ENSEMBLE ({metric.upper()}):")
+        logger.info(f"\n[SUCCESS] BEST ENSEMBLE ({metric.upper()}):")
         logger.info(f"  Method: {best['method']}")
         logger.info(f"  R²: {best['r2']:.4f}")
         logger.info(f"  RMSE: {best['rmse']:.4f}")
@@ -647,7 +647,7 @@ class ComprehensiveEnsembleEvaluator:
     
     def generate_report(self) -> Dict:
         """Generate comprehensive report"""
-        logger.info("\n→ Generating Comprehensive Report")
+        logger.info("\n-> Generating Comprehensive Report")
         
         # Summary statistics
         r2_scores = [r['r2'] for r in self.results]
@@ -680,7 +680,7 @@ class ComprehensiveEnsembleEvaluator:
             
             json.dump(report_copy, f, indent=2, default=str)
         
-        logger.info(f"✓ Report saved: {json_path}")
+        logger.info(f"[OK] Report saved: {json_path}")
         
         return report
 
@@ -710,7 +710,7 @@ def pfaz7_complete_pipeline():
     # ========================================================================
     # STEP 1: Prepare Mock Data & Base Models
     # ========================================================================
-    logger.info("\n📊 STEP 1: DATA & BASE MODELS PREPARATION")
+    logger.info("\n[REPORT] STEP 1: DATA & BASE MODELS PREPARATION")
     logger.info("-"*80)
     
     np.random.seed(42)
@@ -731,7 +731,7 @@ def pfaz7_complete_pipeline():
     y_val = target_func(X_val) + np.random.randn(n_val) * 0.5
     y_test = target_func(X_test) + np.random.randn(n_test) * 0.5
     
-    logger.info(f"✓ Data: Train={n_train}, Val={n_val}, Test={n_test}")
+    logger.info(f"[OK] Data: Train={n_train}, Val={n_val}, Test={n_test}")
     
     # Base models
     base_models = {
@@ -745,12 +745,12 @@ def pfaz7_complete_pipeline():
     if XGBOOST_AVAILABLE:
         base_models['XGB'] = XGBRegressor(n_estimators=100, max_depth=3, random_state=42).fit(X_train, y_train)
     
-    logger.info(f"✓ Base models trained: {len(base_models)}")
+    logger.info(f"[OK] Base models trained: {len(base_models)}")
     
     # ========================================================================
     # STEP 2: Voting Ensembles
     # ========================================================================
-    logger.info("\n🎯 STEP 2: VOTING ENSEMBLES")
+    logger.info("\n[TARGET] STEP 2: VOTING ENSEMBLES")
     logger.info("-"*80)
     
     voting_ensemble = AdvancedVotingEnsemble()
@@ -765,7 +765,7 @@ def pfaz7_complete_pipeline():
     voting_results['rank_based'] = voting_ensemble.rank_based_voting(X_test, y_test)
     voting_results['dynamic'] = voting_ensemble.dynamic_weight_adjustment(X_test, y_test, n_iterations=10)
     
-    logger.info("✅ Voting Ensembles Complete")
+    logger.info("[SUCCESS] Voting Ensembles Complete")
     
     # ========================================================================
     # STEP 3: Stacking Ensembles
@@ -783,12 +783,12 @@ def pfaz7_complete_pipeline():
     
     stacking_results = stacking_ensemble.evaluate_all_meta_models(X_test, y_test)
     
-    logger.info("✅ Stacking Ensembles Complete")
+    logger.info("[SUCCESS] Stacking Ensembles Complete")
     
     # ========================================================================
     # STEP 4: Boosting Ensembles
     # ========================================================================
-    logger.info("\n🚀 STEP 4: BOOSTING ENSEMBLES")
+    logger.info("\n[START] STEP 4: BOOSTING ENSEMBLES")
     logger.info("-"*80)
     
     boosting_ensemble = AdvancedBoostingEnsemble()
@@ -803,12 +803,12 @@ def pfaz7_complete_pipeline():
             X_train, y_train, X_test, y_test, n_iterations=1000
         )
     
-    logger.info("✅ Boosting Ensembles Complete")
+    logger.info("[SUCCESS] Boosting Ensembles Complete")
     
     # ========================================================================
     # STEP 5: Diversity Analysis
     # ========================================================================
-    logger.info("\n🔍 STEP 5: ENSEMBLE DIVERSITY ANALYSIS")
+    logger.info("\n[SEARCH] STEP 5: ENSEMBLE DIVERSITY ANALYSIS")
     logger.info("-"*80)
     
     diversity_analyzer = EnsembleDiversityAnalyzer()
@@ -827,12 +827,12 @@ def pfaz7_complete_pipeline():
     
     diversity_report = diversity_analyzer.analyze_diversity(all_predictions, y_test)
     
-    logger.info("✅ Diversity Analysis Complete")
+    logger.info("[SUCCESS] Diversity Analysis Complete")
     
     # ========================================================================
     # STEP 6: Comprehensive Evaluation
     # ========================================================================
-    logger.info("\n📊 STEP 6: COMPREHENSIVE EVALUATION")
+    logger.info("\n[REPORT] STEP 6: COMPREHENSIVE EVALUATION")
     logger.info("-"*80)
     
     evaluator = ComprehensiveEnsembleEvaluator()
@@ -857,7 +857,7 @@ def pfaz7_complete_pipeline():
     # Generate report
     final_report = evaluator.generate_report()
     
-    logger.info("✅ Evaluation Complete")
+    logger.info("[SUCCESS] Evaluation Complete")
     
     # ========================================================================
     # STEP 7: Final Summary
@@ -866,33 +866,33 @@ def pfaz7_complete_pipeline():
     logger.info("PFAZ 7: FINAL SUMMARY")
     logger.info("="*80)
     
-    logger.info(f"\n📋 TOTAL ENSEMBLES TESTED: {len(evaluator.results)}")
+    logger.info(f"\n[LIST] TOTAL ENSEMBLES TESTED: {len(evaluator.results)}")
     logger.info(f"  - Voting: {len(voting_results)}")
     logger.info(f"  - Stacking: {len(stacking_results)}")
     logger.info(f"  - Boosting: {len(boosting_results)}")
     
-    logger.info(f"\n✅ BEST ENSEMBLE:")
+    logger.info(f"\n[SUCCESS] BEST ENSEMBLE:")
     logger.info(f"  Method: {best_ensemble['method']}")
     logger.info(f"  R²: {best_ensemble['r2']:.4f}")
     logger.info(f"  RMSE: {best_ensemble['rmse']:.4f}")
     logger.info(f"  MAE: {best_ensemble['mae']:.4f}")
     
-    logger.info(f"\n🔍 DIVERSITY METRICS:")
+    logger.info(f"\n[SEARCH] DIVERSITY METRICS:")
     logger.info(f"  Avg Correlation: {diversity_report['avg_correlation']:.4f}")
     logger.info(f"  Diversity Score: {diversity_report['diversity_score']:.4f}")
     
-    logger.info(f"\n💡 RECOMMENDATIONS:")
+    logger.info(f"\n[TIP] RECOMMENDATIONS:")
     if best_ensemble['method'].startswith('stacking'):
-        logger.info("  → Stacking ensemble performs best")
-        logger.info("  → Use for production predictions")
+        logger.info("  -> Stacking ensemble performs best")
+        logger.info("  -> Use for production predictions")
     elif best_ensemble['method'].startswith('voting'):
-        logger.info("  → Voting ensemble performs best")
-        logger.info("  → Simpler method may be sufficient")
+        logger.info("  -> Voting ensemble performs best")
+        logger.info("  -> Simpler method may be sufficient")
     else:
-        logger.info(f"  → {best_ensemble['method']} performs best")
+        logger.info(f"  -> {best_ensemble['method']} performs best")
     
     logger.info("\n" + "="*80)
-    logger.info("🎉 PFAZ 7 COMPLETED SUCCESSFULLY!")
+    logger.info("[COMPLETE] PFAZ 7 COMPLETED SUCCESSFULLY!")
     logger.info("="*80)
     
     return {
@@ -912,7 +912,7 @@ def main():
         results = pfaz7_complete_pipeline()
         return results
     except Exception as e:
-        logger.error(f"\n❌ ERROR in PFAZ 7: {str(e)}")
+        logger.error(f"\n[ERROR] ERROR in PFAZ 7: {str(e)}")
         import traceback
         traceback.print_exc()
         raise

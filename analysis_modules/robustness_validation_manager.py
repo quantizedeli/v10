@@ -440,7 +440,7 @@ class RobustnessValidationManager:
         with open(report_file, 'w') as f:
             json.dump(results, f, indent=2)
         
-        logger.info(f"\n✓ Validasyon raporu kaydedildi: {report_file}")
+        logger.info(f"\n[OK] Validasyon raporu kaydedildi: {report_file}")
         
         # Görselleştirmeler
         self._create_visualizations(model_name, results, report_dir)
@@ -553,7 +553,7 @@ class RobustnessValidationManager:
         output_path = self.output_dir / output_file
         df.to_excel(output_path, index=False)
         
-        logger.info(f"\n✓ Özet rapor kaydedildi: {output_path}")
+        logger.info(f"\n[OK] Özet rapor kaydedildi: {output_path}")
 
 
 def main():
@@ -583,7 +583,7 @@ def main():
     # Summary
     manager.generate_summary_report()
     
-    print("\n✓ Test tamamlandı!")
+    print("\n[OK] Test tamamlandı!")
 
 
 if __name__ == "__main__":

@@ -41,12 +41,12 @@ class GPUOptimizer:
         self.gpu_name = self._get_gpu_name()
 
         if self.gpu_available:
-            logger.info(f"✓ GPU detected: {self.gpu_count} device(s)")
+            logger.info(f"[OK] GPU detected: {self.gpu_count} device(s)")
             if self.gpu_name:
                 logger.info(f"  GPU: {self.gpu_name}")
             self._setup_gpu_memory_growth()
         else:
-            logger.warning("⚠️ No GPU detected - using CPU")
+            logger.warning("[WARNING] No GPU detected - using CPU")
 
     def _check_gpu_availability(self) -> bool:
         """Check if GPU is available"""
@@ -88,7 +88,7 @@ class GPUOptimizer:
             gpus = tf.config.list_physical_devices('GPU')
             for gpu in gpus:
                 tf.config.experimental.set_memory_growth(gpu, True)
-            logger.info("✓ GPU memory growth enabled")
+            logger.info("[OK] GPU memory growth enabled")
         except Exception as e:
             logger.warning(f"Could not set memory growth: {e}")
 
@@ -109,7 +109,7 @@ class GPUOptimizer:
             'n_estimators': 1000,
             'max_depth': 6,
             'learning_rate': 0.1,
-            'tree_method': 'gpu_hist',  # ← GPU acceleration
+            'tree_method': 'gpu_hist',  # <- GPU acceleration
             'gpu_id': 0,
             'predictor': 'gpu_predictor',
             'sampling_method': 'gradient_based',
@@ -139,7 +139,7 @@ class GPUOptimizer:
         # Merge with original params (original params take precedence for duplicates)
         optimized_params = {**params, **gpu_params}
 
-        logger.info("✓ XGBoost GPU optimization enabled")
+        logger.info("[OK] XGBoost GPU optimization enabled")
         logger.info(f"  - tree_method: gpu_hist")
         logger.info(f"  - predictor: gpu_predictor")
 
@@ -173,7 +173,7 @@ class GPUOptimizer:
             try:
                 policy = tf.keras.mixed_precision.Policy('mixed_float16')
                 tf.keras.mixed_precision.set_global_policy(policy)
-                logger.info("✓ Mixed precision enabled (FP16)")
+                logger.info("[OK] Mixed precision enabled (FP16)")
                 logger.info("  Expected speedup: 2-3x")
             except Exception as e:
                 logger.warning(f"Could not enable mixed precision: {e}")
@@ -181,7 +181,7 @@ class GPUOptimizer:
         # 2. XLA Compilation
         try:
             tf.config.optimizer.set_jit(True)
-            logger.info("✓ XLA compilation enabled")
+            logger.info("[OK] XLA compilation enabled")
             logger.info("  Expected speedup: 10-20%")
         except Exception as e:
             logger.warning(f"Could not enable XLA: {e}")
@@ -190,13 +190,13 @@ class GPUOptimizer:
         # This finds the fastest cuDNN algorithms for your specific hardware
         import os
         os.environ['TF_CUDNN_USE_AUTOTUNE'] = '1'
-        logger.info("✓ CuDNN auto-tune enabled")
+        logger.info("[OK] CuDNN auto-tune enabled")
 
         # 4. Multi-GPU Strategy
         if self.gpu_count > 1:
             try:
                 strategy = tf.distribute.MirroredStrategy()
-                logger.info(f"✓ Multi-GPU strategy: {self.gpu_count} GPUs")
+                logger.info(f"[OK] Multi-GPU strategy: {self.gpu_count} GPUs")
                 return strategy
             except Exception as e:
                 logger.warning(f"Could not create multi-GPU strategy: {e}")
@@ -234,7 +234,7 @@ class GPUOptimizer:
 
         optimal_size = 32  # Safe default
 
-        logger.info("🔍 Finding optimal batch size...")
+        logger.info("[SEARCH] Finding optimal batch size...")
 
         for batch_size in batch_sizes:
             try:
@@ -247,16 +247,16 @@ class GPUOptimizer:
                     verbose=0
                 )
                 optimal_size = batch_size
-                logger.info(f"  ✓ Batch size {batch_size} OK")
+                logger.info(f"  [OK] Batch size {batch_size} OK")
 
             except tf.errors.ResourceExhaustedError:
-                logger.info(f"  ✗ Batch size {batch_size} - Out of memory")
+                logger.info(f"  [FAIL] Batch size {batch_size} - Out of memory")
                 break
             except Exception as e:
-                logger.warning(f"  ⚠️ Batch size {batch_size} - Error: {e}")
+                logger.warning(f"  [WARNING] Batch size {batch_size} - Error: {e}")
                 break
 
-        logger.info(f"✓ Optimal batch size: {optimal_size}")
+        logger.info(f"[OK] Optimal batch size: {optimal_size}")
         return optimal_size
 
     def get_gpu_info(self) -> Dict[str, Any]:
@@ -336,7 +336,7 @@ def train_xgboost_optimized(
     optimized_config = gpu_opt.optimize_xgboost(config)
 
     # Train with GPU
-    logger.info("🚀 Training XGBoost with GPU acceleration...")
+    logger.info("[START] Training XGBoost with GPU acceleration...")
 
     start_time = time.time()
 
@@ -357,7 +357,7 @@ def train_xgboost_optimized(
     rmse = np.sqrt(mean_squared_error(y_val, y_pred))
     mae = mean_absolute_error(y_val, y_pred)
 
-    logger.info(f"✓ Training complete in {training_time:.1f}s")
+    logger.info(f"[OK] Training complete in {training_time:.1f}s")
     logger.info(f"  R² = {r2:.4f}, RMSE = {rmse:.4f}, MAE = {mae:.4f}")
 
     return model, {
@@ -425,7 +425,7 @@ def train_dnn_optimized(
     )
 
     # Train
-    logger.info(f"🚀 Training DNN with GPU optimization...")
+    logger.info(f"[START] Training DNN with GPU optimization...")
     logger.info(f"  Batch size: {optimal_batch_size}")
     logger.info(f"  Mixed precision: FP16")
 
@@ -456,7 +456,7 @@ def train_dnn_optimized(
     rmse = np.sqrt(mean_squared_error(y_val, y_pred))
     mae = mean_absolute_error(y_val, y_pred)
 
-    logger.info(f"✓ Training complete in {training_time:.1f}s")
+    logger.info(f"[OK] Training complete in {training_time:.1f}s")
     logger.info(f"  R² = {r2:.4f}, RMSE = {rmse:.4f}, MAE = {mae:.4f}")
 
     return model, {
@@ -547,7 +547,7 @@ class PerformanceBenchmark:
         """
         from xgboost import XGBRegressor
 
-        logger.info("🔬 Benchmarking XGBoost CPU vs GPU...")
+        logger.info("[CALC] Benchmarking XGBoost CPU vs GPU...")
 
         # CPU benchmark
         cpu_times = []

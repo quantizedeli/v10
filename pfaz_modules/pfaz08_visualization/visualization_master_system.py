@@ -138,7 +138,7 @@ class RobustnessVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_noise_robustness(self,
                               original_pred: np.ndarray,
@@ -213,7 +213,7 @@ class RobustnessVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_cross_validation_stability(self,
                                         cv_results: Dict[str, List[float]],
@@ -278,7 +278,7 @@ class RobustnessVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -338,7 +338,7 @@ class SHAPVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_shap_force(self,
                         shap_values: np.ndarray,
@@ -376,7 +376,7 @@ class SHAPVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}_{sample_idx}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}_{sample_idx}.png")
+        logger.info(f"[OK] Saved: {save_name}_{sample_idx}.png")
     
     def plot_shap_dependence(self,
                             feature_idx: int,
@@ -412,7 +412,7 @@ class SHAPVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}_{feature_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}_{feature_name}.png")
+        logger.info(f"[OK] Saved: {save_name}_{feature_name}.png")
 
 
 # =============================================================================
@@ -471,7 +471,7 @@ class AnomalyKernelVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_anomaly_clustering(self,
                                data: pd.DataFrame,
@@ -544,7 +544,7 @@ class AnomalyKernelVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_anomaly_common_patterns(self,
                                     anomaly_data: pd.DataFrame,
@@ -608,7 +608,7 @@ class AnomalyKernelVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -655,7 +655,7 @@ class MasterReportVisualizer:
         
         # Save
         fig.write_html(self.output_dir / f'{save_name}.html')
-        logger.info(f"✓ Saved: {save_name}.html")
+        logger.info(f"[OK] Saved: {save_name}.html")
     
     def plot_master_summary_stats(self,
                                   results_df: pd.DataFrame,
@@ -711,7 +711,7 @@ class MasterReportVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -784,7 +784,7 @@ class PredictionVisualizer:
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
         logger.info(f"  Mean R²: {np.mean(overall_r2):.4f}, Mean MAE: {np.mean(overall_mae):.4f}")
     
     def plot_residual_analysis(self,
@@ -837,7 +837,7 @@ class PredictionVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_error_distribution_3d(self,
                                    experimental: np.ndarray,
@@ -874,7 +874,7 @@ class PredictionVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -934,7 +934,7 @@ class ModelComparisonVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_parallel_coordinates(self,
                                  models_metrics: Dict[str, Dict[str, float]],
@@ -973,7 +973,7 @@ class ModelComparisonVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -1047,7 +1047,7 @@ class TrainingMetricsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_training_convergence(self,
                                  history_dict: Dict[str, Dict[str, List[float]]],
@@ -1116,7 +1116,7 @@ class TrainingMetricsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -1170,7 +1170,7 @@ class OptimizationMetricsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_optimization_history(self,
                                  best_scores: List[float],
@@ -1234,7 +1234,7 @@ class OptimizationMetricsVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -1285,7 +1285,7 @@ class FeatureImportanceVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
     
     def plot_best_features_analysis(self,
                                    data: pd.DataFrame,
@@ -1332,7 +1332,7 @@ class FeatureImportanceVisualizer:
         plt.tight_layout()
         fig.savefig(self.output_dir / f'{save_name}.png', dpi=self.config['dpi'], bbox_inches='tight')
         plt.close()
-        logger.info(f"✓ Saved: {save_name}.png")
+        logger.info(f"[OK] Saved: {save_name}.png")
 
 
 # =============================================================================
@@ -1367,7 +1367,7 @@ class MasterVisualizationSystem:
         
         # Robustness
         if 'robustness' in project_data:
-            logger.info("\n→ Robustness Visualizations")
+            logger.info("\n-> Robustness Visualizations")
             self.robustness_viz.plot_perturbation_sensitivity(
                 project_data['robustness']['predictions'],
                 project_data['robustness']['results']
@@ -1375,7 +1375,7 @@ class MasterVisualizationSystem:
         
         # SHAP
         if 'shap' in project_data:
-            logger.info("\n→ SHAP Visualizations")
+            logger.info("\n-> SHAP Visualizations")
             self.shap_viz.plot_shap_summary(
                 project_data['shap']['features'],
                 project_data['shap']['values'],
@@ -1384,7 +1384,7 @@ class MasterVisualizationSystem:
         
         # Anomaly
         if 'anomaly' in project_data:
-            logger.info("\n→ Anomaly Analysis")
+            logger.info("\n-> Anomaly Analysis")
             self.anomaly_viz.plot_anomaly_characteristics(
                 project_data['anomaly']['normal'],
                 project_data['anomaly']['anomalous'],
@@ -1393,14 +1393,14 @@ class MasterVisualizationSystem:
         
         # Master Report
         if 'master_results' in project_data:
-            logger.info("\n→ Master Report Visualizations")
+            logger.info("\n-> Master Report Visualizations")
             self.master_report_viz.plot_master_summary_stats(
                 project_data['master_results']['summary_df']
             )
         
         # Predictions
         if 'predictions' in project_data:
-            logger.info("\n→ Prediction Visualizations")
+            logger.info("\n-> Prediction Visualizations")
             self.prediction_viz.plot_prediction_comparison(
                 project_data['predictions']['experimental'],
                 project_data['predictions']['models']
@@ -1408,20 +1408,20 @@ class MasterVisualizationSystem:
         
         # Model Comparison
         if 'model_metrics' in project_data:
-            logger.info("\n→ Model Comparison")
+            logger.info("\n-> Model Comparison")
             self.model_comparison_viz.plot_model_ranking(
                 project_data['model_metrics']
             )
         
         # Training Metrics
         if 'training_history' in project_data:
-            logger.info("\n→ Training Metrics")
+            logger.info("\n-> Training Metrics")
             self.training_metrics_viz.plot_training_curves(
                 project_data['training_history']
             )
         
         logger.info("\n" + "="*80)
-        logger.info("✓ ALL VISUALIZATIONS COMPLETED!")
+        logger.info("[OK] ALL VISUALIZATIONS COMPLETED!")
         logger.info("="*80)
 
 
@@ -1434,8 +1434,8 @@ def main():
     # Initialize system
     viz_system = MasterVisualizationSystem('output/visualizations_master')
     
-    logger.info(f"\n✓ System initialized")
-    logger.info(f"✓ Output directory: output/visualizations_master")
+    logger.info(f"\n[OK] System initialized")
+    logger.info(f"[OK] Output directory: output/visualizations_master")
     logger.info(f"\nAvailable visualizers:")
     logger.info("  - RobustnessVisualizer")
     logger.info("  - SHAPVisualizer")

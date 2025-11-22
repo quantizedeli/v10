@@ -47,7 +47,7 @@ class EnsembleModelBuilder:
         self.model_metadata = {}  # Model ID -> Metadata
         self.predictions = {}  # Model ID -> Predictions
         
-        logger.info(f"✓ EnsembleModelBuilder initialized")
+        logger.info(f"[OK] EnsembleModelBuilder initialized")
         logger.info(f"  Output directory: {self.output_dir}")
     
     def add_model(self, 
@@ -80,11 +80,11 @@ class EnsembleModelBuilder:
             # Performance
             r2 = r2_score(y_val, y_pred)
             rmse = np.sqrt(mean_squared_error(y_val, y_pred))
-            logger.info(f"  ✓ Model added: {model_id}")
+            logger.info(f"  [OK] Model added: {model_id}")
             logger.info(f"    Type: {metadata['model_type']}")
             logger.info(f"    Val R²: {r2:.4f}, RMSE: {rmse:.4f}")
         else:
-            logger.info(f"  ✓ Model added: {model_id} (no validation data)")
+            logger.info(f"  [OK] Model added: {model_id} (no validation data)")
     
     def _predict_single(self, model, X, model_type: str) -> np.ndarray:
         """Tek bir modelden tahmin al"""
@@ -146,7 +146,7 @@ class EnsembleModelBuilder:
             y_pred = self._predict_single(model, X_test, metadata['model_type'])
             all_predictions.append(y_pred)
             
-            logger.info(f"  ✓ {model_id}: {len(y_pred)} predictions")
+            logger.info(f"  [OK] {model_id}: {len(y_pred)} predictions")
         
         if len(all_predictions) == 0:
             raise ValueError("No valid predictions from any model!")
@@ -393,7 +393,7 @@ class EnsembleModelBuilder:
         with open(save_path, 'w') as f:
             json.dump(save_data, f, indent=2)
         
-        logger.info(f"\n✓ Ensemble saved: {save_path}")
+        logger.info(f"\n[OK] Ensemble saved: {save_path}")
     
     def compare_ensembles(self, 
                          ensemble_results: List[Dict],
@@ -432,7 +432,7 @@ class EnsembleModelBuilder:
         # Save
         save_path = self.output_dir / 'ensemble_comparison.xlsx'
         df.to_excel(save_path, index=False)
-        logger.info(f"\n✓ Comparison saved: {save_path}")
+        logger.info(f"\n[OK] Comparison saved: {save_path}")
         
         return df
 
@@ -500,7 +500,7 @@ def main():
         ensemble_names=['Simple Voting', 'Weighted Voting (R²)']
     )
     
-    logger.info("\n✅ TEST COMPLETED!")
+    logger.info("\n[SUCCESS] TEST COMPLETED!")
 
 
 if __name__ == "__main__":

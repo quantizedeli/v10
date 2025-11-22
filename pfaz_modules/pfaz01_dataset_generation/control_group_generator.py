@@ -128,31 +128,31 @@ class ControlGroupGenerator:
         analysis = {}
         
         # 1. Per-nucleus statistics
-        logger.info("\n→ Computing per-nucleus statistics...")
+        logger.info("\n-> Computing per-nucleus statistics...")
         analysis['nucleus_stats'] = self._compute_nucleus_statistics()
         
         # 2. Per-model statistics
-        logger.info("\n→ Computing per-model statistics...")
+        logger.info("\n-> Computing per-model statistics...")
         analysis['model_stats'] = self._compute_model_statistics()
         
         # 3. Identify problem nuclei
-        logger.info("\n→ Identifying problem nuclei...")
+        logger.info("\n-> Identifying problem nuclei...")
         analysis['problem_nuclei'] = self._identify_problem_nuclei()
         
         # 4. Identify easy nuclei
-        logger.info("\n→ Identifying easy nuclei...")
+        logger.info("\n-> Identifying easy nuclei...")
         analysis['easy_nuclei'] = self._identify_easy_nuclei()
         
         # 5. Property correlation
-        logger.info("\n→ Analyzing property correlations...")
+        logger.info("\n-> Analyzing property correlations...")
         analysis['property_correlation'] = self._analyze_property_correlation()
         
         # 6. Generate reports
-        logger.info("\n→ Generating reports...")
+        logger.info("\n-> Generating reports...")
         self._generate_comprehensive_report(analysis)
         
         logger.info("\n" + "="*80)
-        logger.info("✓ CONTROL GROUP ANALYSIS COMPLETE")
+        logger.info("[OK] CONTROL GROUP ANALYSIS COMPLETE")
         logger.info("="*80)
         
         return analysis
@@ -367,7 +367,7 @@ class ControlGroupGenerator:
             }
             pd.DataFrame(summary_data).to_excel(writer, sheet_name='Summary', index=False)
         
-        logger.info(f"✓ Excel report: {excel_file}")
+        logger.info(f"[OK] Excel report: {excel_file}")
         
         # Save CSVs
         problem_nuclei.to_csv(self.output_dir / 'poorly_predicted_nuclei.csv', index=False)
@@ -423,7 +423,7 @@ class ControlGroupGenerator:
         plt.savefig(self.output_dir / 'model_nucleus_heatmap.png', dpi=300, bbox_inches='tight')
         plt.close()
         
-        logger.info(f"✓ Heatmap: {self.output_dir / 'model_nucleus_heatmap.png'}")
+        logger.info(f"[OK] Heatmap: {self.output_dir / 'model_nucleus_heatmap.png'}")
     
     def _generate_text_summary(self, analysis):
         """Generate text summary"""
@@ -492,7 +492,7 @@ class ControlGroupGenerator:
                     else:
                         f.write(f"{prop}: {corr:.4f}\n")
         
-        logger.info(f"✓ Text summary: {txt_file}")
+        logger.info(f"[OK] Text summary: {txt_file}")
 
 
 # ============================================================================
@@ -538,11 +538,11 @@ def test_control_group():
     # Analyze
     analysis = generator.analyze_all()
     
-    print("\n✓ Test complete!")
+    print("\n[OK] Test complete!")
     print(f"Output: test_control_group/")
 
 
 if __name__ == "__main__":
     test_control_group()
-    print("\n✅ CONTROL GROUP GENERATOR COMPLETE")
+    print("\n[SUCCESS] CONTROL GROUP GENERATOR COMPLETE")
     print("Location: dataset_generation/control_group_generator.py")

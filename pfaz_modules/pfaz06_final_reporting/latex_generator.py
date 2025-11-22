@@ -47,7 +47,7 @@ class LaTeXReportGenerator:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(latex_content)
         
-        logger.info(f"✓ LaTeX report: {output_path}")
+        logger.info(f"[OK] LaTeX report: {output_path}")
         
         # Compile PDF (if pdflatex available)
         self._compile_pdf(output_path)
@@ -227,15 +227,15 @@ $BE = a_v A - a_s A^{2/3} - a_c \frac{Z^2}{A^{1/3}} - a_a \frac{(N-Z)^2}{A} + \d
             )
             
             if result.returncode == 0:
-                logger.info(f"✓ PDF compiled: {tex_file.with_suffix('.pdf')}")
+                logger.info(f"[OK] PDF compiled: {tex_file.with_suffix('.pdf')}")
             else:
-                logger.warning("⚠ PDF compilation failed (pdflatex may not be installed)")
+                logger.warning("[WARNING] PDF compilation failed (pdflatex may not be installed)")
         except:
-            logger.warning("⚠ Could not compile PDF (pdflatex not available)")
+            logger.warning("[WARNING] Could not compile PDF (pdflatex not available)")
 
 
 if __name__ == "__main__":
-    print("✓ LaTeX Generator modülü hazır - reporting/latex_generator.py")
+    print("[OK] LaTeX Generator modülü hazır - reporting/latex_generator.py")
 
 # ==================== EKLEME BAŞI ====================
 class LaTeXGenerator:

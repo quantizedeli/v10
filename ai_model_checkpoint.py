@@ -61,13 +61,13 @@ class AIModelCheckpoint:
         
         saved_files = {}
         
-        # 1. ⚠️ MODEL CHECKPOINT (.pkl veya .h5)
+        # 1. [WARNING] MODEL CHECKPOINT (.pkl veya .h5)
         if model_type in ['RandomForest', 'GradientBoosting', 'XGBoost']:
             # Sklearn/XGBoost modelleri için joblib
             model_file = output_dir / f'{checkpoint_name}_model.pkl'
             joblib.dump(model, model_file)
             saved_files['model'] = str(model_file)
-            logger.info(f"  ✓ Model kaydedildi (joblib): {model_file.name}")
+            logger.info(f"  [OK] Model kaydedildi (joblib): {model_file.name}")
             
         elif model_type in ['DNN', 'BNN', 'PINN']:
             # Deep learning modelleri için
@@ -76,14 +76,14 @@ class AIModelCheckpoint:
             try:
                 model.save(model_file)
                 saved_files['model'] = str(model_file)
-                logger.info(f"  ✓ Model kaydedildi (H5): {model_file.name}")
+                logger.info(f"  [OK] Model kaydedildi (H5): {model_file.name}")
             except:
                 # H5 başarısız olursa pickle dene
                 model_file = output_dir / f'{checkpoint_name}_model.pkl'
                 with open(model_file, 'wb') as f:
                     pickle.dump(model, f)
                 saved_files['model'] = str(model_file)
-                logger.info(f"  ✓ Model kaydedildi (pickle): {model_file.name}")
+                logger.info(f"  [OK] Model kaydedildi (pickle): {model_file.name}")
         
         # 2. MODEL WEIGHTS (DL modelleri için ayrıca)
         if model_type in ['DNN', 'BNN', 'PINN']:
@@ -91,9 +91,9 @@ class AIModelCheckpoint:
                 weights_file = output_dir / f'{checkpoint_name}_weights.h5'
                 model.save_weights(weights_file)
                 saved_files['weights'] = str(weights_file)
-                logger.info(f"  ✓ Weights kaydedildi: {weights_file.name}")
+                logger.info(f"  [OK] Weights kaydedildi: {weights_file.name}")
             except Exception as e:
-                logger.warning(f"  ⚠️ Weights kaydedilemedi: {e}")
+                logger.warning(f"  [WARNING] Weights kaydedilemedi: {e}")
         
         # 3. CONFIG INFO (JSON)
         config_info['model_type'] = model_type
@@ -102,7 +102,7 @@ class AIModelCheckpoint:
         with open(config_file, 'w') as f:
             json.dump(config_info, f, indent=2)
         saved_files['config'] = str(config_file)
-        logger.info(f"  ✓ Config kaydedildi: {config_file.name}")
+        logger.info(f"  [OK] Config kaydedildi: {config_file.name}")
         
         # 4. METRICS (JSON)
         metrics['model_type'] = model_type
@@ -111,7 +111,7 @@ class AIModelCheckpoint:
         with open(metrics_file, 'w') as f:
             json.dump(metrics, f, indent=2)
         saved_files['metrics'] = str(metrics_file)
-        logger.info(f"  ✓ Metrics kaydedildi: {metrics_file.name}")
+        logger.info(f"  [OK] Metrics kaydedildi: {metrics_file.name}")
         
         # 5. CHECKPOINT SUMMARY
         summary = {
@@ -128,7 +128,7 @@ class AIModelCheckpoint:
             json.dump(summary, f, indent=2)
         saved_files['summary'] = str(summary_file)
         
-        logger.info(f"✓ AI model checkpoint başarıyla kaydedildi: {checkpoint_name}")
+        logger.info(f"[OK] AI model checkpoint başarıyla kaydedildi: {checkpoint_name}")
         
         return {
             'status': 'success',
@@ -179,7 +179,7 @@ class AIModelCheckpoint:
         if model_files:
             verification['model_exists'] = True
             verification['model_file'] = str(model_files[0])
-            logger.info(f"  ✓ Model dosyası bulundu: {model_files[0].name}")
+            logger.info(f"  [OK] Model dosyası bulundu: {model_files[0].name}")
             
             # Model yüklenebilir mi kontrol et
             try:
@@ -188,61 +188,61 @@ class AIModelCheckpoint:
                 elif model_files[0].suffix == '.h5':
                     # Keras model yükleme (isteğe bağlı)
                     pass
-                logger.info(f"    ✓ Model yüklenebilir")
+                logger.info(f"    [OK] Model yüklenebilir")
             except Exception as e:
                 verification['errors'].append(f"Model yüklenemedi: {str(e)}")
         else:
             verification['errors'].append("Model dosyası bulunamadı")
-            logger.warning(f"  ✗ Model dosyası bulunamadı")
+            logger.warning(f"  [FAIL] Model dosyası bulunamadı")
         
         # 2. Config kontrolü
         config_files = list(checkpoint_dir.rglob(f'{checkpoint_name}*_config.json'))
         if config_files:
             verification['config_exists'] = True
             verification['config_file'] = str(config_files[0])
-            logger.info(f"  ✓ Config bulundu: {config_files[0].name}")
+            logger.info(f"  [OK] Config bulundu: {config_files[0].name}")
             
             try:
                 with open(config_files[0], 'r') as f:
                     config = json.load(f)
-                    logger.info(f"    ✓ Config içeriği doğru")
+                    logger.info(f"    [OK] Config içeriği doğru")
             except Exception as e:
                 verification['errors'].append(f"Config yüklenemedi: {str(e)}")
         else:
             verification['errors'].append("Config dosyası bulunamadı")
-            logger.warning(f"  ✗ Config bulunamadı")
+            logger.warning(f"  [FAIL] Config bulunamadı")
         
         # 3. Metrics kontrolü
         metrics_files = list(checkpoint_dir.rglob(f'{checkpoint_name}*_metrics.json'))
         if metrics_files:
             verification['metrics_exists'] = True
             verification['metrics_file'] = str(metrics_files[0])
-            logger.info(f"  ✓ Metrics bulundu: {metrics_files[0].name}")
+            logger.info(f"  [OK] Metrics bulundu: {metrics_files[0].name}")
             
             try:
                 with open(metrics_files[0], 'r') as f:
                     metrics = json.load(f)
-                    logger.info(f"    ✓ Metrics içeriği doğru (R²={metrics.get('R2', 'N/A')})")
+                    logger.info(f"    [OK] Metrics içeriği doğru (R²={metrics.get('R2', 'N/A')})")
             except Exception as e:
                 verification['errors'].append(f"Metrics yüklenemedi: {str(e)}")
         else:
             verification['errors'].append("Metrics dosyası bulunamadı")
-            logger.warning(f"  ✗ Metrics bulunamadı")
+            logger.warning(f"  [FAIL] Metrics bulunamadı")
         
         # 4. Weights kontrolü (DL modelleri için)
         weights_files = list(checkpoint_dir.rglob(f'{checkpoint_name}*_weights.h5'))
         if weights_files:
             verification['weights_exists'] = True
             verification['weights_file'] = str(weights_files[0])
-            logger.info(f"  ✓ Weights bulundu: {weights_files[0].name}")
+            logger.info(f"  [OK] Weights bulundu: {weights_files[0].name}")
         
         # 5. Durum belirleme
         if verification['model_exists'] and verification['config_exists'] and len(verification['errors']) == 0:
             verification['status'] = 'success'
-            logger.info(f"✓ Checkpoint doğrulama BAŞARILI: {checkpoint_name}")
+            logger.info(f"[OK] Checkpoint doğrulama BAŞARILI: {checkpoint_name}")
         else:
             verification['status'] = 'failed'
-            logger.error(f"✗ Checkpoint doğrulama BAŞARISIZ: {checkpoint_name}")
+            logger.error(f"[FAIL] Checkpoint doğrulama BAŞARISIZ: {checkpoint_name}")
             for error in verification['errors']:
                 logger.error(f"    - {error}")
         
@@ -284,7 +284,7 @@ class AIModelCheckpoint:
         with open(verification['metrics_file'], 'r') as f:
             metrics = json.load(f)
         
-        logger.info(f"✓ Checkpoint başarıyla yüklendi: {verification['checkpoint_name']}")
+        logger.info(f"[OK] Checkpoint başarıyla yüklendi: {verification['checkpoint_name']}")
         
         return model, config, metrics
 
