@@ -213,7 +213,7 @@ class TheoreticalCalculationsManager:
     def _calculate_deformation(self, df):
         """Deformation hesaplamaları"""
         from constants import R0, SPHERICAL_THRESHOLD
-        
+
         # β₂ varsa kullan, yoksa tahmin et
         if 'Beta_2' not in df.columns or df['Beta_2'].isna().all():
             # Tahmin: Shell model'e göre
@@ -221,36 +221,43 @@ class TheoreticalCalculationsManager:
                 lambda row: self._estimate_beta2(row['Z'], row['N']), axis=1
             )
         else:
-            df['Beta_2_estimated'] = df['Beta_2']
-        
+            # Beta_2'yi numeric'e çevir (string değerler olabilir)
+            df['Beta_2_estimated'] = pd.to_numeric(df['Beta_2'], errors='coerce')
+
         # Deformation type
         def classify_deformation(beta2):
-            if pd.isna(beta2):
+            # String veya geçersiz değerleri handle et
+            try:
+                beta2_num = float(beta2) if not pd.isna(beta2) else np.nan
+            except (ValueError, TypeError):
                 return 'unknown'
-            elif abs(beta2) < SPHERICAL_THRESHOLD:
+
+            if pd.isna(beta2_num):
+                return 'unknown'
+            elif abs(beta2_num) < SPHERICAL_THRESHOLD:
                 return 'spherical'
-            elif beta2 > 0.35:
+            elif beta2_num > 0.35:
                 return 'strongly_prolate'
-            elif beta2 > 0.15:
+            elif beta2_num > 0.15:
                 return 'prolate'
-            elif beta2 > 0.05:
+            elif beta2_num > 0.05:
                 return 'weakly_prolate'
-            elif beta2 < -0.35:
+            elif beta2_num < -0.35:
                 return 'strongly_oblate'
-            elif beta2 < -0.15:
+            elif beta2_num < -0.15:
                 return 'oblate'
             else:
                 return 'weakly_oblate'
-        
+
         df['deformation_type'] = df['Beta_2_estimated'].apply(classify_deformation)
-        
-        # Intrinsic quadrupole moment (Q₀)
+
+        # Intrinsic quadrupole moment (Q₀) - NaN'ları 0 ile doldur
         df['Q0_intrinsic'] = (3.0 / np.sqrt(5 * np.pi)) * df['Z'] * \
-                             (R0 * df['A']**(1/3))**2 * df['Beta_2_estimated']
-        
+                             (R0 * df['A']**(1/3))**2 * df['Beta_2_estimated'].fillna(0)
+
         # Rotational parameter
         df['rotational_param'] = (HBAR_C**2) / (2 * 0.5 * 1.2**2 * df['A']**(5/3))
-        
+
         logger.info(f"  [OK] Deformation: 4 özellik eklendi")
         return df
     
@@ -350,16 +357,17 @@ class TheoreticalCalculationsManager:
     
     def _calculate_nilsson(self, df):
         """Nilsson model hesaplamaları (sadece deformed nuclei için)"""
-        
-        # Sadece deformed çekirdekler için
-        deformed_mask = df['Beta_2_estimated'].abs() > 0.15
-        
+
+        # Sadece deformed çekirdekler için - NaN'ları 0 olarak ele al
+        beta2_values = df['Beta_2_estimated'].fillna(0)
+        deformed_mask = beta2_values.abs() > 0.15
+
         # Deformation parameter
         df.loc[deformed_mask, 'nilsson_epsilon'] = 0.95 * df.loc[deformed_mask, 'Beta_2_estimated']
-        
+
         # Oscillator frequency
         df.loc[deformed_mask, 'nilsson_omega'] = 41.0 / (df.loc[deformed_mask, 'A'] ** (1/3))
-        
+
         logger.info(f"  [OK] Nilsson: 2 özellik eklendi (sadece deformed nuclei)")
         return df
     
