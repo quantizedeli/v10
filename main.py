@@ -489,7 +489,9 @@ class NuclearPhysicsAIOrchestrator:
             )
 
             predictor = UnknownNucleiPredictor(
-                models_dir=str(self.pfaz_outputs[2]),
+                ai_models_dir=str(self.pfaz_outputs[2]),
+                anfis_models_dir=str(self.pfaz_outputs[3]),
+                splits_dir=str(self.pfaz_outputs[1]),
                 output_dir=str(self.pfaz_outputs[4])
             )
             results = predictor.predict_unknown_nuclei()
