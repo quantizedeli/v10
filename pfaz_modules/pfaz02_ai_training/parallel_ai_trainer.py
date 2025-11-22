@@ -181,7 +181,7 @@ class BaseAITrainer:
                 df[col] = df[col].replace('', np.nan)
                 df[col] = df[col].replace('NaN', np.nan)
 
-        # 3. Identify feature and target columns
+        # 3. Identify feature and target columns based on dataset name
         # Map simplified names to possible actual column names
         target_map = {
             'MM': ['MM', 'MAGNETIC MOMENT [µ]', 'MAGNETIC MOMENT [μ]'],
@@ -189,17 +189,44 @@ class BaseAITrainer:
             'Beta_2': ['Beta_2', 'BETA_2']
         }
 
+        # Determine which targets to use based on dataset name
+        dataset_name = dataset_path.name
+        requested_targets = []
+
+        if 'MM_QM' in dataset_name or 'MM-QM' in dataset_name:
+            # Both MM and Q targets
+            requested_targets = ['MM', 'Q']
+        elif 'MM' in dataset_name:
+            # Only MM target
+            requested_targets = ['MM']
+        elif 'QM' in dataset_name or '_Q_' in dataset_name:
+            # Only Q target
+            requested_targets = ['Q']
+        elif 'Beta_2' in dataset_name or 'BETA_2' in dataset_name:
+            # Only Beta_2 target
+            requested_targets = ['Beta_2']
+        else:
+            # Default: try to find any available target
+            logger.warning(f"Could not determine target from dataset name '{dataset_name}', using all available targets")
+            requested_targets = list(target_map.keys())
+
+        logger.info(f"Dataset: {dataset_name} -> Requested targets: {requested_targets}")
+
+        # Find actual column names for requested targets
         target_cols = []
-        for simple_name, possible_names in target_map.items():
-            for col_name in possible_names:
-                if col_name in df.columns:
-                    target_cols.append(col_name)
-                    logger.info(f"Found target: {simple_name} -> {col_name}")
-                    break
+        for simple_name in requested_targets:
+            if simple_name in target_map:
+                for col_name in target_map[simple_name]:
+                    if col_name in df.columns:
+                        target_cols.append(col_name)
+                        logger.info(f"Found target: {simple_name} -> {col_name}")
+                        break
+                else:
+                    logger.warning(f"Target '{simple_name}' requested but not found in data columns")
 
         if not target_cols:
             logger.error(f"Available columns: {list(df.columns)}")
-            raise ValueError(f"No target columns (MM, Q, Beta_2) found in {data_file}")
+            raise ValueError(f"No target columns found for {requested_targets} in {data_file}")
 
         logger.info(f"Target columns: {target_cols}")
 
