@@ -406,6 +406,29 @@ class ANFISParallelTrainerV2:
             with open(metrics_file, 'w') as f:
                 json.dump(metrics, f, indent=2)
 
+            # ✅ NEW: Save training datasets (.mat, .csv, .xlsx)
+            if self.save_datasets:
+                self.save_training_datasets(
+                    X_train, y_train, X_val, y_val, X_test, y_test,
+                    dataset_name=job.dataset_name,
+                    config_id=job.config['id']
+                )
+
+            # ✅ NEW: Track kernel usage
+            if self.save_datasets:
+                kernel_info = {
+                    'n_train': len(X_train),
+                    'n_val': len(X_val),
+                    'n_test': len(X_test),
+                    'n_features': X_train.shape[1],
+                    'n_rules': n_rules
+                }
+                self.track_kernel_usage(
+                    dataset_name=job.dataset_name,
+                    config_id=job.config['id'],
+                    kernel_info=kernel_info
+                )
+
             training_time = time.time() - start_time
 
             result = ANFISTrainingResult(

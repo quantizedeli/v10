@@ -846,9 +846,32 @@ class ParallelAITrainer:
             metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
             with open(metrics_file, 'w') as f:
                 json.dump(metrics, f, indent=2)
-            
+
+            # ✅ NEW: Model Validation (Cross-validation)
+            if self.use_model_validation:
+                try:
+                    import numpy as np
+                    X_combined = np.vstack([X_train, X_val])
+                    y_combined = np.concatenate([y_train, y_val])
+
+                    cv_results = self.run_model_validation(
+                        model=trainer.model,
+                        model_name=f"{job.model_type}_{job.config['id']}",
+                        X=X_combined,
+                        y=y_combined,
+                        cv_folds=5
+                    )
+
+                    if cv_results.get('status') == 'completed':
+                        cv_file = job.output_dir / f"cv_results_{job.config['id']}.json"
+                        with open(cv_file, 'w') as f:
+                            json.dump(cv_results, f, indent=2)
+                        logger.info(f"  [CV] Saved cross-validation results")
+                except Exception as e:
+                    logger.warning(f"  [CV] Validation failed: {e}")
+
             training_time = time.time() - start_time
-            
+
             result = TrainingResult(
                 job_id=job.job_id,
                 model_type=job.model_type,
@@ -859,7 +882,7 @@ class ParallelAITrainer:
                 model_path=model_path,
                 training_time=training_time
             )
-            
+
             logger.info(f"[SUCCESS] {job.job_id} | R2={metrics['val'].get('r2', 0):.4f} | {training_time:.1f}s")
             
             return result
