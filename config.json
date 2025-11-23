@@ -51,7 +51,7 @@
   "pfaz03_anfis_training": {
     "enabled": true,
     "matlab_engine": {
-      "enabled": false,
+      "enabled": true,
       "fallback_python": true
     },
     "configurations": [
