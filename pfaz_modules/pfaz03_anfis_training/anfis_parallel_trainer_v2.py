@@ -166,7 +166,11 @@ class ANFISParallelTrainerV2:
         # Storage
         self.training_results = []
         self.failed_jobs = []
-        self.kernel_usage_tracker = {}  # Track which kernels used in which trainings
+
+        # Thread-safe kernel usage tracker
+        import threading
+        self.kernel_usage_tracker = {}
+        self.kernel_tracker_lock = threading.Lock()
 
         logger.info("=" * 80)
         logger.info("ANFIS PARALLEL TRAINER V2 INITIALIZED")
@@ -469,15 +473,32 @@ class ANFISParallelTrainerV2:
         return configs[:n_configs]
 
     def discover_datasets(self) -> List[Path]:
-        """Discover dataset directories"""
+        """Discover dataset directories (excluding reports and metadata)"""
 
         if self.datasets_dir is None or not self.datasets_dir.exists():
             raise ValueError(f"Datasets directory not found: {self.datasets_dir}")
 
         dataset_paths = []
 
+        # Directories to exclude (reports, metadata, logs, etc.)
+        EXCLUDE_DIRS = {
+            'quality_reports',
+            'validation_reports',
+            'logs',
+            'reports',
+            'metadata',
+            'temp',
+            'cache',
+            '__pycache__'
+        }
+
         for subdir in self.datasets_dir.iterdir():
             if subdir.is_dir():
+                # Skip excluded directories
+                if subdir.name in EXCLUDE_DIRS:
+                    logger.info(f"  Skipping non-dataset directory: {subdir.name}")
+                    continue
+
                 has_data = (
                     list(subdir.glob('*.csv')) or
                     list(subdir.glob('*.xlsx')) or
@@ -733,7 +754,7 @@ class ANFISParallelTrainerV2:
 
     def track_kernel_usage(self, dataset_name: str, config_id: str, kernel_info: Dict):
         """
-        Track which kernels (nuclei) are used in which training
+        Track which kernels (nuclei) are used in which training (thread-safe)
 
         Args:
             dataset_name: Name of the dataset
@@ -741,17 +762,20 @@ class ANFISParallelTrainerV2:
             kernel_info: Dictionary with kernel information (e.g., nucleus A, Z, N)
         """
         tracking_key = f'{dataset_name}_{config_id}'
-        self.kernel_usage_tracker[tracking_key] = {
-            'dataset': dataset_name,
-            'config': config_id,
-            'timestamp': datetime.now().isoformat(),
-            'kernel_info': kernel_info
-        }
 
-        # Save tracker to file
-        tracker_file = self.output_dir / 'kernel_usage_tracker.json'
-        with open(tracker_file, 'w') as f:
-            json.dump(self.kernel_usage_tracker, f, indent=2)
+        # Thread-safe update
+        with self.kernel_tracker_lock:
+            self.kernel_usage_tracker[tracking_key] = {
+                'dataset': dataset_name,
+                'config': config_id,
+                'timestamp': datetime.now().isoformat(),
+                'kernel_info': kernel_info
+            }
+
+            # Save tracker to file
+            tracker_file = self.output_dir / 'kernel_usage_tracker.json'
+            with open(tracker_file, 'w') as f:
+                json.dump(self.kernel_usage_tracker, f, indent=2)
 
         logger.info(f"[KERNEL TRACKER] Updated for {tracking_key}")
 
