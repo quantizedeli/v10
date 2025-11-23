@@ -5,8 +5,6 @@ Nükleer Fizik Sabitleri ve Konfigürasyon
 Bu modül projedeki tüm sabit değerleri, fiziksel parametreleri ve konfigürasyonları içerir.
 """
 
-import numpy as np
-
 # ============================================================================
 # MAGİK SAYILAR (Magic Numbers)
 # ============================================================================
@@ -166,6 +164,7 @@ TARGETS = {
 # ÖZELLİK SETLERİ / FEATURE SETS
 # ============================================================================
 
+# LEGACY: Eski önceden tanımlı feature setleri (geriye dönük uyumluluk için)
 STANDARD_FEATURE_SETS = {
     'AZN': ['A', 'Z', 'N'],
     'AZNS': ['A', 'Z', 'N', 'SPIN'],
@@ -184,20 +183,119 @@ BETA2_FEATURE_SETS = {
     'Beta2_AZ': ['A', 'Z'],
     'Beta2_AN': ['A', 'N'],
     'Beta2_ZN': ['Z', 'N'],
-    
+
     # 3 input
     'Beta2_AZN': ['A', 'Z', 'N'],
     'Beta2_AZP': ['A', 'Z', 'p_factor'],
     'Beta2_AZMagic': ['A', 'Z', 'Z_magic_dist'],
-    
+
     # 4 input
     'Beta2_AZNP': ['A', 'Z', 'N', 'p_factor'],
     'Beta2_AZNMagic': ['A', 'Z', 'N', 'magic_character'],
-    
+
     # Gelişmiş
-    'Beta2_Physics': ['A', 'Z', 'N', 'p_factor', 'Z_magic_dist', 
+    'Beta2_Physics': ['A', 'Z', 'N', 'p_factor', 'Z_magic_dist',
                       'N_magic_dist', 'asymmetry', 'BE_per_A']
 }
+
+# ============================================================================
+# DİNAMİK FEATURE SET GENERATION (v2.0.0)
+# ============================================================================
+
+def get_dynamic_feature_sets(mode='standard',
+                             target_name=None,
+                             max_sets=None,
+                             **kwargs):
+    """
+    Dinamik olarak feature setleri oluştur
+
+    Args:
+        mode: 'standard' (legacy), 'extended', 'comprehensive', 'targeted'
+        target_name: Hedef ismi ('MM', 'QM', 'Beta_2', 'MM_QM')
+        max_sets: Maksimum set sayısı
+        **kwargs: FeatureSetBuilder fonksiyonlarına iletilecek ek argümanlar
+
+    Returns:
+        Dict[str, List[str]]: Feature set ismi -> feature listesi
+
+    Examples:
+        >>> # Legacy mode (eski sistem)
+        >>> sets = get_dynamic_feature_sets(mode='standard')
+
+        >>> # Extended mode (~200 set)
+        >>> sets = get_dynamic_feature_sets(mode='extended')
+
+        >>> # Comprehensive mode (binlerce set)
+        >>> sets = get_dynamic_feature_sets(mode='comprehensive', max_sets=1000)
+
+        >>> # Target-specific optimized
+        >>> sets = get_dynamic_feature_sets(mode='targeted', target_name='MM')
+    """
+    from core_modules.feature_set_builder import FeatureSetBuilder
+
+    builder = FeatureSetBuilder()
+
+    if mode == 'standard':
+        # Legacy mode: Eski önceden tanımlı setleri kullan
+        if target_name == 'Beta_2':
+            return BETA2_FEATURE_SETS.copy()
+        else:
+            return STANDARD_FEATURE_SETS.copy()
+
+    elif mode == 'extended':
+        # Extended mode: Base + single physics groups
+        feature_sets = {}
+
+        # Base kombinasyonlar
+        feature_sets.update(builder.generate_base_combinations())
+
+        # Physics grupları
+        feature_sets.update(builder.generate_physics_combinations())
+
+        # Base × Physics (single group)
+        full = builder.generate_full_combinations(max_combinations=max_sets)
+        feature_sets.update(full)
+
+        if max_sets:
+            # Limit to max_sets
+            items = list(feature_sets.items())[:max_sets]
+            feature_sets = dict(items)
+
+        return feature_sets
+
+    elif mode == 'comprehensive':
+        # Comprehensive mode: Multi-group combinations (THOUSANDS!)
+        max_groups = kwargs.get('max_groups_per_combo', 3)
+
+        feature_sets = builder.generate_multi_group_combinations(
+            max_groups_per_combo=max_groups,
+            max_combinations=max_sets
+        )
+
+        return feature_sets
+
+    elif mode == 'targeted':
+        # Target-optimized mode
+        if target_name is None:
+            raise ValueError("target_name must be provided for 'targeted' mode")
+
+        feature_sets = builder.generate_target_optimized_sets(
+            target_name=target_name,
+            complexity_levels=kwargs.get('complexity_levels', None)
+        )
+
+        # Ayrıca target'a özel comprehensive setler de ekle
+        if kwargs.get('include_comprehensive', False):
+            comprehensive = builder.generate_all_for_target(
+                target_name=target_name,
+                max_total=max_sets
+            )
+            feature_sets.update(comprehensive)
+
+        return feature_sets
+
+    else:
+        raise ValueError(f"Unknown mode: {mode}. Use 'standard', 'extended', 'comprehensive', or 'targeted'")
 
 # ============================================================================
 # ANFİS KONFİGÜRASYONLARI
@@ -386,9 +484,18 @@ def get_mass_group(A):
 
 def get_deformation_type(beta_2):
     """Deformasyon tipini belirle"""
-    if np.isnan(beta_2):
-        return 'unknown'
-    
+    try:
+        import numpy as np
+        if np.isnan(beta_2):
+            return 'unknown'
+    except (ImportError, TypeError):
+        # Fallback if numpy not available or beta_2 is not numeric
+        try:
+            if beta_2 != beta_2:  # NaN check without numpy
+                return 'unknown'
+        except:
+            return 'unknown'
+
     for def_type, (min_beta, max_beta) in DEFORMATION_REGIONS.items():
         if min_beta <= beta_2 < max_beta:
             return def_type

@@ -1,0 +1,287 @@
+# Dataset Generation Configuration
+# Binlerce dataset oluşturmak için yapılandırma dosyası
+# Versiyon: 2.0.0
+# Tarih: 2025-11-23
+
+# ============================================================================
+# GENEL AYARLAR
+# ============================================================================
+general:
+  version: "2.0.0"
+  description: "Comprehensive dataset generation with thousands of combinations"
+  output_base_dir: "ANFIS_Datasets"
+  enable_logging: true
+  log_level: "INFO"
+
+# ============================================================================
+# FEATURE SET GENERATION
+# ============================================================================
+feature_sets:
+  # Feature set generation mode:
+  # - "standard": Sadece önceden tanımlı setler (9-18 adet)
+  # - "extended": Base + Physics kombinasyonlar (~200 adet)
+  # - "comprehensive": Tüm olası kombinasyonlar (1000+ adet)
+  # - "targeted": Target'a özgü optimize edilmiş setler (~50-100 adet per target)
+  mode: "comprehensive"
+
+  # Base variants to use
+  base_variants:
+    - "AZN"
+    - "AZNS"
+    - "AZNP"
+    - "AZNSP"
+
+  # Physics groups to include
+  physics_groups:
+    # Deformation
+    - "beta"
+    - "beta4"
+    - "def_full"
+
+    # Pairing
+    - "p"
+    - "pair_full"
+
+    # Magic numbers
+    - "magic"
+    - "magic_full"
+    - "magic_adv"
+
+    # Binding energy
+    - "BE"
+    - "BE_full"
+    - "BE_adv"
+
+    # SEMF
+    - "semf_basic"
+    - "semf_full"
+    - "semf_all"
+
+    # Shell model
+    - "shell_basic"
+    - "shell_full"
+    - "shell_all"
+
+    # Schmidt (for MM)
+    - "schmidt"
+    - "schmidt_full"
+
+    # Collective
+    - "collective"
+    - "collective_full"
+
+    # Asymmetry
+    - "asym"
+    - "asym_full"
+
+    # Combined groups
+    - "beta_p"
+    - "magic_BE"
+    - "shell_beta"
+    - "physics_basic"
+    - "physics_adv"
+    - "physics_ultra"
+
+  # Multi-group combinations (combine multiple physics groups)
+  enable_multi_group_combinations: true
+  max_groups_per_combination: 3  # Combine up to 3 physics groups
+
+  # Feature set filters
+  min_features: 3  # Minimum number of features
+  max_features: 20  # Maximum number of features
+
+  # Target-optimized sets
+  include_target_optimized: true
+  target_optimization_levels:
+    - "minimal"
+    - "basic"
+    - "standard"
+    - "advanced"
+    - "ultra"
+
+# ============================================================================
+# TARGETS
+# ============================================================================
+targets:
+  enabled:
+    - name: "MM"
+      description: "Magnetic Moment"
+      columns: ["MM"]
+      qm_filter_required: false
+
+    - name: "QM"
+      description: "Quadrupole Moment"
+      columns: ["Q"]
+      qm_filter_required: true
+
+    - name: "MM_QM"
+      description: "Combined MM and QM"
+      columns: ["MM", "Q"]
+      qm_filter_required: true
+
+    - name: "Beta_2"
+      description: "Deformation Parameter"
+      columns: ["Beta_2"]
+      qm_filter_required: false
+
+  # Target-specific feature sets
+  # Use special Beta2 feature sets for Beta_2 target
+  use_beta2_specific_sets: true
+
+# ============================================================================
+# DATASET PARAMETERS
+# ============================================================================
+dataset_params:
+  # Nucleus counts
+  nucleus_counts:
+    - 75
+    - 100
+    - 150
+    - 200
+    - "ALL"
+
+  # Train/Check/Test scenarios
+  scenarios:
+    S70:
+      train: 0.70
+      check: 0.15
+      test: 0.15
+    S80:
+      train: 0.80
+      check: 0.10
+      test: 0.10
+
+  # Anomaly modes
+  anomaly_modes:
+    - "anomalisiz"  # No anomalies
+    - "anomalili"   # With anomalies
+
+  # Scaling methods
+  scaling_methods:
+    - "none"
+    - "standard"
+    - "robust"
+
+  # Sampling methods
+  sampling_methods:
+    - "stratified"
+    - "random"
+
+# ============================================================================
+# GENERATION LIMITS & OPTIMIZATION
+# ============================================================================
+limits:
+  # Maximum total datasets to generate
+  # Hesaplama: targets × nucleus_counts × scenarios × anomaly × features × scaling × sampling
+  # Örnek: 4 × 5 × 2 × 2 × 100 × 3 × 2 = 48,000 dataset
+  max_total_datasets: 10000  # Limit to prevent overwhelming
+
+  # Skip combinations that are likely redundant
+  skip_redundant: true
+
+  # Parallel generation
+  enable_parallel: true
+  max_workers: 4
+
+  # Memory management
+  clear_intermediate_data: true
+  save_memory_efficient: true
+
+# ============================================================================
+# OUTPUT FORMATS
+# ============================================================================
+output:
+  # File formats to generate
+  formats:
+    csv: true
+    excel: true
+    matlab: false  # MAT files are large, disable by default
+
+  # Generate metadata
+  metadata: true
+
+  # Generate distribution reports
+  distribution_reports: true
+
+  # Generate master catalog
+  master_catalog: true
+
+  # Generate dataset catalog
+  dataset_catalog: true
+
+# ============================================================================
+# FEATURE SELECTION STRATEGIES
+# ============================================================================
+feature_selection:
+  # Automatic feature selection based on target
+  auto_select_by_target: true
+
+  # Remove features that are too correlated (>0.95)
+  remove_highly_correlated: false
+  correlation_threshold: 0.95
+
+  # Remove features with low variance
+  remove_low_variance: false
+  variance_threshold: 0.01
+
+# ============================================================================
+# QUALITY CONTROL
+# ============================================================================
+quality_control:
+  # Validate datasets after generation
+  validate_datasets: true
+
+  # Minimum samples per dataset
+  min_samples_train: 50
+  min_samples_check: 10
+  min_samples_test: 10
+
+  # Check for NaN values
+  check_nan: true
+
+  # Check for infinite values
+  check_inf: true
+
+  # Verify stratification quality
+  verify_stratification: true
+
+# ============================================================================
+# PRESETS (Hızlı kullanım için)
+# ============================================================================
+presets:
+  # Quick test (fast generation for testing)
+  quick_test:
+    feature_sets.mode: "standard"
+    limits.max_total_datasets: 100
+    dataset_params.nucleus_counts: [75, 100]
+    dataset_params.scenarios: ["S70"]
+    output.formats.matlab: false
+
+  # Standard research (balanced)
+  standard_research:
+    feature_sets.mode: "extended"
+    limits.max_total_datasets: 1000
+    dataset_params.nucleus_counts: [75, 100, 150, 200]
+    output.formats.matlab: false
+
+  # Comprehensive (thousands of datasets)
+  comprehensive:
+    feature_sets.mode: "comprehensive"
+    limits.max_total_datasets: 10000
+    feature_sets.enable_multi_group_combinations: true
+    output.formats.matlab: false
+
+  # Target-focused (optimize for specific target)
+  target_focused:
+    feature_sets.mode: "targeted"
+    limits.max_total_datasets: 500
+    feature_sets.include_target_optimized: true
+
+# ============================================================================
+# ACTIVE PRESET
+# ============================================================================
+# Uncomment to use a preset:
+# active_preset: "quick_test"
+# active_preset: "standard_research"
+active_preset: "comprehensive"
+# active_preset: "target_focused"
