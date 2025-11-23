@@ -298,11 +298,14 @@ class NuclearPhysicsAIOrchestrator:
             'data_file': 'aaa2.txt',
             'pfaz_config': {
                 1: {'enabled': True, 'dataset_sizes': [75, 100, 150, 200, 'ALL']},
-                2: {'enabled': True, 'n_configs': 50, 'parallel': True},
-                3: {'enabled': True, 'n_configs': 8, 'use_matlab': False},
+                2: {'enabled': True, 'n_configs': 50, 'parallel': True,
+                    'use_hyperparameter_tuning': False, 'use_model_validation': True, 'use_advanced_models': False},
+                3: {'enabled': True, 'n_configs': 8, 'use_matlab': False,
+                    'use_config_manager': True, 'use_adaptive_strategy': False,
+                    'use_performance_analyzer': True, 'save_datasets': True},
                 4: {'enabled': True, 'test_split': 0.2},
-                5: {'enabled': True, 'targets': ['MM', 'QM', 'Beta_2']},
-                6: {'enabled': True, 'formats': ['excel', 'latex']},
+                5: {'enabled': True, 'targets': ['MM', 'QM', 'Beta_2'], 'use_best_model_selector': True},
+                6: {'enabled': True, 'formats': ['excel', 'latex'], 'use_excel_charts': True, 'use_latex_generator': True},
                 7: {'enabled': True, 'methods': ['voting', 'stacking']},
                 8: {'enabled': True, 'n_plots': 80},
                 9: {'enabled': True, 'monte_carlo': True},
@@ -400,15 +403,19 @@ class NuclearPhysicsAIOrchestrator:
 
             self.status_manager.update_pfaz(pfaz_id, 'running', 30)
 
+            config = self.config['pfaz_config'][pfaz_id]
+
             trainer = ParallelAITrainer(
                 datasets_dir=str(self.pfaz_outputs[1]),
                 models_dir=str(self.pfaz_outputs[2]),
-                training_config_path='pfaz_modules/pfaz02_ai_training/training_configs_50.json'
+                training_config_path='pfaz_modules/pfaz02_ai_training/training_configs_50.json',
+                use_hyperparameter_tuning=config.get('use_hyperparameter_tuning', False),
+                use_model_validation=config.get('use_model_validation', True),
+                use_advanced_models=config.get('use_advanced_models', False)
             )
 
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
 
-            config = self.config['pfaz_config'][pfaz_id]
             results = trainer.train_all_models_parallel(
                 n_configs=config.get('n_configs', 50),
                 use_parallel=config.get('parallel', True)
@@ -447,17 +454,26 @@ class NuclearPhysicsAIOrchestrator:
 
             self.status_manager.update_pfaz(pfaz_id, 'running', 30)
 
+            config = self.config['pfaz_config'][pfaz_id]
+
             trainer = ANFISParallelTrainerV2(
                 datasets_dir=str(self.pfaz_outputs[1]),
-                output_dir=str(self.pfaz_outputs[3])
+                output_dir=str(self.pfaz_outputs[3]),
+                use_config_manager=config.get('use_config_manager', True),
+                use_adaptive_strategy=config.get('use_adaptive_strategy', False),
+                use_performance_analyzer=config.get('use_performance_analyzer', True),
+                save_datasets=config.get('save_datasets', True)
             )
 
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
 
-            config = self.config['pfaz_config'][pfaz_id]
             results = trainer.train_all_anfis_parallel(
                 n_configs=config.get('n_configs', 8)
             )
+
+            # Generate kernel usage report
+            if config.get('save_datasets', True):
+                trainer.generate_kernel_usage_report()
 
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
             logger.info("[SUCCESS] PFAZ 3 tamamlandı!")
@@ -517,9 +533,11 @@ class NuclearPhysicsAIOrchestrator:
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
             from pfaz_modules.pfaz05_cross_model.cross_model_evaluator import CrossModelEvaluator
 
+            config = self.config['pfaz_config'][pfaz_id]
+
             evaluator = CrossModelEvaluator(
-                models_dir=str(self.pfaz_outputs[2]),
-                output_dir=str(self.pfaz_outputs[5])
+                output_dir=str(self.pfaz_outputs[5]),
+                use_best_model_selector=config.get('use_best_model_selector', True)
             )
             results = evaluator.evaluate_all_models()
 
@@ -542,10 +560,16 @@ class NuclearPhysicsAIOrchestrator:
 
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            from pfaz_modules.pfaz06_final_reporting.pfaz6_final_reporting import FinalReporter
+            from pfaz_modules.pfaz06_final_reporting.pfaz6_final_reporting import FinalReportingPipeline
 
-            reporter = FinalReporter(output_dir=str(self.pfaz_outputs[6]))
-            results = reporter.generate_all_reports()
+            config = self.config['pfaz_config'][pfaz_id]
+
+            reporter = FinalReportingPipeline(
+                output_dir=str(self.pfaz_outputs[6]),
+                use_excel_charts=config.get('use_excel_charts', True),
+                use_latex_generator=config.get('use_latex_generator', True)
+            )
+            results = reporter.run_complete_pipeline()
 
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
             logger.info("[SUCCESS] PFAZ 6 tamamlandı!")

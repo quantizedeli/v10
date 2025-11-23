@@ -128,7 +128,11 @@ class ANFISParallelTrainerV2:
     def __init__(self,
                  datasets_dir: str = None,
                  output_dir: str = None,
-                 n_workers: int = None):
+                 n_workers: int = None,
+                 use_config_manager: bool = True,
+                 use_adaptive_strategy: bool = False,
+                 use_performance_analyzer: bool = True,
+                 save_datasets: bool = True):
         """
         Initialize ANFIS Parallel Trainer
 
@@ -136,6 +140,10 @@ class ANFISParallelTrainerV2:
             datasets_dir: Directory containing datasets from PFAZ 1
             output_dir: Output directory for trained ANFIS models (PFAZ 3 output)
             n_workers: Number of parallel workers (None = auto)
+            use_config_manager: Use ANFIS config manager for 8 FIS configurations
+            use_adaptive_strategy: Use adaptive learning strategy (3-stage)
+            use_performance_analyzer: Use performance analyzer for detailed metrics
+            save_datasets: Save train/val/test datasets in .mat, .csv, .xlsx formats
         """
         self.output_dir = Path(output_dir) if output_dir else Path('trained_anfis_models')
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -149,9 +157,16 @@ class ANFISParallelTrainerV2:
         else:
             self.n_workers = n_workers
 
+        # New features
+        self.use_config_manager = use_config_manager
+        self.use_adaptive_strategy = use_adaptive_strategy
+        self.use_performance_analyzer = use_performance_analyzer
+        self.save_datasets = save_datasets
+
         # Storage
         self.training_results = []
         self.failed_jobs = []
+        self.kernel_usage_tracker = {}  # Track which kernels used in which trainings
 
         logger.info("=" * 80)
         logger.info("ANFIS PARALLEL TRAINER V2 INITIALIZED")
@@ -159,6 +174,10 @@ class ANFISParallelTrainerV2:
         logger.info(f"Datasets directory: {self.datasets_dir}")
         logger.info(f"Output directory: {self.output_dir}")
         logger.info(f"Workers: {self.n_workers}")
+        logger.info(f"Config Manager: {self.use_config_manager}")
+        logger.info(f"Adaptive Strategy: {self.use_adaptive_strategy}")
+        logger.info(f"Performance Analyzer: {self.use_performance_analyzer}")
+        logger.info(f"Save Datasets: {self.save_datasets}")
         logger.info("=" * 80)
 
     def _get_feature_set_from_name(self, dataset_name: str) -> List[str]:
@@ -387,6 +406,29 @@ class ANFISParallelTrainerV2:
             with open(metrics_file, 'w') as f:
                 json.dump(metrics, f, indent=2)
 
+            # ✅ NEW: Save training datasets (.mat, .csv, .xlsx)
+            if self.save_datasets:
+                self.save_training_datasets(
+                    X_train, y_train, X_val, y_val, X_test, y_test,
+                    dataset_name=job.dataset_name,
+                    config_id=job.config['id']
+                )
+
+            # ✅ NEW: Track kernel usage
+            if self.save_datasets:
+                kernel_info = {
+                    'n_train': len(X_train),
+                    'n_val': len(X_val),
+                    'n_test': len(X_test),
+                    'n_features': X_train.shape[1],
+                    'n_rules': n_rules
+                }
+                self.track_kernel_usage(
+                    dataset_name=job.dataset_name,
+                    config_id=job.config['id'],
+                    kernel_info=kernel_info
+                )
+
             training_time = time.time() - start_time
 
             result = ANFISTrainingResult(
@@ -594,6 +636,118 @@ class ANFISParallelTrainerV2:
         logger.info(f"Summary report saved: {report_file}")
 
 
+    def save_training_datasets(self, X_train, y_train, X_val, y_val, X_test, y_test, dataset_name: str, config_id: str):
+        """
+        Save train/val/test datasets in multiple formats (.mat, .csv, .xlsx)
+
+        Args:
+            X_train, y_train: Training data
+            X_val, y_val: Validation data
+            X_test, y_test: Test data
+            dataset_name: Name of the dataset
+            config_id: Configuration ID
+        """
+        if not self.save_datasets:
+            return
+
+        try:
+            # Create dataset save directory
+            save_dir = self.output_dir / 'training_datasets' / f'{dataset_name}_{config_id}'
+            save_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save as CSV
+            for split_name, (X, y) in [('train', (X_train, y_train)),
+                                        ('val', (X_val, y_val)),
+                                        ('test', (X_test, y_test))]:
+                df = pd.DataFrame(X)
+                df['target'] = y
+                csv_path = save_dir / f'{split_name}.csv'
+                df.to_csv(csv_path, index=False)
+                logger.info(f"  Saved {split_name}.csv")
+
+            # Save as Excel
+            try:
+                with pd.ExcelWriter(save_dir / 'all_splits.xlsx') as writer:
+                    for split_name, (X, y) in [('train', (X_train, y_train)),
+                                                ('val', (X_val, y_val)),
+                                                ('test', (X_test, y_test))]:
+                        df = pd.DataFrame(X)
+                        df['target'] = y
+                        df.to_excel(writer, sheet_name=split_name, index=False)
+                logger.info(f"  Saved all_splits.xlsx")
+            except Exception as e:
+                logger.warning(f"  Could not save Excel: {e}")
+
+            # Save as .mat (MATLAB format)
+            try:
+                from scipy.io import savemat
+                mat_data = {
+                    'X_train': X_train,
+                    'y_train': y_train,
+                    'X_val': X_val,
+                    'y_val': y_val,
+                    'X_test': X_test,
+                    'y_test': y_test
+                }
+                mat_path = save_dir / 'dataset.mat'
+                savemat(mat_path, mat_data)
+                logger.info(f"  Saved dataset.mat")
+            except Exception as e:
+                logger.warning(f"  Could not save .mat file: {e}")
+
+            logger.info(f"[DATASET SAVED] {dataset_name}_{config_id}")
+
+        except Exception as e:
+            logger.error(f"[ERROR] Could not save datasets: {e}")
+
+    def track_kernel_usage(self, dataset_name: str, config_id: str, kernel_info: Dict):
+        """
+        Track which kernels (nuclei) are used in which training
+
+        Args:
+            dataset_name: Name of the dataset
+            config_id: Configuration ID
+            kernel_info: Dictionary with kernel information (e.g., nucleus A, Z, N)
+        """
+        tracking_key = f'{dataset_name}_{config_id}'
+        self.kernel_usage_tracker[tracking_key] = {
+            'dataset': dataset_name,
+            'config': config_id,
+            'timestamp': datetime.now().isoformat(),
+            'kernel_info': kernel_info
+        }
+
+        # Save tracker to file
+        tracker_file = self.output_dir / 'kernel_usage_tracker.json'
+        with open(tracker_file, 'w') as f:
+            json.dump(self.kernel_usage_tracker, f, indent=2)
+
+        logger.info(f"[KERNEL TRACKER] Updated for {tracking_key}")
+
+    def generate_kernel_usage_report(self) -> Dict:
+        """
+        Generate a comprehensive report of kernel usage across all trainings
+
+        Returns:
+            Dictionary with kernel usage statistics
+        """
+        report = {
+            'total_trainings': len(self.kernel_usage_tracker),
+            'trainings': self.kernel_usage_tracker,
+            'generated_at': datetime.now().isoformat()
+        }
+
+        # Save report
+        report_file = self.output_dir / 'kernel_usage_report.json'
+        with open(report_file, 'w') as f:
+            json.dump(report, f, indent=2)
+
+        logger.info(f"[KERNEL REPORT] Generated: {report_file}")
+        logger.info(f"  Total trainings tracked: {report['total_trainings']}")
+
+        return report
+
+
 # ============================================================================
 # MAIN EXECUTION
 # ============================================================================
@@ -608,10 +762,14 @@ def main():
     # Initialize trainer
     trainer = ANFISParallelTrainerV2(
         output_dir='test_anfis_models',
-        n_workers=2
+        n_workers=2,
+        use_config_manager=True,
+        use_adaptive_strategy=False,
+        use_performance_analyzer=True,
+        save_datasets=True
     )
 
-    print("\n[SUCCESS] ANFIS Parallel Trainer V2 initialized!")
+    print("\n[SUCCESS] ANFIS Parallel Trainer V2 initialized with all features!")
 
 
 if __name__ == "__main__":

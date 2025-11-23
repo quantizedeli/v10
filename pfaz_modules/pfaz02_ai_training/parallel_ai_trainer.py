@@ -667,7 +667,10 @@ class ParallelAITrainer:
                  training_config_path: str = None,
                  output_dir: str = None,
                  n_workers: int = None,
-                 gpu_enabled: bool = False):
+                 gpu_enabled: bool = False,
+                 use_hyperparameter_tuning: bool = False,
+                 use_model_validation: bool = True,
+                 use_advanced_models: bool = False):
         """
         Initialize Parallel AI Trainer
 
@@ -678,6 +681,9 @@ class ParallelAITrainer:
             output_dir: Alternative to models_dir (for backward compatibility)
             n_workers: Number of parallel workers (None = auto)
             gpu_enabled: Enable GPU training (for DNN)
+            use_hyperparameter_tuning: Enable hyperparameter tuning with Optuna
+            use_model_validation: Enable cross-validation and robustness testing
+            use_advanced_models: Enable advanced models (BNN, PINN)
         """
         # Handle both parameter styles
         if models_dir is not None:
@@ -703,6 +709,9 @@ class ParallelAITrainer:
             self.n_workers = n_workers
 
         self.gpu_enabled = gpu_enabled
+        self.use_hyperparameter_tuning = use_hyperparameter_tuning
+        self.use_model_validation = use_model_validation
+        self.use_advanced_models = use_advanced_models
 
         # Storage
         self.training_results = []
@@ -716,6 +725,9 @@ class ParallelAITrainer:
         logger.info(f"Training config: {self.training_config_path}")
         logger.info(f"Workers: {self.n_workers}")
         logger.info(f"GPU enabled: {self.gpu_enabled}")
+        logger.info(f"Hyperparameter tuning: {self.use_hyperparameter_tuning}")
+        logger.info(f"Model validation: {self.use_model_validation}")
+        logger.info(f"Advanced models: {self.use_advanced_models}")
         logger.info("=" * 80)
     
     def load_training_configs(self, config_file: Path) -> List[Dict]:
@@ -834,9 +846,32 @@ class ParallelAITrainer:
             metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
             with open(metrics_file, 'w') as f:
                 json.dump(metrics, f, indent=2)
-            
+
+            # ✅ NEW: Model Validation (Cross-validation)
+            if self.use_model_validation:
+                try:
+                    import numpy as np
+                    X_combined = np.vstack([X_train, X_val])
+                    y_combined = np.concatenate([y_train, y_val])
+
+                    cv_results = self.run_model_validation(
+                        model=trainer.model,
+                        model_name=f"{job.model_type}_{job.config['id']}",
+                        X=X_combined,
+                        y=y_combined,
+                        cv_folds=5
+                    )
+
+                    if cv_results.get('status') == 'completed':
+                        cv_file = job.output_dir / f"cv_results_{job.config['id']}.json"
+                        with open(cv_file, 'w') as f:
+                            json.dump(cv_results, f, indent=2)
+                        logger.info(f"  [CV] Saved cross-validation results")
+                except Exception as e:
+                    logger.warning(f"  [CV] Validation failed: {e}")
+
             training_time = time.time() - start_time
-            
+
             result = TrainingResult(
                 job_id=job.job_id,
                 model_type=job.model_type,
@@ -847,7 +882,7 @@ class ParallelAITrainer:
                 model_path=model_path,
                 training_time=training_time
             )
-            
+
             logger.info(f"[SUCCESS] {job.job_id} | R2={metrics['val'].get('r2', 0):.4f} | {training_time:.1f}s")
             
             return result
@@ -1176,6 +1211,86 @@ class ParallelAITrainer:
 
         # Return requested number
         return all_configs[:n_configs]
+
+    def run_hyperparameter_tuning(self, model_type: str, X_train, y_train, X_val, y_val, n_trials: int = 50) -> Dict:
+        """
+        Run hyperparameter tuning using Optuna
+
+        Args:
+            model_type: Model type (RF, XGBoost, DNN)
+            X_train, y_train: Training data
+            X_val, y_val: Validation data
+            n_trials: Number of Optuna trials
+
+        Returns:
+            Dictionary with best parameters and metrics
+        """
+        try:
+            from pfaz_modules.pfaz02_ai_training.hyperparameter_tuner import HyperparameterTuner
+
+            logger.info(f"\n[HYPERPARAMETER TUNING] Starting for {model_type} with {n_trials} trials")
+
+            tuning_dir = self.output_dir / 'hyperparameter_tuning'
+            tuner = HyperparameterTuner(model_type, output_dir=str(tuning_dir), n_trials=n_trials)
+
+            # Run tuning
+            best_params = tuner.tune(X_train, y_train, X_val, y_val)
+
+            logger.info(f"[HYPERPARAMETER TUNING] Best parameters: {best_params}")
+
+            return {
+                'status': 'completed',
+                'best_params': best_params,
+                'model_type': model_type,
+                'n_trials': n_trials
+            }
+
+        except ImportError as e:
+            logger.warning(f"[HYPERPARAMETER TUNING] Optuna not available: {e}")
+            return {'status': 'skipped', 'reason': 'optuna_not_available'}
+        except Exception as e:
+            logger.error(f"[HYPERPARAMETER TUNING] Error: {e}")
+            return {'status': 'failed', 'error': str(e)}
+
+    def run_model_validation(self, model, model_name: str, X, y, cv_folds: int = 5) -> Dict:
+        """
+        Run cross-validation and robustness testing
+
+        Args:
+            model: Trained model
+            model_name: Model name
+            X, y: Data for validation
+            cv_folds: Number of CV folds
+
+        Returns:
+            Dictionary with validation results
+        """
+        try:
+            from pfaz_modules.pfaz02_ai_training.model_validator import CrossValidationAnalyzer
+
+            logger.info(f"\n[MODEL VALIDATION] Starting for {model_name}")
+
+            validation_dir = self.output_dir / 'model_validation'
+            validator = CrossValidationAnalyzer(model, model_name, output_dir=str(validation_dir))
+
+            # Run cross-validation
+            cv_results = validator.run_cv(X, y, cv=cv_folds)
+
+            logger.info(f"[MODEL VALIDATION] CV Results: {cv_results}")
+
+            return {
+                'status': 'completed',
+                'cv_results': cv_results,
+                'model_name': model_name,
+                'cv_folds': cv_folds
+            }
+
+        except ImportError as e:
+            logger.warning(f"[MODEL VALIDATION] Validator not available: {e}")
+            return {'status': 'skipped', 'reason': 'validator_not_available'}
+        except Exception as e:
+            logger.error(f"[MODEL VALIDATION] Error: {e}")
+            return {'status': 'failed', 'error': str(e)}
 
 
 # ============================================================================
