@@ -22,7 +22,10 @@ feature_sets:
   # - "extended": Base + Physics kombinasyonlar (~200 adet)
   # - "comprehensive": Tüm olası kombinasyonlar (1000+ adet)
   # - "targeted": Target'a özgü optimize edilmiş setler (~50-100 adet per target)
-  mode: "comprehensive"
+  # - "minimal": Basit kombinasyonlar, 2-4 giriş (Kısım 1)
+  # - "advanced": Gelişmiş kombinasyonlar, 5+ giriş (Kısım 2)
+  # - "categorized": Hem minimal hem advanced (ayrı pipeline'lar)
+  mode: "categorized"
 
   # Base variants to use
   base_variants:
@@ -188,6 +191,25 @@ limits:
   save_memory_efficient: true
 
 # ============================================================================
+# CATEGORIZED MODE SETTINGS
+# ============================================================================
+categorized_mode:
+  # Minimal datasets (Kısım 1: 2-4 giriş)
+  minimal:
+    output_dir: "ANFIS_Datasets_Minimal"
+    enable_ai_training: true
+    enable_anfis_training: true
+    priority: "high"  # Bu setler önce işlenir
+
+  # Advanced datasets (Kısım 2: 5+ giriş)
+  advanced:
+    output_dir: "ANFIS_Datasets_Advanced"
+    enable_ai_training: true
+    enable_anfis_training: true
+    priority: "normal"  # Minimal'dan sonra işlenir
+    max_sets_per_target: 100  # Her target için maksimum set
+
+# ============================================================================
 # OUTPUT FORMATS
 # ============================================================================
 output:
@@ -195,7 +217,7 @@ output:
   formats:
     csv: true
     excel: true
-    matlab: false  # MAT files are large, disable by default
+    matlab: true  # MATLAB engine aktif, MAT files oluştur
 
   # Generate metadata
   metadata: true
@@ -277,11 +299,40 @@ presets:
     limits.max_total_datasets: 500
     feature_sets.include_target_optimized: true
 
+  # Minimal datasets only (Kısım 1: 2-4 giriş, hızlı eğitim)
+  minimal_only:
+    feature_sets.mode: "minimal"
+    limits.max_total_datasets: 500
+    output.formats.matlab: true
+    categorized_mode.minimal.enable_ai_training: true
+    categorized_mode.minimal.enable_anfis_training: true
+
+  # Advanced datasets only (Kısım 2: 5+ giriş, gelişmiş eğitim)
+  advanced_only:
+    feature_sets.mode: "advanced"
+    limits.max_total_datasets: 1000
+    output.formats.matlab: true
+    categorized_mode.advanced.enable_ai_training: true
+    categorized_mode.advanced.enable_anfis_training: true
+
+  # Categorized (hem minimal hem advanced, ayrı pipeline'lar)
+  categorized_training:
+    feature_sets.mode: "categorized"
+    limits.max_total_datasets: 2000
+    output.formats.matlab: true
+    categorized_mode.minimal.enable_ai_training: true
+    categorized_mode.minimal.enable_anfis_training: true
+    categorized_mode.advanced.enable_ai_training: true
+    categorized_mode.advanced.enable_anfis_training: true
+
 # ============================================================================
 # ACTIVE PRESET
 # ============================================================================
 # Uncomment to use a preset:
 # active_preset: "quick_test"
 # active_preset: "standard_research"
-active_preset: "comprehensive"
+# active_preset: "comprehensive"
 # active_preset: "target_focused"
+# active_preset: "minimal_only"
+# active_preset: "advanced_only"
+active_preset: "categorized_training"

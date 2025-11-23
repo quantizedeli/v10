@@ -210,13 +210,14 @@ def get_dynamic_feature_sets(mode='standard',
     Dinamik olarak feature setleri oluştur
 
     Args:
-        mode: 'standard' (legacy), 'extended', 'comprehensive', 'targeted'
+        mode: 'standard', 'extended', 'comprehensive', 'targeted', 'minimal', 'advanced', 'categorized'
         target_name: Hedef ismi ('MM', 'QM', 'Beta_2', 'MM_QM')
         max_sets: Maksimum set sayısı
         **kwargs: FeatureSetBuilder fonksiyonlarına iletilecek ek argümanlar
 
     Returns:
         Dict[str, List[str]]: Feature set ismi -> feature listesi
+        (mode='categorized' ise Dict[str, Dict[str, List[str]]])
 
     Examples:
         >>> # Legacy mode (eski sistem)
@@ -230,6 +231,16 @@ def get_dynamic_feature_sets(mode='standard',
 
         >>> # Target-specific optimized
         >>> sets = get_dynamic_feature_sets(mode='targeted', target_name='MM')
+
+        >>> # Minimal mode (2-4 inputs, Kısım 1)
+        >>> sets = get_dynamic_feature_sets(mode='minimal', target_name='MM')
+
+        >>> # Advanced mode (5+ inputs, Kısım 2)
+        >>> sets = get_dynamic_feature_sets(mode='advanced', target_name='MM', max_sets=100)
+
+        >>> # Categorized mode (hem minimal hem advanced)
+        >>> cats = get_dynamic_feature_sets(mode='categorized', target_name='MM')
+        >>> # Returns: {'minimal': {...}, 'advanced': {...}}
     """
     from core_modules.feature_set_builder import FeatureSetBuilder
 
@@ -294,8 +305,33 @@ def get_dynamic_feature_sets(mode='standard',
 
         return feature_sets
 
+    elif mode == 'minimal':
+        # Minimal mode: 2-4 inputs (Kısım 1 - Basit eğitimler)
+        return builder.generate_minimal_feature_sets(target_name=target_name)
+
+    elif mode == 'advanced':
+        # Advanced mode: 5+ inputs (Kısım 2 - Gelişmiş eğitimler)
+        return builder.generate_advanced_feature_sets(
+            target_name=target_name,
+            max_sets=max_sets
+        )
+
+    elif mode == 'categorized':
+        # Categorized mode: Hem minimal hem advanced
+        # Returns: {'minimal': {...}, 'advanced': {...}}
+        minimal = builder.generate_minimal_feature_sets(target_name=target_name)
+        advanced = builder.generate_advanced_feature_sets(
+            target_name=target_name,
+            max_sets=max_sets
+        )
+
+        return {
+            'minimal': minimal,
+            'advanced': advanced
+        }
+
     else:
-        raise ValueError(f"Unknown mode: {mode}. Use 'standard', 'extended', 'comprehensive', or 'targeted'")
+        raise ValueError(f"Unknown mode: {mode}. Use 'standard', 'extended', 'comprehensive', 'targeted', 'minimal', 'advanced', or 'categorized'")
 
 # ============================================================================
 # ANFİS KONFİGÜRASYONLARI

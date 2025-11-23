@@ -19,6 +19,10 @@ class FeatureSetBuilder:
 
     Binlerce farklı feature kombinasyonu oluşturarak comprehensive bir
     dataset sistemi için gerekli feature set'leri üretir.
+
+    Kategoriler:
+    - MINIMAL (Kısım 1): 2-4 giriş, basit kombinasyonlar, hızlı eğitim
+    - ADVANCED (Kısım 2): 5+ giriş, karmaşık kombinasyonlar, gelişmiş eğitim
     """
 
     def __init__(self):
@@ -502,6 +506,143 @@ class FeatureSetBuilder:
         )
 
         return counts
+
+    def categorize_by_complexity(self,
+                                  feature_sets: Dict[str, List[str]],
+                                  target_name: str = None) -> Dict[str, Dict[str, List[str]]]:
+        """
+        Feature setlerini karmaşıklığa göre kategorize et
+
+        Kategoriler:
+        - MINIMAL (Kısım 1): 2-4 giriş, basit kombinasyonlar
+        - ADVANCED (Kısım 2): 5+ giriş, gelişmiş kombinasyonlar
+
+        Args:
+            feature_sets: Kategorize edilecek feature setleri
+            target_name: Target ismi (output sayısını belirlemek için)
+
+        Returns:
+            Dict with 'minimal' and 'advanced' keys
+        """
+        categorized = {
+            'minimal': {},
+            'advanced': {}
+        }
+
+        # Target'a göre output sayısını belirle
+        output_count = 2 if target_name == 'MM_QM' else 1
+
+        for name, features in feature_sets.items():
+            n_inputs = len(features)
+
+            # Minimal: 2-4 giriş
+            if 2 <= n_inputs <= 4:
+                categorized['minimal'][name] = features
+            # Advanced: 5+ giriş
+            elif n_inputs >= 5:
+                categorized['advanced'][name] = features
+
+        return categorized
+
+    def generate_minimal_feature_sets(self, target_name: str = None) -> Dict[str, List[str]]:
+        """
+        Minimal feature setleri oluştur (Kısım 1)
+
+        Minimal setler:
+        - 2 giriş 1 çıkış (Beta_2 için)
+        - 3 giriş 1 çıkış (AZN -> MM, QM, Beta_2)
+        - 3 giriş 2 çıkış (AZN -> MM_Q)
+        - 4 giriş 1 çıkış (AZNS, AZNP -> MM, QM, Beta_2)
+        - 4 giriş 2 çıkış (AZNS, AZNP, AZNSP -> MM_Q)
+
+        Args:
+            target_name: Target ismi ('MM', 'QM', 'MM_QM', 'Beta_2')
+
+        Returns:
+            Dict[str, List[str]]: Minimal feature setleri (2-4 giriş)
+        """
+        minimal_sets = {}
+
+        # 2 giriş (sadece Beta_2 için)
+        if target_name == 'Beta_2' or target_name is None:
+            minimal_sets['Beta2_AZ'] = ['A', 'Z']
+            minimal_sets['Beta2_AN'] = ['A', 'N']
+            minimal_sets['Beta2_ZN'] = ['Z', 'N']
+
+        # 3 giriş: AZN
+        minimal_sets['AZN'] = ['A', 'Z', 'N']
+
+        # 4 giriş: AZN + S veya P (tek başına)
+        minimal_sets['AZNS'] = ['A', 'Z', 'N', 'SPIN']
+        minimal_sets['AZNP'] = ['A', 'Z', 'N', 'PARITY']
+
+        # NOT: AZNSP = 5 feature, bu advanced kategorisine girer!
+        # Sadece MM_QM multi-output için minimal'e dahil edilebilir
+        if target_name == 'MM_QM' or target_name is None:
+            minimal_sets['AZNSP'] = ['A', 'Z', 'N', 'SPIN', 'PARITY']
+
+        return minimal_sets
+
+    def generate_advanced_feature_sets(self,
+                                      target_name: str = None,
+                                      max_sets: int = None) -> Dict[str, List[str]]:
+        """
+        Advanced feature setleri oluştur (Kısım 2)
+
+        Advanced setler:
+        - 5+ giriş ile tüm physics kombinasyonları
+
+        Args:
+            target_name: Target ismi
+            max_sets: Maksimum set sayısı
+
+        Returns:
+            Dict[str, List[str]]: Advanced feature setleri
+        """
+        advanced_sets = {}
+
+        # Target-optimized advanced setleri ekle
+        if target_name:
+            target_sets = self.generate_target_optimized_sets(
+                target_name,
+                complexity_levels=['advanced', 'ultra']
+            )
+            advanced_sets.update(target_sets)
+
+        # Physics kombinasyonları (5+ features olan)
+        base_combos = self.generate_base_combinations()
+
+        # Sadece AZNSP kullan (zaten 5 feature)
+        for base_name, base_features in base_combos.items():
+            if len(base_features) < 4:  # 4'ten az olanları atla
+                continue
+
+            # Single physics groups ile kombine et
+            physics = self.generate_physics_combinations()
+            for phys_name, phys_features in physics.items():
+                combined = list(dict.fromkeys(base_features + phys_features))
+
+                if len(combined) >= 5:  # Sadece 5+ olanları al
+                    set_name = f"{base_name}_{phys_name}"
+                    advanced_sets[set_name] = combined
+
+                    if max_sets and len(advanced_sets) >= max_sets:
+                        return advanced_sets
+
+        # Multi-group combinations (bunlar zaten 5+ olacak)
+        if max_sets is None or len(advanced_sets) < max_sets:
+            remaining = max_sets - len(advanced_sets) if max_sets else None
+            multi_sets = self.generate_multi_group_combinations(
+                max_groups_per_combo=2,
+                max_combinations=remaining
+            )
+
+            # Sadece 5+ olanları ekle
+            for name, features in multi_sets.items():
+                if len(features) >= 5:
+                    advanced_sets[name] = features
+
+        return advanced_sets
 
     def export_feature_sets_summary(self, feature_sets: Dict[str, List[str]]) -> str:
         """
