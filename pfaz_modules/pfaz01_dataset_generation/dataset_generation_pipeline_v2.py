@@ -1,5 +1,5 @@
 """
-FAZ 1: Dataset Generation Pipeline
+FAZ 2: Dataset Generation Pipeline
 ===================================
 
 Kapsamlı dataset oluşturma sistemi:
@@ -7,12 +7,16 @@ Kapsamlı dataset oluşturma sistemi:
 - QM filtreleme (target-based)
 - Çoklu çekirdek sayıları (50, 75, 100, 150, 175, 200, 250, 300, 350)
 - Çoklu targetler (MM, QM, MM_QM, Beta_2)
+- Feature kombinasyonları (Basic, Extended, Full, ANFIS variants)
+- I/O Configurations (3In1Out, 4In1Out, 5InAdv, etc.)
+- Scenario System (S70, S80)
+- Enhanced naming convention (7-part format)
 - Kalite kontrolü ve validasyon
 - Otomatik raporlama
 
 Author: Nuclear Physics AI Project
-Version: 1.0.0
-Date: 2025-10-15
+Version: 2.0.0 (FAZ 2)
+Date: 2025-11-23
 """
 
 import pandas as pd
@@ -31,6 +35,7 @@ from .qm_filter_manager import QMFilterManager
 from .data_quality_modules import OutlierHandler, DataValidator
 from .excluded_nuclei_tracker import ExcludedNucleiTracker
 from .feature_combination_manager import FeatureCombinationManager, get_default_feature_sets
+from .io_config_manager import InputOutputConfigManager, ScenarioManager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,7 +46,7 @@ logger = logging.getLogger(__name__)
 
 class DatasetGenerationPipelineV2:
     """
-    Ana Dataset Generation Pipeline V2
+    Ana Dataset Generation Pipeline V2 (FAZ 2)
 
     Workflow:
     1. Ham veriyi yükle
@@ -49,16 +54,19 @@ class DatasetGenerationPipelineV2:
     3. Target-based QM filtreleme uygula
     4. Farklı çekirdek sayıları için örnekle
     5. Kalite kontrolü
-    6. Dataset'leri kaydet
+    6. Dataset'leri kaydet (I/O configs, scenarios, 7-part naming)
     7. Metadata ve raporlar oluştur
     """
-    
+
     def __init__(self,
                  source_data_path: str = None,
                  output_base_dir: str = 'generated_datasets',
                  nucleus_counts: List[int] = None,
                  targets: List[str] = None,
                  feature_sets: List[str] = None,
+                 scenario: str = None,
+                 scaling: str = None,
+                 sampling: str = None,
                  # Backward compatibility aliases
                  aaa2_txt_path: str = None,
                  output_dir: str = None):
@@ -69,6 +77,9 @@ class DatasetGenerationPipelineV2:
             nucleus_counts: Oluşturulacak dataset boyutları
             targets: Target değişkenler
             feature_sets: Feature kombinasyonları (Basic, Extended, Full)
+            scenario: Split scenario (S70, S80) - Default: S70
+            scaling: Scaling method (NoScaling, Standard, Robust) - Default: NoScaling
+            sampling: Sampling method (Random, Stratified) - Default: Random
             aaa2_txt_path: Alias for source_data_path (backward compatibility)
             output_dir: Alias for output_base_dir (backward compatibility)
         """
@@ -90,6 +101,11 @@ class DatasetGenerationPipelineV2:
 
         # [FAZ 1 NEW]: Feature combinations
         self.feature_sets = feature_sets or get_default_feature_sets()  # ['Basic', 'Extended', 'Full']
+
+        # [FAZ 2 NEW]: Scenario, Scaling, Sampling
+        self.scenario = scenario or 'S70'  # Default: 70/15/15 split
+        self.scaling = scaling or 'NoScaling'  # Default: no scaling (FAZ 3 will add options)
+        self.sampling = sampling or 'Random'  # Default: random (FAZ 3 will add stratified)
 
         # Target column name mapping (simplified name -> actual column name)
         self.target_column_map = {
@@ -113,7 +129,11 @@ class DatasetGenerationPipelineV2:
 
         # [FAZ 1 NEW]: Feature combination manager
         self.feature_manager = FeatureCombinationManager()
-        
+
+        # [FAZ 2 NEW]: I/O Config and Scenario managers
+        self.io_config_manager = InputOutputConfigManager()
+        self.scenario_manager = ScenarioManager()
+
         # Storage
         self.raw_data = None
         self.enriched_data = None
@@ -122,13 +142,16 @@ class DatasetGenerationPipelineV2:
         self.generation_report = {}
         
         logger.info("=" * 80)
-        logger.info("DATASET GENERATION PIPELINE INITIALIZED")
+        logger.info("DATASET GENERATION PIPELINE INITIALIZED (FAZ 2)")
         logger.info("=" * 80)
         logger.info(f"Source data: {self.source_data_path}")
         logger.info(f"Output directory: {self.output_base_dir}")
         logger.info(f"Nucleus counts: {self.nucleus_counts}")
         logger.info(f"Targets: {self.targets}")
-        logger.info(f"Feature sets: {self.feature_sets}")  # [FAZ 1 NEW]
+        logger.info(f"Feature sets: {self.feature_sets}")  # [FAZ 1]
+        logger.info(f"Scenario: {self.scenario}")  # [FAZ 2]
+        logger.info(f"Scaling: {self.scaling}")  # [FAZ 2]
+        logger.info(f"Sampling: {self.sampling}")  # [FAZ 2]
     
     def run_complete_pipeline(self) -> Dict:
         """
@@ -523,7 +546,7 @@ class DatasetGenerationPipelineV2:
                                              n_nuclei: int,
                                              feature_set_name: str) -> Optional[Dict]:
         """
-        [FAZ 1 NEW] Belirli bir feature set ile dataset oluştur
+        [FAZ 2 UPDATE] Belirli bir feature set ile dataset oluştur
 
         Args:
             source_df: Kaynak DataFrame
@@ -546,7 +569,7 @@ class DatasetGenerationPipelineV2:
             actual_n = n_nuclei
             size_label = str(n_nuclei)
 
-        # [FAZ 1 NEW]: Feature set selection
+        # [FAZ 1]: Feature set selection
         target_cols = self._get_actual_column_names(target, sampled_df)
 
         # Get features for this specific feature set
@@ -560,16 +583,28 @@ class DatasetGenerationPipelineV2:
             logger.error(f"Error getting feature set '{feature_set_name}': {e}")
             return None
 
-        # [FAZ 1 NEW]: Folder structure (basit version - Faz 1)
-        # Format: output_base_dir / target / feature_set_name / dataset_name
-        dataset_name = f"{target}_{size_label}_{feature_set_name}"
+        # [FAZ 2 NEW]: Detect I/O configuration
+        n_features = len(feature_cols)
+        io_config_name = self.io_config_manager.get_config_for_feature_set(
+            feature_set_name,
+            n_features,
+            target
+        )
+
+        # [FAZ 2 NEW]: Enhanced naming convention (7-part format)
+        # Format: {TARGET}_{SIZE}_{SCENARIO}_{IO_CONFIG}_{FEATURE_SET}_{SCALING}_{SAMPLING}
+        # Example: MM_75_S70_3In1Out_Basic_NoScaling_Random
+        dataset_name = f"{target}_{size_label}_{self.scenario}_{io_config_name}_{feature_set_name}_{self.scaling}_{self.sampling}"
+
+        # [FAZ 1]: Folder structure (output_base_dir / target / feature_set_name)
         dataset_dir = self.output_base_dir / target / feature_set_name
         dataset_dir.mkdir(parents=True, exist_ok=True)
 
-        # CRITICAL: Split into train/val/test (70/15/15) with fixed seed
+        # [FAZ 2 UPDATE]: Split using scenario ratios instead of hardcoded values
+        train_ratio, val_ratio, test_ratio = self.scenario_manager.get_split_ratios(self.scenario)
         n_total = len(sampled_df)
-        n_train = int(0.7 * n_total)
-        n_val = int(0.15 * n_total)
+        n_train = int(train_ratio * n_total)
+        n_val = int(val_ratio * n_total)
 
         # Shuffle with fixed seed for reproducibility
         split_seed = hash(f"split_{target}_{n_nuclei}_{feature_set_name}") % (2**32)
@@ -600,11 +635,15 @@ class DatasetGenerationPipelineV2:
                 'mat': mat_file
             }
 
-        # Create metadata
+        # [FAZ 2 UPDATE]: Enhanced metadata with I/O config and scenario
         metadata = {
             'dataset_name': dataset_name,
             'target': target,
             'feature_set': feature_set_name,
+            'io_config': io_config_name,  # [FAZ 2 NEW]
+            'scenario': self.scenario,  # [FAZ 2 NEW]
+            'scaling': self.scaling,  # [FAZ 2 NEW]
+            'sampling': self.sampling,  # [FAZ 2 NEW]
             'n_nuclei_requested': n_nuclei,
             'n_nuclei_total': actual_n,
             'n_nuclei_train': len(train_df),
@@ -613,9 +652,11 @@ class DatasetGenerationPipelineV2:
             'n_features': len(feature_cols),
             'feature_names': feature_cols,
             'target_names': target_cols,
-            'split_ratio': [0.70, 0.15, 0.15],
+            'split_ratio': [train_ratio, val_ratio, test_ratio],  # [FAZ 2 UPDATE: from scenario]
             'generation_timestamp': datetime.now().isoformat(),
-            'folder_structure': str(dataset_dir.relative_to(self.output_base_dir))
+            'folder_structure': str(dataset_dir.relative_to(self.output_base_dir)),
+            # [FAZ 2 NEW]: I/O config details
+            'io_config_details': self.io_config_manager.get_config_info(io_config_name)
         }
 
         # Save metadata
@@ -876,33 +917,61 @@ class DatasetGenerationPipelineV2:
             qm_report_path = metadata_dir / 'qm_filter_report.xlsx'
             self.qm_filter_manager.save_filter_report_excel(str(qm_report_path))
 
-        # [FAZ 1 NEW]: Feature combinations JSON
+        # [FAZ 1]: Feature combinations JSON
         feature_combos_path = metadata_dir / 'feature_combinations.json'
         self.feature_manager.save_feature_combinations_json(str(feature_combos_path))
+
+        # [FAZ 2 NEW]: I/O configurations JSON
+        io_configs_path = metadata_dir / 'io_configurations.json'
+        self.io_config_manager.save_io_configs_json(str(io_configs_path))
 
         # Summary Excel report
         self._create_summary_excel()
     
     def _create_summary_excel(self):
-        """Excel özet raporu oluştur"""
+        """[FAZ 2 UPDATE] Excel özet raporu oluştur"""
         summary_data = []
-        
+
         for dataset in self.generated_datasets:
             meta = dataset['metadata']
+
+            # Handle both FAZ 1 format (old) and FAZ 2 format (new)
+            if 'split_info' in meta:
+                # Old FAZ 1 format
+                n_train = meta['split_info']['train']['n_samples']
+                n_val = meta['split_info']['val']['n_samples']
+                n_test = meta['split_info']['test']['n_samples']
+                a_min = meta['statistics']['A_range'][0]
+                a_max = meta['statistics']['A_range'][1]
+                z_min = meta['statistics']['Z_range'][0]
+                z_max = meta['statistics']['Z_range'][1]
+            else:
+                # New FAZ 2 format
+                n_train = meta.get('n_nuclei_train', 0)
+                n_val = meta.get('n_nuclei_val', 0)
+                n_test = meta.get('n_nuclei_test', 0)
+                a_min = meta.get('statistics', {}).get('A_range', [None, None])[0] if 'statistics' in meta else None
+                a_max = meta.get('statistics', {}).get('A_range', [None, None])[1] if 'statistics' in meta else None
+                z_min = meta.get('statistics', {}).get('Z_range', [None, None])[0] if 'statistics' in meta else None
+                z_max = meta.get('statistics', {}).get('Z_range', [None, None])[1] if 'statistics' in meta else None
+
             summary_data.append({
                 'Dataset_Name': meta['dataset_name'],
                 'Target': meta['target'],
+                'Feature_Set': meta.get('feature_set', 'N/A'),  # [FAZ 2]
+                'IO_Config': meta.get('io_config', 'N/A'),  # [FAZ 2]
+                'Scenario': meta.get('scenario', 'N/A'),  # [FAZ 2]
+                'Scaling': meta.get('scaling', 'N/A'),  # [FAZ 2]
+                'Sampling': meta.get('sampling', 'N/A'),  # [FAZ 2]
                 'N_Nuclei_Total': meta['n_nuclei_total'],
-                'N_Train': meta['split_info']['train']['n_samples'],
-                'N_Val': meta['split_info']['val']['n_samples'],
-                'N_Test': meta['split_info']['test']['n_samples'],
+                'N_Train': n_train,
+                'N_Val': n_val,
+                'N_Test': n_test,
                 'N_Features': meta['n_features'],
-                'A_Min': meta['statistics']['A_range'][0],
-                'A_Max': meta['statistics']['A_range'][1],
-                'Z_Min': meta['statistics']['Z_range'][0],
-                'Z_Max': meta['statistics']['Z_range'][1],
-                'Train_CSV': str(dataset['split_files']['train']['csv'].name),
-                'Train_Excel': str(dataset['split_files']['train']['xlsx'].name)
+                'A_Min': a_min,
+                'A_Max': a_max,
+                'Z_Min': z_min,
+                'Z_Max': z_max
             })
         
         summary_df = pd.DataFrame(summary_data)
