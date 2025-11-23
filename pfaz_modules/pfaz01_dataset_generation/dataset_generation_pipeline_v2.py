@@ -29,6 +29,7 @@ warnings.filterwarnings('ignore')
 from physics_modules.theoretical_calculations_manager import TheoreticalCalculationsManager
 from .qm_filter_manager import QMFilterManager
 from .data_quality_modules import OutlierHandler, DataValidator
+from .excluded_nuclei_tracker import ExcludedNucleiTracker
 
 logging.basicConfig(
     level=logging.INFO,
@@ -92,10 +93,16 @@ class DatasetGenerationPipelineV2:
             'Beta_2': 'Beta_2'
         }
         
-        # Initialize managers
+        # Initialize exclusion tracker
+        self.exclusion_tracker = ExcludedNucleiTracker()
+
+        # Initialize managers with tracker
         self.theoretical_calc_manager = TheoreticalCalculationsManager(enable_all=True)
-        self.qm_filter_manager = QMFilterManager()
-        self.outlier_handler = OutlierHandler(output_dir=self.output_base_dir / 'quality_reports')
+        self.qm_filter_manager = QMFilterManager(tracker=self.exclusion_tracker)
+        self.outlier_handler = OutlierHandler(
+            output_dir=self.output_base_dir / 'quality_reports',
+            tracker=self.exclusion_tracker
+        )
         self.data_validator = DataValidator(output_dir=self.output_base_dir / 'quality_reports')
         
         # Storage
@@ -648,7 +655,7 @@ class DatasetGenerationPipelineV2:
     def _create_metadata_and_reports(self):
         """Master metadata ve raporlar oluştur"""
         logger.info("Creating master metadata and reports...")
-        
+
         # Master metadata
         master_metadata = {
             'pipeline_version': '1.0.0',
@@ -659,7 +666,7 @@ class DatasetGenerationPipelineV2:
             'nucleus_counts': self.nucleus_counts,
             'datasets': []
         }
-        
+
         for dataset in self.generated_datasets:
             master_metadata['datasets'].append({
                 'name': dataset['dataset_name'],
@@ -669,7 +676,7 @@ class DatasetGenerationPipelineV2:
                 'data_file_csv': str(dataset['data_file_csv']),
                 'data_file_mat': str(dataset['data_file_mat'])
             })
-        
+
         # Save master metadata
         master_metadata_file = self.output_base_dir / 'master_metadata.json'
         with open(master_metadata_file, 'w') as f:
@@ -683,7 +690,34 @@ class DatasetGenerationPipelineV2:
             json.dump(self.generation_report, f, indent=2)
 
         logger.info(f"[SUCCESS] Generation report: {report_file}")
-        
+
+        # Exclusion tracker reports
+        logger.info("\nSaving exclusion tracker reports...")
+        self.exclusion_tracker.print_summary()
+
+        # Save to multiple formats
+        metadata_dir = self.output_base_dir / 'metadata'
+        metadata_dir.mkdir(parents=True, exist_ok=True)
+
+        # Excel report (main format)
+        excel_path = metadata_dir / 'excluded_nuclei_report.xlsx'
+        self.exclusion_tracker.save_to_excel(str(excel_path))
+
+        # CSV report (for easy parsing)
+        csv_path = metadata_dir / 'excluded_nuclei_report.csv'
+        self.exclusion_tracker.save_to_csv(str(csv_path))
+
+        # JSON report (for programmatic access)
+        json_path = metadata_dir / 'excluded_nuclei_report.json'
+        self.exclusion_tracker.save_to_json(str(json_path))
+
+        logger.info(f"[SUCCESS] Exclusion reports saved to: {metadata_dir}")
+
+        # QM filter reports
+        if self.qm_filter_manager.filter_reports:
+            qm_report_path = metadata_dir / 'qm_filter_report.xlsx'
+            self.qm_filter_manager.save_filter_report_excel(str(qm_report_path))
+
         # Summary Excel report
         self._create_summary_excel()
     

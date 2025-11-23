@@ -18,10 +18,26 @@ logger = logging.getLogger(__name__)
 
 
 class QMFilterManager:
-    """QM filtreleme yöneticisi"""
+    """
+    QM filtreleme yöneticisi
 
-    def __init__(self):
+    Features:
+    - Target-based QM filtering
+    - Detailed tracking of removed nuclei
+    - Excel report generation
+    - Integration with ExcludedNucleiTracker
+    """
+
+    def __init__(self, tracker=None):
+        """
+        Initialize QM Filter Manager
+
+        Args:
+            tracker: ExcludedNucleiTracker instance for tracking exclusions
+        """
         self.qm_columns = ['Q', 'QUADRUPOLE MOMENT [Q]', 'QM']  # Olası QM sütun isimleri
+        self.tracker = tracker
+        self.filter_reports = []  # Store all filter reports
         
     def filter_by_target(self, df, target_name, target_cols, features=None):
         """
@@ -52,7 +68,9 @@ class QMFilterManager:
             # MM için Q feature kontrolü
             if features and self._has_q_dependent_features(features):
                 # Q feature varsa QM gerekli [FAIL]
-                df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
+                df_filtered, removed = self._remove_missing_qm(
+                    df_filtered, qm_col, target_name, 'MISSING_QM_FOR_FEATURES'
+                )
                 removed_nuclei = removed
                 filter_result = 'qm_required_for_features'
                 logger.info(f"[OK] Target: MM + Q feature -> QM filtresi UYGULANDI ({len(removed)} çekirdek çıkarıldı)")
@@ -60,26 +78,32 @@ class QMFilterManager:
                 # Q feature yoksa QM gerekmez [OK]
                 filter_result = 'no_filtering_needed'
                 logger.info(f"[OK] Target: MM -> QM filtresi UYGULANMADI (Q feature yok)")
-            
+
         elif target_name == 'QM':
             # QM hedefi, QM olmayan çıkar [FAIL]
-            df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
+            df_filtered, removed = self._remove_missing_qm(
+                df_filtered, qm_col, target_name, 'QM_REQUIRED'
+            )
             removed_nuclei = removed
             filter_result = 'qm_required'
-            logger.info(f"[OK] Target: QM -> QM filtresi UYGULAN DI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
-            
+            logger.info(f"[OK] Target: QM -> QM filtresi UYGULANDI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
+
         elif target_name == 'MM_QM':
             # MM_QM hedefi, QM olmayan çıkar [FAIL]
-            df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
+            df_filtered, removed = self._remove_missing_qm(
+                df_filtered, qm_col, target_name, 'QM_REQUIRED'
+            )
             removed_nuclei = removed
             filter_result = 'qm_required'
             logger.info(f"[OK] Target: MM_QM -> QM filtresi UYGULANDI (QM olmayan {len(removed)} çekirdek çıkarıldı)")
-            
+
         elif target_name == 'Beta_2':
             # Beta_2 için Q'ya bağlı feature kontrolü
             if features and self._has_q_dependent_features(features):
                 # Q'ya bağlı feature varsa QM gerekli [FAIL]
-                df_filtered, removed = self._remove_missing_qm(df_filtered, qm_col)
+                df_filtered, removed = self._remove_missing_qm(
+                    df_filtered, qm_col, target_name, 'MISSING_QM_FOR_FEATURES'
+                )
                 removed_nuclei = removed
                 filter_result = 'qm_required_for_features'
                 logger.info(f"[OK] Target: Beta_2 + Q-bağlı features -> QM filtresi UYGULANDI ({len(removed)} çekirdek çıkarıldı)")
@@ -112,13 +136,50 @@ class QMFilterManager:
                 return col
         return None
     
-    def _remove_missing_qm(self, df, qm_col):
-        """QM olmayan çekirdekleri çıkar"""
+    def _remove_missing_qm(self, df, qm_col, target_name=None, reason_code='QM_REQUIRED'):
+        """
+        QM olmayan çekirdekleri çıkar ve tracker'a kaydet
+
+        Args:
+            df: DataFrame
+            qm_col: QM sütun adı
+            target_name: Target adı (tracking için)
+            reason_code: Neden kodu
+
+        Returns:
+            df_filtered: Filtrelenmiş DataFrame
+            removed_nuclei: Çıkartılan çekirdek listesi
+        """
         missing_qm = df[df[qm_col].isna() | (df[qm_col] == 0)]
         removed_nuclei = missing_qm['NUCLEUS'].tolist() if 'NUCLEUS' in df.columns else []
-        
+
+        # Track removed nuclei with details
+        if self.tracker and target_name:
+            for idx, row in missing_qm.iterrows():
+                nucleus = row['NUCLEUS'] if 'NUCLEUS' in df.columns else f'Index_{idx}'
+                qm_value = row[qm_col] if qm_col in df.columns else None
+
+                details = {
+                    'qm_column': qm_col,
+                    'qm_value': float(qm_value) if pd.notna(qm_value) else None,
+                    'is_nan': pd.isna(qm_value),
+                    'is_zero': qm_value == 0 if pd.notna(qm_value) else False
+                }
+
+                a = int(row['A']) if 'A' in df.columns else None
+                z = int(row['Z']) if 'Z' in df.columns else None
+                n = int(row['N']) if 'N' in df.columns else None
+
+                self.tracker.add_exclusion(
+                    nucleus=nucleus,
+                    reason=reason_code,
+                    target=target_name,
+                    a=a, z=z, n=n,
+                    details=details
+                )
+
         df_filtered = df[df[qm_col].notna() & (df[qm_col] != 0)].copy()
-        
+
         return df_filtered, removed_nuclei
     
     def _has_q_dependent_features(self, features):
@@ -141,10 +202,67 @@ class QMFilterManager:
         
         return False
     
-    def create_filter_report(self, reports, output_path='reports/qm_filter_report.xlsx'):
+    def save_filter_report_excel(self, output_path='reports/qm_filter_report.xlsx'):
         """
         Tüm filtreleme raporlarını birleştir ve Excel'e kaydet
-        
+
+        Args:
+            output_path: str - Excel dosya yolu
+        """
+        if not self.filter_reports:
+            logger.warning("[WARNING] No filter reports to save")
+            return
+
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Create summary dataframe
+        summary_data = []
+        for report in self.filter_reports:
+            summary_data.append({
+                'Target': report.get('target', 'Unknown'),
+                'Status': report.get('status', 'Unknown'),
+                'Initial_Count': report.get('initial_count', 0),
+                'Final_Count': report.get('final_count', 0),
+                'Removed_Count': report.get('removed', 0),
+                'Removal_Percentage': f"{report.get('removed', 0) / max(report.get('initial_count', 1), 1) * 100:.2f}%"
+            })
+
+        df_summary = pd.DataFrame(summary_data)
+
+        # Create detailed dataframe
+        detailed_data = []
+        for report in self.filter_reports:
+            target = report.get('target', 'Unknown')
+            for nucleus in report.get('removed_nuclei', []):
+                detailed_data.append({
+                    'Target': target,
+                    'NUCLEUS': nucleus,
+                    'Status': report.get('status', 'Unknown')
+                })
+
+        df_detailed = pd.DataFrame(detailed_data) if detailed_data else pd.DataFrame()
+
+        # Save to Excel
+        with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
+            df_summary.to_excel(writer, sheet_name='Summary', index=False)
+
+            if not df_detailed.empty:
+                df_detailed.to_excel(writer, sheet_name='Removed_Nuclei', index=False)
+
+                # By target
+                for target in df_detailed['Target'].unique():
+                    target_df = df_detailed[df_detailed['Target'] == target]
+                    sheet_name = f"Target_{target}"[:31]
+                    target_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+        logger.info(f"[OK] QM filter report saved: {output_path}")
+
+    def create_filter_report(self, reports, output_path='reports/qm_filter_report.xlsx'):
+        """
+        Legacy method - backward compatibility
+        Tüm filtreleme raporlarını birleştir ve Excel'e kaydet
+
         Args:
             reports: list of dict - Her dataset için filtreleme raporu
             output_path: str - Excel dosya yolu
