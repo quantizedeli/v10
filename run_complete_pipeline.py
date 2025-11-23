@@ -9,8 +9,14 @@ from pathlib import Path
 from datetime import datetime
 
 # Encoding sorununu çöz
-sys.stdout.reconfigure(encoding='utf-8')
-sys.stderr.reconfigure(encoding='utf-8')
+try:
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8')
+except (AttributeError, OSError):
+    # If reconfigure is not available or fails, continue
+    pass
 
 # Logging ayarları
 logging.basicConfig(
