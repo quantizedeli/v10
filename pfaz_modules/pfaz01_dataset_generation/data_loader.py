@@ -25,7 +25,7 @@ logging.basicConfig(
     ]
 )
 # Set UTF-8 encoding for stdout if possible (for Windows compatibility)
-if sys.stdout.encoding != 'utf-8':
+if getattr(sys.stdout, 'encoding', None) != 'utf-8':
     try:
         import codecs
         sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
