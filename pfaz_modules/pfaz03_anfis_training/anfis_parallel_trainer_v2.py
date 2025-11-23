@@ -660,7 +660,16 @@ class ANFISParallelTrainerV2:
                                         ('val', (X_val, y_val)),
                                         ('test', (X_test, y_test))]:
                 df = pd.DataFrame(X)
-                df['target'] = y
+
+                # Handle multi-target y (shape: n_samples, n_targets)
+                y_arr = np.asarray(y)
+                if y_arr.ndim == 1:
+                    df['target'] = y_arr
+                else:
+                    # Multi-target: add each target as a separate column
+                    for i in range(y_arr.shape[1]):
+                        df[f'target_{i}'] = y_arr[:, i]
+
                 csv_path = save_dir / f'{split_name}.csv'
                 df.to_csv(csv_path, index=False)
                 logger.info(f"  Saved {split_name}.csv")
@@ -672,7 +681,16 @@ class ANFISParallelTrainerV2:
                                                 ('val', (X_val, y_val)),
                                                 ('test', (X_test, y_test))]:
                         df = pd.DataFrame(X)
-                        df['target'] = y
+
+                        # Handle multi-target y (shape: n_samples, n_targets)
+                        y_arr = np.asarray(y)
+                        if y_arr.ndim == 1:
+                            df['target'] = y_arr
+                        else:
+                            # Multi-target: add each target as a separate column
+                            for i in range(y_arr.shape[1]):
+                                df[f'target_{i}'] = y_arr[:, i]
+
                         df.to_excel(writer, sheet_name=split_name, index=False)
                 logger.info(f"  Saved all_splits.xlsx")
             except Exception as e:
@@ -682,21 +700,28 @@ class ANFISParallelTrainerV2:
             try:
                 from scipy.io import savemat
 
-                # Ensure y arrays are 1D for savemat compatibility
-                y_train_1d = y_train.ravel() if hasattr(y_train, 'ravel') else np.asarray(y_train).ravel()
-                y_val_1d = y_val.ravel() if hasattr(y_val, 'ravel') else np.asarray(y_val).ravel()
-                y_test_1d = y_test.ravel() if hasattr(y_test, 'ravel') else np.asarray(y_test).ravel()
+                # Convert y arrays to proper format for savemat
+                # If multi-dimensional (multi-target), ensure they are 2D arrays
+                # If 1D, ensure they are column vectors
+                def prepare_for_mat(y):
+                    y_arr = np.asarray(y)
+                    if y_arr.ndim == 1:
+                        return y_arr.reshape(-1, 1)  # Make column vector
+                    elif y_arr.ndim == 2:
+                        return y_arr  # Keep as is
+                    else:
+                        return y_arr.reshape(y_arr.shape[0], -1)  # Flatten extra dims
 
                 mat_data = {
                     'X_train': X_train,
-                    'y_train': y_train_1d,
+                    'y_train': prepare_for_mat(y_train),
                     'X_val': X_val,
-                    'y_val': y_val_1d,
+                    'y_val': prepare_for_mat(y_val),
                     'X_test': X_test,
-                    'y_test': y_test_1d
+                    'y_test': prepare_for_mat(y_test)
                 }
                 mat_path = save_dir / 'dataset.mat'
-                savemat(mat_path, mat_data)
+                savemat(mat_path, mat_data, oned_as='column')
                 logger.info(f"  Saved dataset.mat")
             except Exception as e:
                 logger.warning(f"  Could not save .mat file: {e}")
