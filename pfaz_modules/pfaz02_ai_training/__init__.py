@@ -50,6 +50,28 @@ except ImportError:
     ModelTrainer = None
     MODEL_TRAINER_AVAILABLE = False
 
+# ✅ ACTIVATED: Moved from root directory
+try:
+    from .gpu_optimization import GPUOptimizer
+    GPU_OPTIMIZATION_AVAILABLE = True
+except ImportError:
+    GPUOptimizer = None
+    GPU_OPTIMIZATION_AVAILABLE = False
+
+try:
+    from .training_utils_v2 import TrainingUtilities
+    TRAINING_UTILS_AVAILABLE = True
+except ImportError:
+    TrainingUtilities = None
+    TRAINING_UTILS_AVAILABLE = False
+
+try:
+    from .robustness_tester import RobustnessTester
+    ROBUSTNESS_TESTER_AVAILABLE = True
+except ImportError:
+    RobustnessTester = None
+    ROBUSTNESS_TESTER_AVAILABLE = False
+
 __all__ = [
     # Main
     'ParallelAITrainer',
@@ -73,4 +95,11 @@ __all__ = [
     # Alternative Trainer
     'ModelTrainer',
     'MODEL_TRAINER_AVAILABLE',
+    # Moved from root
+    'GPUOptimizer',
+    'GPU_OPTIMIZATION_AVAILABLE',
+    'TrainingUtilities',
+    'TRAINING_UTILS_AVAILABLE',
+    'RobustnessTester',
+    'ROBUSTNESS_TESTER_AVAILABLE',
 ]
