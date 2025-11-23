@@ -110,28 +110,40 @@ class UnknownNucleiSplitter:
         return known_df, unknown_df
     
     def split_all_datasets(self, datasets_dir: Path):
-        """Split all datasets in directory"""
-        
+        """Split all datasets in directory (searches subdirectories)"""
+
         datasets_dir = Path(datasets_dir)
-        
-        # Find all dataset files
-        dataset_files = list(datasets_dir.glob('*.csv')) + list(datasets_dir.glob('*.xlsx'))
-        dataset_files = [f for f in dataset_files if 'ALL' not in f.name]  # Skip ALL datasets
-        
+
+        # Find all dataset files (both in root and subdirectories)
+        dataset_files = []
+
+        # Check root directory
+        root_files = list(datasets_dir.glob('*.csv')) + list(datasets_dir.glob('*.xlsx'))
+        dataset_files.extend([f for f in root_files if 'ALL' not in f.name and 'summary' not in f.name.lower()])
+
+        # Check subdirectories (PFAZ 1 creates datasets in subdirectories)
+        for subdir in datasets_dir.iterdir():
+            if subdir.is_dir() and subdir.name not in {'quality_reports', 'logs', 'reports', 'metadata'}:
+                subdir_files = list(subdir.glob('*.csv')) + list(subdir.glob('*.xlsx'))
+                # Filter out ALL datasets and summary files
+                filtered = [f for f in subdir_files
+                           if 'ALL' not in f.name and 'summary' not in f.name.lower()]
+                dataset_files.extend(filtered)
+
         logger.info(f"\nFound {len(dataset_files)} datasets to split")
-        
+
         for dataset_file in dataset_files:
             try:
                 known_df, unknown_df = self.split_dataset(dataset_file)
-                
+
                 # Save
                 dataset_name = dataset_file.stem
                 known_file = self.output_dir / f"{dataset_name}_known.csv"
                 unknown_file = self.output_dir / f"{dataset_name}_unknown.csv"
-                
+
                 known_df.to_csv(known_file, index=False)
                 unknown_df.to_csv(unknown_file, index=False)
-                
+
                 # Update metadata
                 self.split_metadata['datasets'].append({
                     'name': dataset_name,
@@ -141,17 +153,17 @@ class UnknownNucleiSplitter:
                     'known_file': str(known_file),
                     'unknown_file': str(unknown_file)
                 })
-                
+
                 logger.info(f"[SUCCESS] Saved: {known_file.name}, {unknown_file.name}")
-                
+
             except Exception as e:
                 logger.error(f"Failed to split {dataset_file.name}: {e}")
-        
+
         # Save metadata
         metadata_file = self.output_dir / 'split_metadata.json'
         with open(metadata_file, 'w') as f:
             json.dump(self.split_metadata, f, indent=2)
-        
+
         logger.info(f"\n[SUCCESS] Metadata saved: {metadata_file}")
         logger.info(f"[SUCCESS] Total datasets split: {len(self.split_metadata['datasets'])}")
 
