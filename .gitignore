@@ -114,3 +114,4 @@ Thumbs.db
 
 # Project specific
 archive/duplicates_*/
+test_*.json
