@@ -16,13 +16,19 @@ logger = logging.getLogger(__name__)
 
 class FinalReportingPipeline:
     """Thesis için final raporlama sistemi"""
-    
-    def __init__(self, reports_dir='reports', output_dir='final_reports'):
+
+    def __init__(self, reports_dir='reports', output_dir='final_reports',
+                 use_excel_charts: bool = True, use_latex_generator: bool = True):
         self.reports_dir = Path(reports_dir)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         self.all_results = {}
+        self.use_excel_charts = use_excel_charts
+        self.use_latex_generator = use_latex_generator
+
+        logger.info(f"Excel Charts: {self.use_excel_charts}")
+        logger.info(f"LaTeX Generator: {self.use_latex_generator}")
         
     def collect_all_results(self):
         """Tüm fazlardan sonuçları topla"""
@@ -309,39 +315,93 @@ class FinalReportingPipeline:
         logger.info(f"\n[OK] JSON: {json_file}")
         return json_file
     
+    def generate_excel_charts(self):
+        """Generate Excel charts using excel_charts.py"""
+        if not self.use_excel_charts:
+            logger.info("[SKIP] Excel charts disabled")
+            return None
+
+        try:
+            from pfaz_modules.pfaz06_final_reporting.excel_charts import ExcelChartGenerator
+
+            logger.info("\n[EXCEL CHARTS] Generating charts...")
+            chart_gen = ExcelChartGenerator(output_dir=str(self.output_dir))
+            charts = chart_gen.generate_all_charts(self.all_results)
+            logger.info(f"[OK] Generated {len(charts)} Excel charts")
+            return charts
+        except ImportError as e:
+            logger.warning(f"[SKIP] Excel charts module not available: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"[ERROR] Excel charts generation failed: {e}")
+            return None
+
+    def generate_latex_report(self):
+        """Generate LaTeX report using latex_generator.py"""
+        if not self.use_latex_generator:
+            logger.info("[SKIP] LaTeX generator disabled")
+            return None
+
+        try:
+            from pfaz_modules.pfaz06_final_reporting.latex_generator import LaTeXReportGenerator
+
+            logger.info("\n[LATEX] Generating LaTeX report...")
+            latex_gen = LaTeXReportGenerator(output_dir=str(self.output_dir))
+            latex_file = latex_gen.generate_report(self.all_results)
+            logger.info(f"[OK] LaTeX report: {latex_file}")
+            return latex_file
+        except ImportError as e:
+            logger.warning(f"[SKIP] LaTeX generator module not available: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"[ERROR] LaTeX generation failed: {e}")
+            return None
+
     def run_complete_pipeline(self):
         """Tam pipeline çalıştır"""
         start = datetime.now()
-        
+
         logger.info("\n" + "="*80)
         logger.info("PFAZ 6: FINAL REPORTING & THESIS")
         logger.info("="*80)
-        
+
         # 1. Sonuçları topla
         self.collect_all_results()
-        
+
         # 2. Excel tabloları
         excel_file = self.generate_thesis_tables()
-        
+
         # 3. JSON özet
         json_file = self.generate_summary_json()
-        
-        # 4. Summary
+
+        # 4. Excel charts (NEW)
+        excel_charts = self.generate_excel_charts()
+
+        # 5. LaTeX report (NEW)
+        latex_file = self.generate_latex_report()
+
+        # 6. Summary
         duration = (datetime.now() - start).total_seconds()
-        
+
         logger.info("\n" + "="*80)
         logger.info("[SUCCESS] PFAZ 6 TAMAMLANDI")
         logger.info("="*80)
         logger.info(f"Süre: {duration:.1f} saniye")
         logger.info(f"Excel: {excel_file}")
         logger.info(f"JSON: {json_file}")
+        if excel_charts:
+            logger.info(f"Excel Charts: {len(excel_charts)} charts generated")
+        if latex_file:
+            logger.info(f"LaTeX: {latex_file}")
         logger.info(f"\nNot: Tüm modellerin tüm sonuçları Excel'de mevcut.")
         logger.info(f"     En iyi model seçimi TEZ yazarı tarafından yapılmalı.")
-        
+
         return {
             'results': self.all_results,
             'excel_file': excel_file,
             'json_file': json_file,
+            'excel_charts': excel_charts,
+            'latex_file': latex_file,
             'duration': duration
         }
 
