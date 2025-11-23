@@ -126,53 +126,53 @@ class UnknownNucleiPredictor:
         
         return models
     
-    def predict_on_unknown(self):
-        """Predict on all unknown datasets"""
-        
+    def predict_unknown_nuclei(self):
+        """Predict on all unknown datasets and generate report"""
+
         logger.info("\n" + "=" * 80)
         logger.info("PREDICTING ON UNKNOWN NUCLEI")
         logger.info("=" * 80)
-        
+
         # Load models
         models = self.load_models()
-        
+
         # Load metadata
         metadata_file = self.splits_dir / 'split_metadata.json'
         with open(metadata_file, 'r') as f:
             metadata = json.load(f)
-        
+
         # Process each dataset
         for dataset_info in metadata['datasets']:
             dataset_name = dataset_info['name']
             unknown_file = Path(dataset_info['unknown_file'])
-            
+
             if not unknown_file.exists():
                 logger.warning(f"Unknown file not found: {unknown_file}")
                 continue
-            
+
             logger.info(f"\nProcessing: {dataset_name}")
-            
+
             # Load unknown data
             unknown_df = pd.read_csv(unknown_file)
-            
+
             # Identify features and target
             target_col = self._identify_target(dataset_name)
             if target_col not in unknown_df.columns:
                 continue
-            
-            feature_cols = [col for col in unknown_df.columns 
+
+            feature_cols = [col for col in unknown_df.columns
                           if col not in ['NUCLEUS', 'A', 'Z', 'N', target_col]]
-            
+
             X_unknown = unknown_df[feature_cols].values
             y_unknown = unknown_df[target_col].values
-            
+
             # Predict with AI models
             for model_id, model_info in models['ai'].items():
                 if dataset_name in model_id:
                     try:
                         y_pred = model_info['model'].predict(X_unknown)
                         metrics = self._calculate_metrics(y_unknown, y_pred)
-                        
+
                         self.results['ai_results'].append({
                             'model_id': model_id,
                             'dataset': dataset_name,
@@ -182,14 +182,14 @@ class UnknownNucleiPredictor:
                         })
                     except:
                         pass
-            
+
             # Predict with ANFIS models
             for model_id, model_info in models['anfis'].items():
                 if dataset_name in model_id:
                     try:
                         y_pred = model_info['model'].predict(X_unknown)
                         metrics = self._calculate_metrics(y_unknown, y_pred)
-                        
+
                         self.results['anfis_results'].append({
                             'model_id': model_id,
                             'dataset': dataset_name,
@@ -199,10 +199,16 @@ class UnknownNucleiPredictor:
                         })
                     except:
                         pass
-        
+
         logger.info("\n" + "=" * 80)
         logger.info(f"COMPLETED: {len(self.results['ai_results'])} AI + {len(self.results['anfis_results'])} ANFIS")
         logger.info("=" * 80 + "\n")
+
+        # Generate Excel report
+        self.generate_excel_report()
+
+        # Return results
+        return self.results
     
     def _identify_target(self, dataset_name: str) -> str:
         """Identify target column"""
@@ -302,12 +308,11 @@ def main():
     )
     
     print("\nPredicting on unknown nuclei...")
-    predictor.predict_on_unknown()
-    
-    print("\nGenerating Excel report...")
-    predictor.generate_excel_report()
-    
-    print("\n[SUCCESS] TEST COMPLETED!")
+    results = predictor.predict_unknown_nuclei()
+
+    print(f"\n[SUCCESS] TEST COMPLETED!")
+    print(f"AI Results: {len(results['ai_results'])}")
+    print(f"ANFIS Results: {len(results['anfis_results'])}")
 
 
 if __name__ == "__main__":
