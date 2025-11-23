@@ -25,26 +25,52 @@ logger = logging.getLogger(__name__)
 class OutlierHandler:
     """
     Advanced outlier detection and handling
-    
+
     Methods:
     1. IQR method
     2. Z-score
     3. Isolation Forest
     4. Elliptic Envelope
     5. DBSCAN
+
+    Features:
+    - Detailed outlier tracking with reasons
+    - Integration with ExcludedNucleiTracker
+    - Comprehensive reporting
     """
-    
-    def __init__(self, output_dir='data_quality/outliers'):
+
+    def __init__(self, output_dir='data_quality/outliers', tracker=None):
+        """
+        Initialize OutlierHandler
+
+        Args:
+            output_dir: Output directory for reports
+            tracker: ExcludedNucleiTracker instance for tracking exclusions
+        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+        self.tracker = tracker
+
+        # Store detailed outlier information
+        self.outlier_details = []
+
         logger.info("Outlier Handler başlatıldı")
     
-    def detect_outliers_iqr(self, df, columns, threshold=1.5):
-        """IQR method outlier detection"""
-        
-        outlier_mask = pd.Series([False] * len(df))
-        
+    def detect_outliers_iqr(self, df, columns, threshold=1.5, target=None):
+        """
+        IQR method outlier detection with detailed tracking
+
+        Args:
+            df: DataFrame
+            columns: Columns to check
+            threshold: IQR threshold multiplier
+            target: Target name for tracking (e.g., 'MM', 'QM')
+
+        Returns:
+            outlier_mask: Boolean mask for outliers
+        """
+        outlier_mask = pd.Series([False] * len(df), index=df.index)
+
         for col in columns:
             # String değerleri numeric'e çevir
             col_data = pd.to_numeric(df[col], errors='coerce')
@@ -57,29 +83,115 @@ class OutlierHandler:
             upper_bound = Q3 + threshold * IQR
 
             col_outliers = (col_data < lower_bound) | (col_data > upper_bound)
+
+            # Track individual outliers with details
+            if self.tracker and target and 'NUCLEUS' in df.columns:
+                outlier_indices = col_data[col_outliers].index
+                for idx in outlier_indices:
+                    value = col_data.loc[idx]
+                    nucleus = df.loc[idx, 'NUCLEUS'] if 'NUCLEUS' in df.columns else f'Index_{idx}'
+
+                    # Calculate how many IQRs away
+                    if value < lower_bound:
+                        iqr_distance = (lower_bound - value) / IQR
+                        bound_type = 'lower'
+                    else:
+                        iqr_distance = (value - upper_bound) / IQR
+                        bound_type = 'upper'
+
+                    details = {
+                        'column': col,
+                        'value': float(value),
+                        'Q1': float(Q1),
+                        'Q3': float(Q3),
+                        'IQR': float(IQR),
+                        'lower_bound': float(lower_bound),
+                        'upper_bound': float(upper_bound),
+                        'threshold': threshold,
+                        'iqr_distance': float(iqr_distance),
+                        'bound_type': bound_type,
+                        'method': 'IQR'
+                    }
+
+                    # Add to tracker
+                    a = int(df.loc[idx, 'A']) if 'A' in df.columns else None
+                    z = int(df.loc[idx, 'Z']) if 'Z' in df.columns else None
+                    n = int(df.loc[idx, 'N']) if 'N' in df.columns else None
+
+                    self.tracker.add_exclusion(
+                        nucleus=nucleus,
+                        reason='OUTLIER_REMOVED',
+                        target=target,
+                        a=a, z=z, n=n,
+                        details=details
+                    )
+
             outlier_mask |= col_outliers
 
             n_outliers = col_outliers.sum()
             logger.info(f"  {col}: {n_outliers} outliers ({n_outliers/len(df)*100:.1f}%)")
-        
+
         return outlier_mask
     
-    def detect_outliers_zscore(self, df, columns, threshold=3):
-        """Z-score method"""
-        
-        outlier_mask = pd.Series([False] * len(df))
+    def detect_outliers_zscore(self, df, columns, threshold=3, target=None):
+        """
+        Z-score method with detailed tracking
+
+        Args:
+            df: DataFrame
+            columns: Columns to check
+            threshold: Z-score threshold
+            target: Target name for tracking
+
+        Returns:
+            outlier_mask: Boolean mask for outliers
+        """
+        outlier_mask = pd.Series([False] * len(df), index=df.index)
 
         for col in columns:
             # String değerleri numeric'e çevir
             col_data = pd.to_numeric(df[col], errors='coerce')
 
-            z_scores = np.abs((col_data - col_data.mean()) / col_data.std())
+            mean = col_data.mean()
+            std = col_data.std()
+            z_scores = np.abs((col_data - mean) / std)
             col_outliers = z_scores > threshold
+
+            # Track individual outliers
+            if self.tracker and target and 'NUCLEUS' in df.columns:
+                outlier_indices = col_data[col_outliers].index
+                for idx in outlier_indices:
+                    value = col_data.loc[idx]
+                    z_score = z_scores.loc[idx]
+                    nucleus = df.loc[idx, 'NUCLEUS'] if 'NUCLEUS' in df.columns else f'Index_{idx}'
+
+                    details = {
+                        'column': col,
+                        'value': float(value),
+                        'mean': float(mean),
+                        'std': float(std),
+                        'z_score': float(z_score),
+                        'threshold': threshold,
+                        'method': 'Z-score'
+                    }
+
+                    a = int(df.loc[idx, 'A']) if 'A' in df.columns else None
+                    z = int(df.loc[idx, 'Z']) if 'Z' in df.columns else None
+                    n = int(df.loc[idx, 'N']) if 'N' in df.columns else None
+
+                    self.tracker.add_exclusion(
+                        nucleus=nucleus,
+                        reason='OUTLIER_REMOVED',
+                        target=target,
+                        a=a, z=z, n=n,
+                        details=details
+                    )
+
             outlier_mask |= col_outliers
 
             n_outliers = col_outliers.sum()
             logger.info(f"  {col}: {n_outliers} outliers (Z>{threshold})")
-        
+
         return outlier_mask
     
     def detect_outliers_isolation_forest(self, df, columns, contamination=0.1):
