@@ -45,23 +45,34 @@ class CrossModelEvaluator:
         evaluator.save_cross_model_report('cross_model_report.xlsx')
     """
     
-    def __init__(self, output_dir='reports/cross_model'):
+    def __init__(self, output_dir='reports/cross_model', use_best_model_selector: bool = True):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Model predictions storage
         self.predictions = {}  # {model_name: df with predictions}
-        
+
         # Classification thresholds
         self.thresholds = {
             'good': {'error': 0.1, 'r2': 0.90},    # Error < 0.1 and R² > 0.90
             'medium': {'error': 0.5, 'r2': 0.70},  # 0.1 ≤ Error < 0.5 and 0.70 ≤ R² < 0.90
             'poor': {'error': 0.5, 'r2': 0.70}     # Error ≥ 0.5 or R² < 0.70
         }
-        
+
         # Results storage
         self.results = {}
-        
+
+        # Best model selector
+        self.use_best_model_selector = use_best_model_selector
+        if self.use_best_model_selector:
+            try:
+                from pfaz_modules.pfaz05_cross_model.best_model_selector import BestModelSelector
+                self.best_model_selector = BestModelSelector()
+                logger.info("Best Model Selector enabled")
+            except ImportError:
+                logger.warning("Best Model Selector not available")
+                self.use_best_model_selector = False
+
         logger.info("Cross-Model Evaluator initialized")
     
     def add_predictions(self, 
