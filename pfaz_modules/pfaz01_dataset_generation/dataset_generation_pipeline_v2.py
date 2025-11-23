@@ -30,6 +30,7 @@ from physics_modules.theoretical_calculations_manager import TheoreticalCalculat
 from .qm_filter_manager import QMFilterManager
 from .data_quality_modules import OutlierHandler, DataValidator
 from .excluded_nuclei_tracker import ExcludedNucleiTracker
+from .feature_combination_manager import FeatureCombinationManager, get_default_feature_sets
 
 logging.basicConfig(
     level=logging.INFO,
@@ -57,6 +58,7 @@ class DatasetGenerationPipelineV2:
                  output_base_dir: str = 'generated_datasets',
                  nucleus_counts: List[int] = None,
                  targets: List[str] = None,
+                 feature_sets: List[str] = None,
                  # Backward compatibility aliases
                  aaa2_txt_path: str = None,
                  output_dir: str = None):
@@ -66,6 +68,7 @@ class DatasetGenerationPipelineV2:
             output_base_dir: Çıktı ana dizini (or use output_dir)
             nucleus_counts: Oluşturulacak dataset boyutları
             targets: Target değişkenler
+            feature_sets: Feature kombinasyonları (Basic, Extended, Full)
             aaa2_txt_path: Alias for source_data_path (backward compatibility)
             output_dir: Alias for output_base_dir (backward compatibility)
         """
@@ -84,6 +87,9 @@ class DatasetGenerationPipelineV2:
         # [UPDATED]: 75, 100, 150, 200, ALL (all available nuclei)
         self.nucleus_counts = nucleus_counts or [75, 100, 150, 200, 'ALL']
         self.targets = targets or ['MM', 'QM', 'MM_QM', 'Beta_2']
+
+        # [FAZ 1 NEW]: Feature combinations
+        self.feature_sets = feature_sets or get_default_feature_sets()  # ['Basic', 'Extended', 'Full']
 
         # Target column name mapping (simplified name -> actual column name)
         self.target_column_map = {
@@ -104,6 +110,9 @@ class DatasetGenerationPipelineV2:
             tracker=self.exclusion_tracker
         )
         self.data_validator = DataValidator(output_dir=self.output_base_dir / 'quality_reports')
+
+        # [FAZ 1 NEW]: Feature combination manager
+        self.feature_manager = FeatureCombinationManager()
         
         # Storage
         self.raw_data = None
@@ -119,6 +128,7 @@ class DatasetGenerationPipelineV2:
         logger.info(f"Output directory: {self.output_base_dir}")
         logger.info(f"Nucleus counts: {self.nucleus_counts}")
         logger.info(f"Targets: {self.targets}")
+        logger.info(f"Feature sets: {self.feature_sets}")  # [FAZ 1 NEW]
     
     def run_complete_pipeline(self) -> Dict:
         """
@@ -397,14 +407,20 @@ class DatasetGenerationPipelineV2:
         self.generation_report['quality_control'] = quality_reports
     
     def _generate_all_datasets(self):
-        """Tüm dataset kombinasyonlarını oluştur"""
+        """
+        Tüm dataset kombinasyonlarını oluştur
+
+        [FAZ 1 UPDATE]: target × nucleus_count × feature_set kombinasyonları
+        """
         logger.info("Generating all dataset combinations...")
-        
-        total_combinations = len(self.targets) * len(self.nucleus_counts)
-        logger.info(f"Total combinations to generate: {total_combinations}")
-        
+
+        # [FAZ 1 UPDATE]: Üçlü kombinasyon
+        total_combinations = len(self.targets) * len(self.nucleus_counts) * len(self.feature_sets)
+        logger.info(f"Total combinations: {len(self.targets)} targets × {len(self.nucleus_counts)} sizes × {len(self.feature_sets)} feature sets = {total_combinations}")
+
         generated_count = 0
-        
+
+        # [FAZ 1 UPDATE]: Üçlü döngü
         for target in self.targets:
             if target not in self.filtered_data:
                 logger.warning(f"[WARNING] No filtered data for {target}, skipping")
@@ -412,35 +428,59 @@ class DatasetGenerationPipelineV2:
 
             target_df = self.filtered_data[target]
 
-            logger.info(f"\n-> Generating datasets for target: {target}")
-            logger.info(f"   Available nuclei: {len(target_df)}")
+            logger.info(f"\n-> Target: {target} (Available nuclei: {len(target_df)})")
 
             for n_nuclei in self.nucleus_counts:
                 # Handle 'ALL' case
                 if n_nuclei == 'ALL':
                     actual_n = len(target_df)
-                    logger.info(f"  -> 'ALL' option: using all {actual_n} available nuclei")
+                    size_label = f"ALL_{actual_n}"
                 elif n_nuclei > len(target_df):
                     logger.warning(f"  [WARNING] Requested {n_nuclei} nuclei but only {len(target_df)} available, skipping")
                     continue
+                else:
+                    size_label = str(n_nuclei)
 
-                # Sample dataset
-                dataset = self._create_single_dataset(target_df, target, n_nuclei)
+                # [FAZ 1 NEW]: Feature set döngüsü
+                for feature_set_name in self.feature_sets:
+                    try:
+                        # Sample dataset with specific feature set
+                        dataset = self._create_single_dataset_with_features(
+                            target_df, target, n_nuclei, feature_set_name
+                        )
 
-                if dataset is not None:
-                    self.generated_datasets.append(dataset)
-                    generated_count += 1
+                        if dataset is not None:
+                            self.generated_datasets.append(dataset)
+                            generated_count += 1
 
-                    logger.info(f"  [SUCCESS] Generated: {dataset['dataset_name']} ({len(dataset['data'])} nuclei)")
-                    logger.info(f"     Files: CSV + MAT")
+                            logger.info(f"  ✓ {dataset['dataset_name']} | {dataset['n_features']} features | {len(dataset['data'])} nuclei")
+
+                    except Exception as e:
+                        logger.error(f"  ✗ Error generating {target}_{size_label}_{feature_set_name}: {e}")
+                        continue
 
         logger.info(f"\n[SUCCESS] Total datasets generated: {generated_count}/{total_combinations}")
-        
+
         self.generation_report['dataset_generation'] = {
             'total_requested': total_combinations,
             'total_generated': generated_count,
-            'success_rate': generated_count / total_combinations if total_combinations > 0 else 0
+            'success_rate': generated_count / total_combinations if total_combinations > 0 else 0,
+            'by_target': {},
+            'by_feature_set': {}
         }
+
+        # Collect stats
+        for dataset in self.generated_datasets:
+            target = dataset['target']
+            feature_set = dataset['feature_set']
+
+            if target not in self.generation_report['dataset_generation']['by_target']:
+                self.generation_report['dataset_generation']['by_target'][target] = 0
+            self.generation_report['dataset_generation']['by_target'][target] += 1
+
+            if feature_set not in self.generation_report['dataset_generation']['by_feature_set']:
+                self.generation_report['dataset_generation']['by_feature_set'][feature_set] = 0
+            self.generation_report['dataset_generation']['by_feature_set'][feature_set] += 1
     
     def _get_actual_column_names(self, target: str, df: pd.DataFrame) -> List[str]:
         """
@@ -476,6 +516,124 @@ class DatasetGenerationPipelineV2:
                     if target.upper() in col.upper():
                         return [col]
                 return [target]  # Fallback to original name
+
+    def _create_single_dataset_with_features(self,
+                                             source_df: pd.DataFrame,
+                                             target: str,
+                                             n_nuclei: int,
+                                             feature_set_name: str) -> Optional[Dict]:
+        """
+        [FAZ 1 NEW] Belirli bir feature set ile dataset oluştur
+
+        Args:
+            source_df: Kaynak DataFrame
+            target: Target adı (MM, QM, etc.)
+            n_nuclei: Çekirdek sayısı (veya 'ALL')
+            feature_set_name: Feature set adı (Basic, Extended, Full)
+
+        Returns:
+            Dataset metadata dictionary
+        """
+        # Handle 'ALL' case
+        if n_nuclei == 'ALL':
+            sampled_df = source_df.copy()
+            actual_n = len(sampled_df)
+            size_label = f"ALL_{actual_n}"
+        else:
+            # Random sampling with seed for reproducibility
+            seed = hash(f"{target}_{n_nuclei}_{feature_set_name}") % (2**32)
+            sampled_df = source_df.sample(n=n_nuclei, random_state=seed)
+            actual_n = n_nuclei
+            size_label = str(n_nuclei)
+
+        # [FAZ 1 NEW]: Feature set selection
+        target_cols = self._get_actual_column_names(target, sampled_df)
+
+        # Get features for this specific feature set
+        try:
+            feature_cols = self.feature_manager.get_feature_set(
+                feature_set_name,
+                sampled_df.columns.tolist(),
+                target_cols
+            )
+        except ValueError as e:
+            logger.error(f"Error getting feature set '{feature_set_name}': {e}")
+            return None
+
+        # [FAZ 1 NEW]: Folder structure (basit version - Faz 1)
+        # Format: output_base_dir / target / feature_set_name / dataset_name
+        dataset_name = f"{target}_{size_label}_{feature_set_name}"
+        dataset_dir = self.output_base_dir / target / feature_set_name
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+
+        # CRITICAL: Split into train/val/test (70/15/15) with fixed seed
+        n_total = len(sampled_df)
+        n_train = int(0.7 * n_total)
+        n_val = int(0.15 * n_total)
+
+        # Shuffle with fixed seed for reproducibility
+        split_seed = hash(f"split_{target}_{n_nuclei}_{feature_set_name}") % (2**32)
+        shuffled_df = sampled_df.sample(frac=1.0, random_state=split_seed).reset_index(drop=True)
+
+        train_df = shuffled_df[:n_train]
+        val_df = shuffled_df[n_train:n_train+n_val]
+        test_df = shuffled_df[n_train+n_val:]
+
+        # Save train/val/test splits
+        split_files = {}
+
+        for split_name, split_df in [('train', train_df), ('val', val_df), ('test', test_df)]:
+            # Select only the relevant columns (features + targets)
+            cols_to_save = ['NUCLEUS'] + feature_cols + target_cols if 'NUCLEUS' in split_df.columns else feature_cols + target_cols
+            split_data = split_df[cols_to_save]
+
+            # CSV format
+            csv_file = dataset_dir / f"{dataset_name}_{split_name}.csv"
+            split_data.to_csv(csv_file, index=False, encoding='utf-8')
+
+            # MAT format (for ANFIS/MATLAB)
+            mat_file = dataset_dir / f"{dataset_name}_{split_name}.mat"
+            self._save_as_mat(split_data, mat_file, feature_cols, target_cols)
+
+            split_files[split_name] = {
+                'csv': csv_file,
+                'mat': mat_file
+            }
+
+        # Create metadata
+        metadata = {
+            'dataset_name': dataset_name,
+            'target': target,
+            'feature_set': feature_set_name,
+            'n_nuclei_requested': n_nuclei,
+            'n_nuclei_total': actual_n,
+            'n_nuclei_train': len(train_df),
+            'n_nuclei_val': len(val_df),
+            'n_nuclei_test': len(test_df),
+            'n_features': len(feature_cols),
+            'feature_names': feature_cols,
+            'target_names': target_cols,
+            'split_ratio': [0.70, 0.15, 0.15],
+            'generation_timestamp': datetime.now().isoformat(),
+            'folder_structure': str(dataset_dir.relative_to(self.output_base_dir))
+        }
+
+        # Save metadata
+        metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
+        with open(metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=2)
+
+        return {
+            'dataset_name': dataset_name,
+            'target': target,
+            'feature_set': feature_set_name,
+            'n_features': len(feature_cols),
+            'dataset_dir': dataset_dir,
+            'split_files': split_files,
+            'metadata_file': metadata_file,
+            'metadata': metadata,
+            'data': shuffled_df  # Full shuffled data
+        }
 
     def _create_single_dataset(self, source_df: pd.DataFrame, target: str, n_nuclei: int) -> Optional[Dict]:
         """Tek bir dataset oluştur ve train/val/test olarak böl"""
@@ -717,6 +875,10 @@ class DatasetGenerationPipelineV2:
         if self.qm_filter_manager.filter_reports:
             qm_report_path = metadata_dir / 'qm_filter_report.xlsx'
             self.qm_filter_manager.save_filter_report_excel(str(qm_report_path))
+
+        # [FAZ 1 NEW]: Feature combinations JSON
+        feature_combos_path = metadata_dir / 'feature_combinations.json'
+        self.feature_manager.save_feature_combinations_json(str(feature_combos_path))
 
         # Summary Excel report
         self._create_summary_excel()
