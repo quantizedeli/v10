@@ -136,8 +136,21 @@ class UnknownNucleiPredictor:
         # Load models
         models = self.load_models()
 
-        # Load metadata
+        # Check if split metadata exists, if not create it
         metadata_file = self.splits_dir / 'split_metadata.json'
+        if not metadata_file.exists():
+            logger.warning("split_metadata.json not found. Running UnknownNucleiSplitter...")
+            from pfaz_modules.pfaz04_unknown_predictions.unknown_nuclei_splitter import UnknownNucleiSplitter
+
+            splitter = UnknownNucleiSplitter(
+                split_ratio=0.7,
+                random_state=42,
+                output_dir=str(self.splits_dir)
+            )
+            splitter.split_all_datasets(self.splits_dir)
+            logger.info("Split completed. Continuing with predictions...")
+
+        # Load metadata
         with open(metadata_file, 'r') as f:
             metadata = json.load(f)
 

@@ -395,10 +395,10 @@ class ANFISParallelTrainerV2:
                 'test': test_metrics
             }
 
-            # Save model
+            # Save model (use 'model_' prefix for consistency with PFAZ 4)
             import joblib
             job.output_dir.mkdir(parents=True, exist_ok=True)
-            model_path = job.output_dir / f"anfis_{job.config['id']}.pkl"
+            model_path = job.output_dir / f"model_{job.config['id']}.pkl"
             joblib.dump(anfis, model_path)
 
             # Save metrics
@@ -681,13 +681,19 @@ class ANFISParallelTrainerV2:
             # Save as .mat (MATLAB format)
             try:
                 from scipy.io import savemat
+
+                # Ensure y arrays are 1D for savemat compatibility
+                y_train_1d = y_train.ravel() if hasattr(y_train, 'ravel') else np.asarray(y_train).ravel()
+                y_val_1d = y_val.ravel() if hasattr(y_val, 'ravel') else np.asarray(y_val).ravel()
+                y_test_1d = y_test.ravel() if hasattr(y_test, 'ravel') else np.asarray(y_test).ravel()
+
                 mat_data = {
                     'X_train': X_train,
-                    'y_train': y_train,
+                    'y_train': y_train_1d,
                     'X_val': X_val,
-                    'y_val': y_val,
+                    'y_val': y_val_1d,
                     'X_test': X_test,
-                    'y_test': y_test
+                    'y_test': y_test_1d
                 }
                 mat_path = save_dir / 'dataset.mat'
                 savemat(mat_path, mat_data)
