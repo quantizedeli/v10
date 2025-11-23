@@ -599,7 +599,7 @@ def main():
     # Test subfigures
     subfig_code = integrator.create_subfigures(
         image_paths=["figures/mae_plot.png", "figures/rmse_plot.png",
-                     "figures/r2_plot.png", "figures="loss_plot.png"],
+                     "figures/r2_plot.png", "figures/loss_plot.png"],
         subcaptions=["MAE", "RMSE", "R² Score", "Training Loss"],
         main_caption="Training metrics across 50 different configurations",
         label="training_metrics",
