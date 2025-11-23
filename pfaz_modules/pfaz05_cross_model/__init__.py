@@ -4,7 +4,7 @@
 # Main pipeline (ACTIVE)
 from .cross_model_evaluator import CrossModelEvaluator
 
-#  ACTIVATED MODULES: Cross-Model Tools (2 modüller aktif edildi)
+#  ACTIVATED MODULES: Cross-Model Tools (2 modï¿½ller aktif edildi)
 try:
     from .best_model_selector import BestModelSelector
     BEST_MODEL_SELECTOR_AVAILABLE = True
@@ -26,9 +26,19 @@ except ImportError:
     CrossModelAnalysis = None
     CROSS_MODEL_ANALYSIS_AVAILABLE = False
 
+# âœ… ACTIVATED: Moved from root directory
+try:
+    from .optimizer_comparison_reporter import OptimizerComparisonReporter
+    OPTIMIZER_COMPARISON_REPORTER_AVAILABLE = True
+except ImportError:
+    OptimizerComparisonReporter = None
+    OPTIMIZER_COMPARISON_REPORTER_AVAILABLE = False
+
 __all__ = [
     'CrossModelEvaluator',
     'BestModelSelector', 'BEST_MODEL_SELECTOR_AVAILABLE',
     'CompleteCrossModelAnalyzer', 'COMPLETE_CROSS_MODEL_AVAILABLE',
     'CrossModelAnalysis', 'CROSS_MODEL_ANALYSIS_AVAILABLE',
+    # Moved from root
+    'OptimizerComparisonReporter', 'OPTIMIZER_COMPARISON_REPORTER_AVAILABLE',
 ]
