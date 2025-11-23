@@ -717,6 +717,27 @@ class ParallelAITrainer:
         self.training_results = []
         self.failed_jobs = []
 
+        # ACTIVATED MODULES: Import optional modules
+        self.overfitting_detector = None
+        self.hyperparameter_tuner = None
+        self.advanced_models_trainer = None
+
+        if self.use_hyperparameter_tuning:
+            try:
+                from pfaz_modules.pfaz02_ai_training.hyperparameter_tuner import HyperparameterTuner
+                logger.info("[ACTIVATED] Hyperparameter Tuner loaded")
+            except ImportError as e:
+                logger.warning(f"[SKIP] Hyperparameter Tuner not available: {e}")
+                self.use_hyperparameter_tuning = False
+
+        if self.use_advanced_models:
+            try:
+                from pfaz_modules.pfaz02_ai_training.advanced_models import BayesianNeuralNetwork, PINN
+                logger.info("[ACTIVATED] Advanced Models (BNN, PINN) loaded")
+            except ImportError as e:
+                logger.warning(f"[SKIP] Advanced Models not available: {e}")
+                self.use_advanced_models = False
+
         logger.info("=" * 80)
         logger.info("PARALLEL AI TRAINER INITIALIZED")
         logger.info("=" * 80)
@@ -847,7 +868,7 @@ class ParallelAITrainer:
             with open(metrics_file, 'w') as f:
                 json.dump(metrics, f, indent=2)
 
-            # ✅ NEW: Model Validation (Cross-validation)
+            # ✅ ACTIVATED: Model Validation (Cross-validation)
             if self.use_model_validation:
                 try:
                     import numpy as np
@@ -869,6 +890,25 @@ class ParallelAITrainer:
                         logger.info(f"  [CV] Saved cross-validation results")
                 except Exception as e:
                     logger.warning(f"  [CV] Validation failed: {e}")
+
+            # ✅ ACTIVATED: Overfitting Detection
+            try:
+                from pfaz_modules.pfaz02_ai_training.overfitting_detector import OverfittingDetector
+
+                detector = OverfittingDetector(output_dir=str(job.output_dir))
+                overfitting_results = detector.analyze_training_metrics(
+                    train_metrics=metrics['train'],
+                    val_metrics=metrics['val'],
+                    test_metrics=metrics.get('test', {})
+                )
+
+                if overfitting_results:
+                    overfitting_file = job.output_dir / f"overfitting_analysis_{job.config['id']}.json"
+                    with open(overfitting_file, 'w') as f:
+                        json.dump(overfitting_results, f, indent=2)
+                    logger.info(f"  [OVERFITTING] Analysis saved - Severity: {overfitting_results.get('severity', 'N/A')}")
+            except Exception as e:
+                logger.warning(f"  [OVERFITTING] Detection failed: {e}")
 
             training_time = time.time() - start_time
 
