@@ -1,5 +1,5 @@
 """
-FAZ 2: Dataset Generation Pipeline
+FAZ 3: Dataset Generation Pipeline
 ===================================
 
 Kapsamlı dataset oluşturma sistemi:
@@ -11,11 +11,13 @@ Kapsamlı dataset oluşturma sistemi:
 - I/O Configurations (3In1Out, 4In1Out, 5InAdv, etc.)
 - Scenario System (S70, S80)
 - Enhanced naming convention (7-part format)
+- Scaling options (NoScaling, Standard, Robust)
+- Stratified sampling (Random, Stratified, StratifiedMagic, StratifiedHybrid)
 - Kalite kontrolü ve validasyon
 - Otomatik raporlama
 
 Author: Nuclear Physics AI Project
-Version: 2.0.0 (FAZ 2)
+Version: 3.0.0 (FAZ 3)
 Date: 2025-11-23
 """
 
@@ -36,6 +38,8 @@ from .data_quality_modules import OutlierHandler, DataValidator
 from .excluded_nuclei_tracker import ExcludedNucleiTracker
 from .feature_combination_manager import FeatureCombinationManager, get_default_feature_sets
 from .io_config_manager import InputOutputConfigManager, ScenarioManager
+from .scaling_manager import ScalingManager
+from .sampling_manager import SamplingManager, get_sampling_statistics
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,16 +50,17 @@ logger = logging.getLogger(__name__)
 
 class DatasetGenerationPipelineV2:
     """
-    Ana Dataset Generation Pipeline V2 (FAZ 2)
+    Ana Dataset Generation Pipeline V2 (FAZ 3)
 
     Workflow:
     1. Ham veriyi yükle
     2. Teorik hesaplamalar ekle
     3. Target-based QM filtreleme uygula
-    4. Farklı çekirdek sayıları için örnekle
+    4. Farklı çekirdek sayıları için örnekle (stratified or random)
     5. Kalite kontrolü
     6. Dataset'leri kaydet (I/O configs, scenarios, 7-part naming)
-    7. Metadata ve raporlar oluştur
+    7. Scaling uygula (NoScaling, Standard, Robust)
+    8. Metadata ve raporlar oluştur
     """
 
     def __init__(self,
@@ -142,7 +147,7 @@ class DatasetGenerationPipelineV2:
         self.generation_report = {}
         
         logger.info("=" * 80)
-        logger.info("DATASET GENERATION PIPELINE INITIALIZED (FAZ 2)")
+        logger.info("DATASET GENERATION PIPELINE INITIALIZED (FAZ 3)")
         logger.info("=" * 80)
         logger.info(f"Source data: {self.source_data_path}")
         logger.info(f"Output directory: {self.output_base_dir}")
@@ -546,7 +551,7 @@ class DatasetGenerationPipelineV2:
                                              n_nuclei: int,
                                              feature_set_name: str) -> Optional[Dict]:
         """
-        [FAZ 2 UPDATE] Belirli bir feature set ile dataset oluştur
+        [FAZ 3 UPDATE] Belirli bir feature set ile dataset oluştur
 
         Args:
             source_df: Kaynak DataFrame
@@ -557,15 +562,16 @@ class DatasetGenerationPipelineV2:
         Returns:
             Dataset metadata dictionary
         """
-        # Handle 'ALL' case
+        # [FAZ 3 NEW]: Sampling with SamplingManager
         if n_nuclei == 'ALL':
             sampled_df = source_df.copy()
             actual_n = len(sampled_df)
             size_label = f"ALL_{actual_n}"
         else:
-            # Random sampling with seed for reproducibility
+            # Use SamplingManager for sampling
             seed = hash(f"{target}_{n_nuclei}_{feature_set_name}") % (2**32)
-            sampled_df = source_df.sample(n=n_nuclei, random_state=seed)
+            sampling_manager = SamplingManager(method=self.sampling, random_seed=seed)
+            sampled_df = sampling_manager.sample(source_df, n_nuclei, group_col='A')
             actual_n = n_nuclei
             size_label = str(n_nuclei)
 
@@ -614,6 +620,26 @@ class DatasetGenerationPipelineV2:
         val_df = shuffled_df[n_train:n_train+n_val]
         test_df = shuffled_df[n_train+n_val:]
 
+        # [FAZ 3 NEW]: Apply scaling
+        scaler = ScalingManager(method=self.scaling)
+        scaling_metadata = {}
+
+        if self.scaling != 'NoScaling':
+            # Fit scaler on train features only (not targets!)
+            scaler.fit(train_df, feature_cols)
+
+            # Transform train/val/test
+            train_df = scaler.transform(train_df)
+            val_df = scaler.transform(val_df)
+            test_df = scaler.transform(test_df)
+
+            # Get scaling metadata
+            scaling_metadata = scaler.get_metadata()
+
+            logger.info(f"  Scaling applied: {self.scaling} (scaled {len(scaler.features_to_scale)} features)")
+        else:
+            logger.info(f"  No scaling applied")
+
         # Save train/val/test splits
         split_files = {}
 
@@ -626,24 +652,30 @@ class DatasetGenerationPipelineV2:
             csv_file = dataset_dir / f"{dataset_name}_{split_name}.csv"
             split_data.to_csv(csv_file, index=False, encoding='utf-8')
 
-            # MAT format (for ANFIS/MATLAB)
+            # MAT format (for ANFIS/MATLAB) - with enhanced metadata
             mat_file = dataset_dir / f"{dataset_name}_{split_name}.mat"
-            self._save_as_mat(split_data, mat_file, feature_cols, target_cols)
+            self._save_as_mat(
+                split_data, mat_file, feature_cols, target_cols,
+                scaling_metadata=scaling_metadata,
+                dataset_name=dataset_name,
+                target=target,
+                split_name=split_name
+            )
 
             split_files[split_name] = {
                 'csv': csv_file,
                 'mat': mat_file
             }
 
-        # [FAZ 2 UPDATE]: Enhanced metadata with I/O config and scenario
+        # [FAZ 3 UPDATE]: Enhanced metadata with scaling and sampling
         metadata = {
             'dataset_name': dataset_name,
             'target': target,
             'feature_set': feature_set_name,
-            'io_config': io_config_name,  # [FAZ 2 NEW]
-            'scenario': self.scenario,  # [FAZ 2 NEW]
-            'scaling': self.scaling,  # [FAZ 2 NEW]
-            'sampling': self.sampling,  # [FAZ 2 NEW]
+            'io_config': io_config_name,  # [FAZ 2]
+            'scenario': self.scenario,  # [FAZ 2]
+            'scaling': self.scaling,  # [FAZ 2/3]
+            'sampling': self.sampling,  # [FAZ 2/3]
             'n_nuclei_requested': n_nuclei,
             'n_nuclei_total': actual_n,
             'n_nuclei_train': len(train_df),
@@ -652,11 +684,18 @@ class DatasetGenerationPipelineV2:
             'n_features': len(feature_cols),
             'feature_names': feature_cols,
             'target_names': target_cols,
-            'split_ratio': [train_ratio, val_ratio, test_ratio],  # [FAZ 2 UPDATE: from scenario]
+            'split_ratio': [train_ratio, val_ratio, test_ratio],  # [FAZ 2]
             'generation_timestamp': datetime.now().isoformat(),
             'folder_structure': str(dataset_dir.relative_to(self.output_base_dir)),
-            # [FAZ 2 NEW]: I/O config details
-            'io_config_details': self.io_config_manager.get_config_info(io_config_name)
+            # [FAZ 2]: I/O config details
+            'io_config_details': self.io_config_manager.get_config_info(io_config_name),
+            # [FAZ 3 NEW]: Scaling metadata
+            'scaling_metadata': scaling_metadata if self.scaling != 'NoScaling' else {},
+            # [FAZ 3 NEW]: Sampling statistics
+            'sampling_info': {
+                'method': self.sampling,
+                'statistics': get_sampling_statistics(sampled_df)
+            }
         }
 
         # Save metadata
@@ -820,31 +859,75 @@ class DatasetGenerationPipelineV2:
             'data': shuffled_df  # Full shuffled data
         }
     
-    def _save_as_mat(self, df: pd.DataFrame, filepath: Path, feature_cols: List[str], target_cols: List[str]):
+    def _save_as_mat(self,
+                     df: pd.DataFrame,
+                     filepath: Path,
+                     feature_cols: List[str],
+                     target_cols: List[str],
+                     scaling_metadata: Dict = None,
+                     dataset_name: str = '',
+                     target: str = '',
+                     split_name: str = ''):
         """
-        Save dataset as MATLAB .mat file
-        
+        [FAZ 3 UPDATE] Save dataset as MATLAB .mat file with enhanced metadata
+
         Args:
             df: DataFrame to save
             filepath: Output .mat file path
             feature_cols: Feature column names
             target_cols: Target column names
+            scaling_metadata: Scaling metadata (mean, std, etc.)
+            dataset_name: Dataset name
+            target: Target variable name
+            split_name: Split name (train/val/test)
         """
         try:
             from scipy.io import savemat
-            
-            # Prepare data dictionary for MATLAB
+
+            # Prepare enhanced data dictionary for MATLAB/ANFIS
             mat_dict = {
+                # Data arrays
                 'features': df[feature_cols].values,
                 'targets': df[target_cols].values,
+                'nucleus_names': df['NUCLEUS'].values if 'NUCLEUS' in df.columns else [],
+
+                # Feature information
                 'feature_names': feature_cols,
                 'target_names': target_cols,
-                'nucleus_names': df['NUCLEUS'].values if 'NUCLEUS' in df.columns else []
+                'n_features': len(feature_cols),
+                'n_targets': len(target_cols),
+                'n_samples': len(df),
+
+                # Dataset metadata
+                'dataset_name': dataset_name,
+                'target': target,
+                'split': split_name,
+
+                # [FAZ 3 NEW]: Scaling metadata
+                'scaling_applied': scaling_metadata is not None and len(scaling_metadata) > 0,
             }
-            
-            # Save
+
+            # Add scaling parameters if available
+            if scaling_metadata and len(scaling_metadata) > 0:
+                mat_dict['scaling_method'] = scaling_metadata.get('method', 'NoScaling')
+                mat_dict['features_scaled'] = scaling_metadata.get('features_scaled', [])
+                mat_dict['features_excluded'] = scaling_metadata.get('features_excluded', [])
+
+                # Add scaler parameters (mean, std, median, IQR)
+                scaler_params = scaling_metadata.get('scaler_params', {})
+                if 'mean' in scaler_params:
+                    mat_dict['scaler_mean'] = np.array(scaler_params['mean'])
+                    mat_dict['scaler_std'] = np.array(scaler_params['std'])
+                if 'median' in scaler_params:
+                    mat_dict['scaler_median'] = np.array(scaler_params['median'])
+                    mat_dict['scaler_iqr'] = np.array(scaler_params['iqr'])
+            else:
+                mat_dict['scaling_method'] = 'NoScaling'
+                mat_dict['features_scaled'] = []
+
+            # Save to .mat file
             savemat(filepath, mat_dict)
-            logger.info(f"  [SUCCESS] MAT file saved: {filepath.name}")
+            # logger.info(f"  [SUCCESS] MAT file saved: {filepath.name}")
 
         except ImportError:
             logger.warning("  [WARNING] scipy not available, skipping MAT file export")
