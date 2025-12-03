@@ -48,6 +48,47 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def sanitize_for_json(obj):
+    """
+    Recursively sanitize objects for JSON serialization.
+    Converts tuple keys to strings and handles non-serializable types.
+
+    Args:
+        obj: Object to sanitize (dict, list, or primitive)
+
+    Returns:
+        JSON-serializable version of obj
+    """
+    if isinstance(obj, dict):
+        # Convert any tuple keys to string representations
+        sanitized = {}
+        for key, value in obj.items():
+            # Convert tuple keys to string
+            if isinstance(key, tuple):
+                key = str(key)
+            # Ensure key is JSON-serializable
+            elif not isinstance(key, (str, int, float, bool, type(None))):
+                key = str(key)
+            # Recursively sanitize value
+            sanitized[key] = sanitize_for_json(value)
+        return sanitized
+    elif isinstance(obj, (list, tuple)):
+        return [sanitize_for_json(item) for item in obj]
+    elif isinstance(obj, (np.integer, np.int64, np.int32)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32)):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, Path):
+        return str(obj)
+    elif obj is None or isinstance(obj, (bool, int, float, str)):
+        return obj
+    else:
+        # For any other non-serializable type, convert to string
+        return str(obj)
+
+
 class DatasetGenerationPipelineV2:
     """
     Ana Dataset Generation Pipeline V2 (FAZ 3)
@@ -698,10 +739,10 @@ class DatasetGenerationPipelineV2:
             }
         }
 
-        # Save metadata
+        # Save metadata (sanitized for JSON)
         metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
         with open(metadata_file, 'w') as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(sanitize_for_json(metadata), f, indent=2)
 
         return {
             'dataset_name': dataset_name,
@@ -845,10 +886,10 @@ class DatasetGenerationPipelineV2:
                     metadata['statistics'][f'{target_col}_std'] = None
                     metadata['statistics'][f'{target_col}_range'] = [None, None]
         
-        # Save metadata
+        # Save metadata (sanitized for JSON)
         metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
         with open(metadata_file, 'w') as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(sanitize_for_json(metadata), f, indent=2)
 
         return {
             'dataset_name': dataset_name,
@@ -961,17 +1002,17 @@ class DatasetGenerationPipelineV2:
                 'data_file_mat': str(dataset['data_file_mat'])
             })
 
-        # Save master metadata
+        # Save master metadata (sanitized for JSON)
         master_metadata_file = self.output_base_dir / 'master_metadata.json'
         with open(master_metadata_file, 'w') as f:
-            json.dump(master_metadata, f, indent=2)
+            json.dump(sanitize_for_json(master_metadata), f, indent=2)
 
         logger.info(f"[SUCCESS] Master metadata: {master_metadata_file}")
 
-        # Generation report
+        # Generation report (sanitized for JSON)
         report_file = self.output_base_dir / 'generation_report.json'
         with open(report_file, 'w') as f:
-            json.dump(self.generation_report, f, indent=2)
+            json.dump(sanitize_for_json(self.generation_report), f, indent=2)
 
         logger.info(f"[SUCCESS] Generation report: {report_file}")
 
