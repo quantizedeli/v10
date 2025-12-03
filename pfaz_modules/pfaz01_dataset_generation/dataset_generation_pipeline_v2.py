@@ -643,8 +643,10 @@ class DatasetGenerationPipelineV2:
         # Example: MM_75_S70_3In1Out_Basic_NoScaling_Random
         dataset_name = f"{target}_{size_label}_{self.scenario}_{io_config_name}_{feature_set_name}_{self.scaling}_{self.sampling}"
 
-        # [FAZ 1]: Folder structure (output_base_dir / target / feature_set_name)
-        dataset_dir = self.output_base_dir / target / feature_set_name
+        # FIXED: Each dataset gets its own directory for PFAZ2/3 discovery
+        # Old (WRONG): output_base_dir / target / feature_set_name -> outputs/generated_datasets/MM/Basic/
+        # New (CORRECT): output_base_dir / dataset_name -> outputs/generated_datasets/MM_75_S70_3In1Out_Basic_NoScaling_Random/
+        dataset_dir = self.output_base_dir / dataset_name
         dataset_dir.mkdir(parents=True, exist_ok=True)
 
         # [FAZ 2 UPDATE]: Split using scenario ratios instead of hardcoded values
@@ -689,12 +691,14 @@ class DatasetGenerationPipelineV2:
             cols_to_save = ['NUCLEUS'] + feature_cols + target_cols if 'NUCLEUS' in split_df.columns else feature_cols + target_cols
             split_data = split_df[cols_to_save]
 
-            # CSV format
-            csv_file = dataset_dir / f"{dataset_name}_{split_name}.csv"
+            # CSV format - FIXED: Simplified naming (dataset name is already in directory name)
+            # Old: MM_75_S70_3In1Out_Basic_NoScaling_Random/MM_75_S70_3In1Out_Basic_NoScaling_Random_train.csv
+            # New: MM_75_S70_3In1Out_Basic_NoScaling_Random/train.csv
+            csv_file = dataset_dir / f"{split_name}.csv"
             split_data.to_csv(csv_file, index=False, encoding='utf-8')
 
             # MAT format (for ANFIS/MATLAB) - with enhanced metadata
-            mat_file = dataset_dir / f"{dataset_name}_{split_name}.mat"
+            mat_file = dataset_dir / f"{split_name}.mat"
             self._save_as_mat(
                 split_data, mat_file, feature_cols, target_cols,
                 scaling_metadata=scaling_metadata,
@@ -740,7 +744,8 @@ class DatasetGenerationPipelineV2:
         }
 
         # Save metadata (sanitized for JSON)
-        metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
+        # FIXED: Simplified naming (dataset name is already in directory)
+        metadata_file = dataset_dir / "metadata.json"
         with open(metadata_file, 'w') as f:
             json.dump(sanitize_for_json(metadata), f, indent=2)
 
@@ -887,7 +892,8 @@ class DatasetGenerationPipelineV2:
                     metadata['statistics'][f'{target_col}_range'] = [None, None]
         
         # Save metadata (sanitized for JSON)
-        metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
+        # FIXED: Simplified naming (dataset name is already in directory)
+        metadata_file = dataset_dir / "metadata.json"
         with open(metadata_file, 'w') as f:
             json.dump(sanitize_for_json(metadata), f, indent=2)
 
