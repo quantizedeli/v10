@@ -1044,7 +1044,11 @@ class ParallelAITrainer:
         logger.info(f"Successful: {successful}")
         logger.info(f"Failed: {len(failed)}")
         logger.info(f"Total time: {total_time/60:.2f} minutes")
-        logger.info(f"Avg time per job: {total_time/len(jobs):.1f} seconds")
+        # Defensive: Avoid division by zero when no jobs
+        if len(jobs) > 0:
+            logger.info(f"Avg time per job: {total_time/len(jobs):.1f} seconds")
+        else:
+            logger.info("Avg time per job: N/A (no jobs executed)")
         logger.info("=" * 80 + "\n")
         
         self.training_results = results
