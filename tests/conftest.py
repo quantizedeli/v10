@@ -31,7 +31,7 @@ def config_path(project_root):
 @pytest.fixture(scope="session")
 def data_file_path(project_root):
     """Path to aaa2.txt data file"""
-    return project_root / "aaa2.txt"
+    return project_root / "data" / "aaa2.txt"
 
 
 @pytest.fixture

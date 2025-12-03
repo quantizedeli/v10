@@ -71,15 +71,15 @@ def test_main_py_syntax(project_root):
 def test_essential_modules_importable():
     """Test essential modules can be imported"""
     essential_modules = [
-        'constants_v1_1_0',
-        'data_loader',
-        'dataset_generator',
+        ('core_modules.constants', 'core_modules/constants.py'),
+        ('pfaz_modules.pfaz01_dataset_generation.data_loader', 'pfaz_modules/pfaz01_dataset_generation/data_loader.py'),
+        ('pfaz_modules.pfaz01_dataset_generation.dataset_generator', 'pfaz_modules/pfaz01_dataset_generation/dataset_generator.py'),
     ]
 
-    for module_name in essential_modules:
+    for module_name, file_path in essential_modules:
         try:
             __import__(module_name)
         except ImportError:
             # Expected if module not in path, just check file exists
-            module_path = Path(f"{module_name}.py")
-            assert module_path.exists(), f"{module_name}.py not found"
+            module_path = Path(__file__).parent.parent.parent / file_path
+            assert module_path.exists(), f"{file_path} not found"

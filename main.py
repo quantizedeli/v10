@@ -698,30 +698,21 @@ class NuclearPhysicsAIOrchestrator:
             raise
 
     def run_pfaz_11(self, mode='run', **kwargs):
-        """PFAZ 11: Production Deployment"""
+        """PFAZ 11: Production Deployment (DEFERRED - Ertelendi)"""
         pfaz_id = 11
-        logger.info(f"\n[PFAZ {pfaz_id}] PRODUCTION DEPLOYMENT")
 
-        if mode == 'pass':
-            self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
-            return {'status': 'skipped'}
+        # PFAZ11 kullanıcı talebi doğrultusunda ertelendi
+        logger.info(f"\n[PFAZ {pfaz_id}] PRODUCTION DEPLOYMENT - DEFERRED")
+        logger.info("[INFO] PFAZ11 proje tamamlandıktan sonra için ertelenmiştir.")
+        logger.info("[INFO] Şu anda PFAZ11 otomatik olarak atlanacaktır.")
 
-        try:
-            self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            from pfaz_modules.pfaz11_production.production_model_serving import (
-                ProductionModelServer
-            )
-
-            server = ProductionModelServer(models_dir=str(self.pfaz_outputs[2]))
-            results = server.deploy()
-
-            self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
-            logger.info("[SUCCESS] PFAZ 11 tamamlandı!")
-            return results
-        except Exception as e:
-            logger.error(f"[ERROR] PFAZ 11 başarısız: {e}")
-            self.status_manager.update_pfaz(pfaz_id, 'failed', 0)
-            raise
+        # Otomatik olarak skip et
+        self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
+        return {
+            'status': 'skipped',
+            'reason': 'PFAZ11 deferred per user request - will be implemented after project completion',
+            'message': 'PFAZ11 ertelendi - proje tamamen bittikten sonra yapılacak'
+        }
 
     def run_pfaz_12(self, mode='run', **kwargs):
         """PFAZ 12: Advanced Analytics"""
@@ -789,14 +780,24 @@ class NuclearPhysicsAIOrchestrator:
             start_from: Başlangıç fazı
             end_at: Bitiş fazı
             modes: Dict[int, str] - Her faz için mod ('run', 'resume', 'update', 'pass')
+
+        Note:
+            PFAZ 11 (Production Deployment) kullanıcı talebi doğrultusunda ertelenmiştir.
+            Otomatik olarak atlanacaktır.
         """
         if modes is None:
             modes = {i: 'run' for i in range(start_from, end_at + 1)}
+
+        # PFAZ11'i otomatik olarak skip moduna al
+        if 11 in modes and modes[11] != 'pass':
+            logger.info("[INFO] PFAZ11 (Production Deployment) kullanıcı talebi ile ertelenmiştir.")
+            modes[11] = 'pass'
 
         logger.info("\n" + "="*80)
         logger.info("[START] TUM PFAZ FAZLARI BASLATILIYOR")
         logger.info("="*80)
         logger.info(f"Aralık: PFAZ {start_from} - PFAZ {end_at}")
+        logger.info("[NOTE] PFAZ 11 otomatik olarak atlanacaktır (deferred)")
 
         results = {}
 

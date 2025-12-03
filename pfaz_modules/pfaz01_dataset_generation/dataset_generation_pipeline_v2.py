@@ -1,5 +1,5 @@
 """
-FAZ 1: Dataset Generation Pipeline
+FAZ 3: Dataset Generation Pipeline
 ===================================
 
 Kapsamlı dataset oluşturma sistemi:
@@ -7,12 +7,18 @@ Kapsamlı dataset oluşturma sistemi:
 - QM filtreleme (target-based)
 - Çoklu çekirdek sayıları (50, 75, 100, 150, 175, 200, 250, 300, 350)
 - Çoklu targetler (MM, QM, MM_QM, Beta_2)
+- Feature kombinasyonları (Basic, Extended, Full, ANFIS variants)
+- I/O Configurations (3In1Out, 4In1Out, 5InAdv, etc.)
+- Scenario System (S70, S80)
+- Enhanced naming convention (7-part format)
+- Scaling options (NoScaling, Standard, Robust)
+- Stratified sampling (Random, Stratified, StratifiedMagic, StratifiedHybrid)
 - Kalite kontrolü ve validasyon
 - Otomatik raporlama
 
 Author: Nuclear Physics AI Project
-Version: 1.0.0
-Date: 2025-10-15
+Version: 3.0.0 (FAZ 3)
+Date: 2025-11-23
 """
 
 import pandas as pd
@@ -29,6 +35,11 @@ warnings.filterwarnings('ignore')
 from physics_modules.theoretical_calculations_manager import TheoreticalCalculationsManager
 from .qm_filter_manager import QMFilterManager
 from .data_quality_modules import OutlierHandler, DataValidator
+from .excluded_nuclei_tracker import ExcludedNucleiTracker
+from .feature_combination_manager import FeatureCombinationManager, get_default_feature_sets
+from .io_config_manager import InputOutputConfigManager, ScenarioManager
+from .scaling_manager import ScalingManager
+from .sampling_manager import SamplingManager, get_sampling_statistics
 
 logging.basicConfig(
     level=logging.INFO,
@@ -39,23 +50,28 @@ logger = logging.getLogger(__name__)
 
 class DatasetGenerationPipelineV2:
     """
-    Ana Dataset Generation Pipeline V2
+    Ana Dataset Generation Pipeline V2 (FAZ 3)
 
     Workflow:
     1. Ham veriyi yükle
     2. Teorik hesaplamalar ekle
     3. Target-based QM filtreleme uygula
-    4. Farklı çekirdek sayıları için örnekle
+    4. Farklı çekirdek sayıları için örnekle (stratified or random)
     5. Kalite kontrolü
-    6. Dataset'leri kaydet
-    7. Metadata ve raporlar oluştur
+    6. Dataset'leri kaydet (I/O configs, scenarios, 7-part naming)
+    7. Scaling uygula (NoScaling, Standard, Robust)
+    8. Metadata ve raporlar oluştur
     """
-    
+
     def __init__(self,
                  source_data_path: str = None,
                  output_base_dir: str = 'generated_datasets',
                  nucleus_counts: List[int] = None,
                  targets: List[str] = None,
+                 feature_sets: List[str] = None,
+                 scenario: str = None,
+                 scaling: str = None,
+                 sampling: str = None,
                  # Backward compatibility aliases
                  aaa2_txt_path: str = None,
                  output_dir: str = None):
@@ -65,6 +81,10 @@ class DatasetGenerationPipelineV2:
             output_base_dir: Çıktı ana dizini (or use output_dir)
             nucleus_counts: Oluşturulacak dataset boyutları
             targets: Target değişkenler
+            feature_sets: Feature kombinasyonları (Basic, Extended, Full)
+            scenario: Split scenario (S70, S80) - Default: S70
+            scaling: Scaling method (NoScaling, Standard, Robust) - Default: NoScaling
+            sampling: Sampling method (Random, Stratified) - Default: Random
             aaa2_txt_path: Alias for source_data_path (backward compatibility)
             output_dir: Alias for output_base_dir (backward compatibility)
         """
@@ -84,6 +104,14 @@ class DatasetGenerationPipelineV2:
         self.nucleus_counts = nucleus_counts or [75, 100, 150, 200, 'ALL']
         self.targets = targets or ['MM', 'QM', 'MM_QM', 'Beta_2']
 
+        # [FAZ 1 NEW]: Feature combinations
+        self.feature_sets = feature_sets or get_default_feature_sets()  # ['Basic', 'Extended', 'Full']
+
+        # [FAZ 2 NEW]: Scenario, Scaling, Sampling
+        self.scenario = scenario or 'S70'  # Default: 70/15/15 split
+        self.scaling = scaling or 'NoScaling'  # Default: no scaling (FAZ 3 will add options)
+        self.sampling = sampling or 'Random'  # Default: random (FAZ 3 will add stratified)
+
         # Target column name mapping (simplified name -> actual column name)
         self.target_column_map = {
             'MM': 'MAGNETIC MOMENT [µ]',
@@ -92,12 +120,25 @@ class DatasetGenerationPipelineV2:
             'Beta_2': 'Beta_2'
         }
         
-        # Initialize managers
+        # Initialize exclusion tracker
+        self.exclusion_tracker = ExcludedNucleiTracker()
+
+        # Initialize managers with tracker
         self.theoretical_calc_manager = TheoreticalCalculationsManager(enable_all=True)
-        self.qm_filter_manager = QMFilterManager()
-        self.outlier_handler = OutlierHandler(output_dir=self.output_base_dir / 'quality_reports')
+        self.qm_filter_manager = QMFilterManager(tracker=self.exclusion_tracker)
+        self.outlier_handler = OutlierHandler(
+            output_dir=self.output_base_dir / 'quality_reports',
+            tracker=self.exclusion_tracker
+        )
         self.data_validator = DataValidator(output_dir=self.output_base_dir / 'quality_reports')
-        
+
+        # [FAZ 1 NEW]: Feature combination manager
+        self.feature_manager = FeatureCombinationManager()
+
+        # [FAZ 2 NEW]: I/O Config and Scenario managers
+        self.io_config_manager = InputOutputConfigManager()
+        self.scenario_manager = ScenarioManager()
+
         # Storage
         self.raw_data = None
         self.enriched_data = None
@@ -106,12 +147,16 @@ class DatasetGenerationPipelineV2:
         self.generation_report = {}
         
         logger.info("=" * 80)
-        logger.info("DATASET GENERATION PIPELINE INITIALIZED")
+        logger.info("DATASET GENERATION PIPELINE INITIALIZED (FAZ 3)")
         logger.info("=" * 80)
         logger.info(f"Source data: {self.source_data_path}")
         logger.info(f"Output directory: {self.output_base_dir}")
         logger.info(f"Nucleus counts: {self.nucleus_counts}")
         logger.info(f"Targets: {self.targets}")
+        logger.info(f"Feature sets: {self.feature_sets}")  # [FAZ 1]
+        logger.info(f"Scenario: {self.scenario}")  # [FAZ 2]
+        logger.info(f"Scaling: {self.scaling}")  # [FAZ 2]
+        logger.info(f"Sampling: {self.sampling}")  # [FAZ 2]
     
     def run_complete_pipeline(self) -> Dict:
         """
@@ -390,14 +435,20 @@ class DatasetGenerationPipelineV2:
         self.generation_report['quality_control'] = quality_reports
     
     def _generate_all_datasets(self):
-        """Tüm dataset kombinasyonlarını oluştur"""
+        """
+        Tüm dataset kombinasyonlarını oluştur
+
+        [FAZ 1 UPDATE]: target × nucleus_count × feature_set kombinasyonları
+        """
         logger.info("Generating all dataset combinations...")
-        
-        total_combinations = len(self.targets) * len(self.nucleus_counts)
-        logger.info(f"Total combinations to generate: {total_combinations}")
-        
+
+        # [FAZ 1 UPDATE]: Üçlü kombinasyon
+        total_combinations = len(self.targets) * len(self.nucleus_counts) * len(self.feature_sets)
+        logger.info(f"Total combinations: {len(self.targets)} targets × {len(self.nucleus_counts)} sizes × {len(self.feature_sets)} feature sets = {total_combinations}")
+
         generated_count = 0
-        
+
+        # [FAZ 1 UPDATE]: Üçlü döngü
         for target in self.targets:
             if target not in self.filtered_data:
                 logger.warning(f"[WARNING] No filtered data for {target}, skipping")
@@ -405,35 +456,59 @@ class DatasetGenerationPipelineV2:
 
             target_df = self.filtered_data[target]
 
-            logger.info(f"\n-> Generating datasets for target: {target}")
-            logger.info(f"   Available nuclei: {len(target_df)}")
+            logger.info(f"\n-> Target: {target} (Available nuclei: {len(target_df)})")
 
             for n_nuclei in self.nucleus_counts:
                 # Handle 'ALL' case
                 if n_nuclei == 'ALL':
                     actual_n = len(target_df)
-                    logger.info(f"  -> 'ALL' option: using all {actual_n} available nuclei")
+                    size_label = f"ALL_{actual_n}"
                 elif n_nuclei > len(target_df):
                     logger.warning(f"  [WARNING] Requested {n_nuclei} nuclei but only {len(target_df)} available, skipping")
                     continue
+                else:
+                    size_label = str(n_nuclei)
 
-                # Sample dataset
-                dataset = self._create_single_dataset(target_df, target, n_nuclei)
+                # [FAZ 1 NEW]: Feature set döngüsü
+                for feature_set_name in self.feature_sets:
+                    try:
+                        # Sample dataset with specific feature set
+                        dataset = self._create_single_dataset_with_features(
+                            target_df, target, n_nuclei, feature_set_name
+                        )
 
-                if dataset is not None:
-                    self.generated_datasets.append(dataset)
-                    generated_count += 1
+                        if dataset is not None:
+                            self.generated_datasets.append(dataset)
+                            generated_count += 1
 
-                    logger.info(f"  [SUCCESS] Generated: {dataset['dataset_name']} ({len(dataset['data'])} nuclei)")
-                    logger.info(f"     Files: CSV + MAT")
+                            logger.info(f"  ✓ {dataset['dataset_name']} | {dataset['n_features']} features | {len(dataset['data'])} nuclei")
+
+                    except Exception as e:
+                        logger.error(f"  ✗ Error generating {target}_{size_label}_{feature_set_name}: {e}")
+                        continue
 
         logger.info(f"\n[SUCCESS] Total datasets generated: {generated_count}/{total_combinations}")
-        
+
         self.generation_report['dataset_generation'] = {
             'total_requested': total_combinations,
             'total_generated': generated_count,
-            'success_rate': generated_count / total_combinations if total_combinations > 0 else 0
+            'success_rate': generated_count / total_combinations if total_combinations > 0 else 0,
+            'by_target': {},
+            'by_feature_set': {}
         }
+
+        # Collect stats
+        for dataset in self.generated_datasets:
+            target = dataset['target']
+            feature_set = dataset['feature_set']
+
+            if target not in self.generation_report['dataset_generation']['by_target']:
+                self.generation_report['dataset_generation']['by_target'][target] = 0
+            self.generation_report['dataset_generation']['by_target'][target] += 1
+
+            if feature_set not in self.generation_report['dataset_generation']['by_feature_set']:
+                self.generation_report['dataset_generation']['by_feature_set'][feature_set] = 0
+            self.generation_report['dataset_generation']['by_feature_set'][feature_set] += 1
     
     def _get_actual_column_names(self, target: str, df: pd.DataFrame) -> List[str]:
         """
@@ -469,6 +544,176 @@ class DatasetGenerationPipelineV2:
                     if target.upper() in col.upper():
                         return [col]
                 return [target]  # Fallback to original name
+
+    def _create_single_dataset_with_features(self,
+                                             source_df: pd.DataFrame,
+                                             target: str,
+                                             n_nuclei: int,
+                                             feature_set_name: str) -> Optional[Dict]:
+        """
+        [FAZ 3 UPDATE] Belirli bir feature set ile dataset oluştur
+
+        Args:
+            source_df: Kaynak DataFrame
+            target: Target adı (MM, QM, etc.)
+            n_nuclei: Çekirdek sayısı (veya 'ALL')
+            feature_set_name: Feature set adı (Basic, Extended, Full)
+
+        Returns:
+            Dataset metadata dictionary
+        """
+        # [FAZ 3 NEW]: Sampling with SamplingManager
+        if n_nuclei == 'ALL':
+            sampled_df = source_df.copy()
+            actual_n = len(sampled_df)
+            size_label = f"ALL_{actual_n}"
+        else:
+            # Use SamplingManager for sampling
+            seed = hash(f"{target}_{n_nuclei}_{feature_set_name}") % (2**32)
+            sampling_manager = SamplingManager(method=self.sampling, random_seed=seed)
+            sampled_df = sampling_manager.sample(source_df, n_nuclei, group_col='A')
+            actual_n = n_nuclei
+            size_label = str(n_nuclei)
+
+        # [FAZ 1]: Feature set selection
+        target_cols = self._get_actual_column_names(target, sampled_df)
+
+        # Get features for this specific feature set
+        try:
+            feature_cols = self.feature_manager.get_feature_set(
+                feature_set_name,
+                sampled_df.columns.tolist(),
+                target_cols
+            )
+        except ValueError as e:
+            logger.error(f"Error getting feature set '{feature_set_name}': {e}")
+            return None
+
+        # [FAZ 2 NEW]: Detect I/O configuration
+        n_features = len(feature_cols)
+        io_config_name = self.io_config_manager.get_config_for_feature_set(
+            feature_set_name,
+            n_features,
+            target
+        )
+
+        # [FAZ 2 NEW]: Enhanced naming convention (7-part format)
+        # Format: {TARGET}_{SIZE}_{SCENARIO}_{IO_CONFIG}_{FEATURE_SET}_{SCALING}_{SAMPLING}
+        # Example: MM_75_S70_3In1Out_Basic_NoScaling_Random
+        dataset_name = f"{target}_{size_label}_{self.scenario}_{io_config_name}_{feature_set_name}_{self.scaling}_{self.sampling}"
+
+        # [FAZ 1]: Folder structure (output_base_dir / target / feature_set_name)
+        dataset_dir = self.output_base_dir / target / feature_set_name
+        dataset_dir.mkdir(parents=True, exist_ok=True)
+
+        # [FAZ 2 UPDATE]: Split using scenario ratios instead of hardcoded values
+        train_ratio, val_ratio, test_ratio = self.scenario_manager.get_split_ratios(self.scenario)
+        n_total = len(sampled_df)
+        n_train = int(train_ratio * n_total)
+        n_val = int(val_ratio * n_total)
+
+        # Shuffle with fixed seed for reproducibility
+        split_seed = hash(f"split_{target}_{n_nuclei}_{feature_set_name}") % (2**32)
+        shuffled_df = sampled_df.sample(frac=1.0, random_state=split_seed).reset_index(drop=True)
+
+        train_df = shuffled_df[:n_train]
+        val_df = shuffled_df[n_train:n_train+n_val]
+        test_df = shuffled_df[n_train+n_val:]
+
+        # [FAZ 3 NEW]: Apply scaling
+        scaler = ScalingManager(method=self.scaling)
+        scaling_metadata = {}
+
+        if self.scaling != 'NoScaling':
+            # Fit scaler on train features only (not targets!)
+            scaler.fit(train_df, feature_cols)
+
+            # Transform train/val/test
+            train_df = scaler.transform(train_df)
+            val_df = scaler.transform(val_df)
+            test_df = scaler.transform(test_df)
+
+            # Get scaling metadata
+            scaling_metadata = scaler.get_metadata()
+
+            logger.info(f"  Scaling applied: {self.scaling} (scaled {len(scaler.features_to_scale)} features)")
+        else:
+            logger.info(f"  No scaling applied")
+
+        # Save train/val/test splits
+        split_files = {}
+
+        for split_name, split_df in [('train', train_df), ('val', val_df), ('test', test_df)]:
+            # Select only the relevant columns (features + targets)
+            cols_to_save = ['NUCLEUS'] + feature_cols + target_cols if 'NUCLEUS' in split_df.columns else feature_cols + target_cols
+            split_data = split_df[cols_to_save]
+
+            # CSV format
+            csv_file = dataset_dir / f"{dataset_name}_{split_name}.csv"
+            split_data.to_csv(csv_file, index=False, encoding='utf-8')
+
+            # MAT format (for ANFIS/MATLAB) - with enhanced metadata
+            mat_file = dataset_dir / f"{dataset_name}_{split_name}.mat"
+            self._save_as_mat(
+                split_data, mat_file, feature_cols, target_cols,
+                scaling_metadata=scaling_metadata,
+                dataset_name=dataset_name,
+                target=target,
+                split_name=split_name
+            )
+
+            split_files[split_name] = {
+                'csv': csv_file,
+                'mat': mat_file
+            }
+
+        # [FAZ 3 UPDATE]: Enhanced metadata with scaling and sampling
+        metadata = {
+            'dataset_name': dataset_name,
+            'target': target,
+            'feature_set': feature_set_name,
+            'io_config': io_config_name,  # [FAZ 2]
+            'scenario': self.scenario,  # [FAZ 2]
+            'scaling': self.scaling,  # [FAZ 2/3]
+            'sampling': self.sampling,  # [FAZ 2/3]
+            'n_nuclei_requested': n_nuclei,
+            'n_nuclei_total': actual_n,
+            'n_nuclei_train': len(train_df),
+            'n_nuclei_val': len(val_df),
+            'n_nuclei_test': len(test_df),
+            'n_features': len(feature_cols),
+            'feature_names': feature_cols,
+            'target_names': target_cols,
+            'split_ratio': [train_ratio, val_ratio, test_ratio],  # [FAZ 2]
+            'generation_timestamp': datetime.now().isoformat(),
+            'folder_structure': str(dataset_dir.relative_to(self.output_base_dir)),
+            # [FAZ 2]: I/O config details
+            'io_config_details': self.io_config_manager.get_config_info(io_config_name),
+            # [FAZ 3 NEW]: Scaling metadata
+            'scaling_metadata': scaling_metadata if self.scaling != 'NoScaling' else {},
+            # [FAZ 3 NEW]: Sampling statistics
+            'sampling_info': {
+                'method': self.sampling,
+                'statistics': get_sampling_statistics(sampled_df)
+            }
+        }
+
+        # Save metadata
+        metadata_file = dataset_dir / f"{dataset_name}_metadata.json"
+        with open(metadata_file, 'w') as f:
+            json.dump(metadata, f, indent=2)
+
+        return {
+            'dataset_name': dataset_name,
+            'target': target,
+            'feature_set': feature_set_name,
+            'n_features': len(feature_cols),
+            'dataset_dir': dataset_dir,
+            'split_files': split_files,
+            'metadata_file': metadata_file,
+            'metadata': metadata,
+            'data': shuffled_df  # Full shuffled data
+        }
 
     def _create_single_dataset(self, source_df: pd.DataFrame, target: str, n_nuclei: int) -> Optional[Dict]:
         """Tek bir dataset oluştur ve train/val/test olarak böl"""
@@ -614,31 +859,75 @@ class DatasetGenerationPipelineV2:
             'data': shuffled_df  # Full shuffled data
         }
     
-    def _save_as_mat(self, df: pd.DataFrame, filepath: Path, feature_cols: List[str], target_cols: List[str]):
+    def _save_as_mat(self,
+                     df: pd.DataFrame,
+                     filepath: Path,
+                     feature_cols: List[str],
+                     target_cols: List[str],
+                     scaling_metadata: Dict = None,
+                     dataset_name: str = '',
+                     target: str = '',
+                     split_name: str = ''):
         """
-        Save dataset as MATLAB .mat file
-        
+        [FAZ 3 UPDATE] Save dataset as MATLAB .mat file with enhanced metadata
+
         Args:
             df: DataFrame to save
             filepath: Output .mat file path
             feature_cols: Feature column names
             target_cols: Target column names
+            scaling_metadata: Scaling metadata (mean, std, etc.)
+            dataset_name: Dataset name
+            target: Target variable name
+            split_name: Split name (train/val/test)
         """
         try:
             from scipy.io import savemat
-            
-            # Prepare data dictionary for MATLAB
+
+            # Prepare enhanced data dictionary for MATLAB/ANFIS
             mat_dict = {
+                # Data arrays
                 'features': df[feature_cols].values,
                 'targets': df[target_cols].values,
+                'nucleus_names': df['NUCLEUS'].values if 'NUCLEUS' in df.columns else [],
+
+                # Feature information
                 'feature_names': feature_cols,
                 'target_names': target_cols,
-                'nucleus_names': df['NUCLEUS'].values if 'NUCLEUS' in df.columns else []
+                'n_features': len(feature_cols),
+                'n_targets': len(target_cols),
+                'n_samples': len(df),
+
+                # Dataset metadata
+                'dataset_name': dataset_name,
+                'target': target,
+                'split': split_name,
+
+                # [FAZ 3 NEW]: Scaling metadata
+                'scaling_applied': scaling_metadata is not None and len(scaling_metadata) > 0,
             }
-            
-            # Save
+
+            # Add scaling parameters if available
+            if scaling_metadata and len(scaling_metadata) > 0:
+                mat_dict['scaling_method'] = scaling_metadata.get('method', 'NoScaling')
+                mat_dict['features_scaled'] = scaling_metadata.get('features_scaled', [])
+                mat_dict['features_excluded'] = scaling_metadata.get('features_excluded', [])
+
+                # Add scaler parameters (mean, std, median, IQR)
+                scaler_params = scaling_metadata.get('scaler_params', {})
+                if 'mean' in scaler_params:
+                    mat_dict['scaler_mean'] = np.array(scaler_params['mean'])
+                    mat_dict['scaler_std'] = np.array(scaler_params['std'])
+                if 'median' in scaler_params:
+                    mat_dict['scaler_median'] = np.array(scaler_params['median'])
+                    mat_dict['scaler_iqr'] = np.array(scaler_params['iqr'])
+            else:
+                mat_dict['scaling_method'] = 'NoScaling'
+                mat_dict['features_scaled'] = []
+
+            # Save to .mat file
             savemat(filepath, mat_dict)
-            logger.info(f"  [SUCCESS] MAT file saved: {filepath.name}")
+            # logger.info(f"  [SUCCESS] MAT file saved: {filepath.name}")
 
         except ImportError:
             logger.warning("  [WARNING] scipy not available, skipping MAT file export")
@@ -648,7 +937,7 @@ class DatasetGenerationPipelineV2:
     def _create_metadata_and_reports(self):
         """Master metadata ve raporlar oluştur"""
         logger.info("Creating master metadata and reports...")
-        
+
         # Master metadata
         master_metadata = {
             'pipeline_version': '1.0.0',
@@ -659,7 +948,7 @@ class DatasetGenerationPipelineV2:
             'nucleus_counts': self.nucleus_counts,
             'datasets': []
         }
-        
+
         for dataset in self.generated_datasets:
             master_metadata['datasets'].append({
                 'name': dataset['dataset_name'],
@@ -669,7 +958,7 @@ class DatasetGenerationPipelineV2:
                 'data_file_csv': str(dataset['data_file_csv']),
                 'data_file_mat': str(dataset['data_file_mat'])
             })
-        
+
         # Save master metadata
         master_metadata_file = self.output_base_dir / 'master_metadata.json'
         with open(master_metadata_file, 'w') as f:
@@ -683,30 +972,89 @@ class DatasetGenerationPipelineV2:
             json.dump(self.generation_report, f, indent=2)
 
         logger.info(f"[SUCCESS] Generation report: {report_file}")
-        
+
+        # Exclusion tracker reports
+        logger.info("\nSaving exclusion tracker reports...")
+        self.exclusion_tracker.print_summary()
+
+        # Save to multiple formats
+        metadata_dir = self.output_base_dir / 'metadata'
+        metadata_dir.mkdir(parents=True, exist_ok=True)
+
+        # Excel report (main format)
+        excel_path = metadata_dir / 'excluded_nuclei_report.xlsx'
+        self.exclusion_tracker.save_to_excel(str(excel_path))
+
+        # CSV report (for easy parsing)
+        csv_path = metadata_dir / 'excluded_nuclei_report.csv'
+        self.exclusion_tracker.save_to_csv(str(csv_path))
+
+        # JSON report (for programmatic access)
+        json_path = metadata_dir / 'excluded_nuclei_report.json'
+        self.exclusion_tracker.save_to_json(str(json_path))
+
+        logger.info(f"[SUCCESS] Exclusion reports saved to: {metadata_dir}")
+
+        # QM filter reports
+        if self.qm_filter_manager.filter_reports:
+            qm_report_path = metadata_dir / 'qm_filter_report.xlsx'
+            self.qm_filter_manager.save_filter_report_excel(str(qm_report_path))
+
+        # [FAZ 1]: Feature combinations JSON
+        feature_combos_path = metadata_dir / 'feature_combinations.json'
+        self.feature_manager.save_feature_combinations_json(str(feature_combos_path))
+
+        # [FAZ 2 NEW]: I/O configurations JSON
+        io_configs_path = metadata_dir / 'io_configurations.json'
+        self.io_config_manager.save_io_configs_json(str(io_configs_path))
+
         # Summary Excel report
         self._create_summary_excel()
     
     def _create_summary_excel(self):
-        """Excel özet raporu oluştur"""
+        """[FAZ 2 UPDATE] Excel özet raporu oluştur"""
         summary_data = []
-        
+
         for dataset in self.generated_datasets:
             meta = dataset['metadata']
+
+            # Handle both FAZ 1 format (old) and FAZ 2 format (new)
+            if 'split_info' in meta:
+                # Old FAZ 1 format
+                n_train = meta['split_info']['train']['n_samples']
+                n_val = meta['split_info']['val']['n_samples']
+                n_test = meta['split_info']['test']['n_samples']
+                a_min = meta['statistics']['A_range'][0]
+                a_max = meta['statistics']['A_range'][1]
+                z_min = meta['statistics']['Z_range'][0]
+                z_max = meta['statistics']['Z_range'][1]
+            else:
+                # New FAZ 2 format
+                n_train = meta.get('n_nuclei_train', 0)
+                n_val = meta.get('n_nuclei_val', 0)
+                n_test = meta.get('n_nuclei_test', 0)
+                a_min = meta.get('statistics', {}).get('A_range', [None, None])[0] if 'statistics' in meta else None
+                a_max = meta.get('statistics', {}).get('A_range', [None, None])[1] if 'statistics' in meta else None
+                z_min = meta.get('statistics', {}).get('Z_range', [None, None])[0] if 'statistics' in meta else None
+                z_max = meta.get('statistics', {}).get('Z_range', [None, None])[1] if 'statistics' in meta else None
+
             summary_data.append({
                 'Dataset_Name': meta['dataset_name'],
                 'Target': meta['target'],
+                'Feature_Set': meta.get('feature_set', 'N/A'),  # [FAZ 2]
+                'IO_Config': meta.get('io_config', 'N/A'),  # [FAZ 2]
+                'Scenario': meta.get('scenario', 'N/A'),  # [FAZ 2]
+                'Scaling': meta.get('scaling', 'N/A'),  # [FAZ 2]
+                'Sampling': meta.get('sampling', 'N/A'),  # [FAZ 2]
                 'N_Nuclei_Total': meta['n_nuclei_total'],
-                'N_Train': meta['split_info']['train']['n_samples'],
-                'N_Val': meta['split_info']['val']['n_samples'],
-                'N_Test': meta['split_info']['test']['n_samples'],
+                'N_Train': n_train,
+                'N_Val': n_val,
+                'N_Test': n_test,
                 'N_Features': meta['n_features'],
-                'A_Min': meta['statistics']['A_range'][0],
-                'A_Max': meta['statistics']['A_range'][1],
-                'Z_Min': meta['statistics']['Z_range'][0],
-                'Z_Max': meta['statistics']['Z_range'][1],
-                'Train_CSV': str(dataset['split_files']['train']['csv'].name),
-                'Train_Excel': str(dataset['split_files']['train']['xlsx'].name)
+                'A_Min': a_min,
+                'A_Max': a_max,
+                'Z_Min': z_min,
+                'Z_Max': z_max
             })
         
         summary_df = pd.DataFrame(summary_data)
