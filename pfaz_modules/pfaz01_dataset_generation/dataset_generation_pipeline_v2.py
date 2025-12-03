@@ -710,6 +710,8 @@ class DatasetGenerationPipelineV2:
             'n_features': len(feature_cols),
             'dataset_dir': dataset_dir,
             'split_files': split_files,
+            'data_file_csv': split_files['train']['csv'],  # Keep for backward compatibility
+            'data_file_mat': split_files['train']['mat'],  # Keep for backward compatibility
             'metadata_file': metadata_file,
             'metadata': metadata,
             'data': shuffled_df  # Full shuffled data
