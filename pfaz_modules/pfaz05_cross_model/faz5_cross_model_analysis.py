@@ -23,7 +23,7 @@ import sys
 
 # Proje modüllerini import et
 try:
-    from cross_model_evaluator import CrossModelEvaluator
+    from .cross_model_evaluator import CrossModelEvaluator
 except ImportError:
     print("[ERROR] cross_model_evaluator.py bulunamadı!")
     print("Lütfen cross_model_evaluator.py'yi aynı klasöre kopyalayın.")
