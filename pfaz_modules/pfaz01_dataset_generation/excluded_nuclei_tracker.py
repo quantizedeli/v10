@@ -16,6 +16,9 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
 import json
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from core_modules.json_utils import sanitize_for_json
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -148,11 +151,16 @@ class ExcludedNucleiTracker:
 
         df = pd.DataFrame(self.excluded)
 
+        # Convert multi-level groupby to JSON-serializable format
+        reason_target_grouped = df.groupby(['Reason', 'Target']).size()
+        reason_target_dict = {f"{reason}_{target}": count
+                              for (reason, target), count in reason_target_grouped.items()}
+
         summary = {
             'total_excluded': len(df),
             'by_reason': df.groupby('Reason').size().to_dict(),
             'by_target': df.groupby('Target').size().to_dict(),
-            'by_reason_and_target': df.groupby(['Reason', 'Target']).size().to_dict()
+            'by_reason_and_target': reason_target_dict  # Now JSON-serializable
         }
 
         return summary
@@ -280,7 +288,7 @@ class ExcludedNucleiTracker:
         }
 
         with open(output_path, 'w') as f:
-            json.dump(output_data, f, indent=2)
+            json.dump(sanitize_for_json(output_data), f, indent=2)
 
         logger.info(f"[OK] Excluded nuclei saved to JSON: {output_path}")
 
