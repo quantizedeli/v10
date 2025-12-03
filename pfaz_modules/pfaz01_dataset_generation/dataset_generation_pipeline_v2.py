@@ -522,7 +522,7 @@ class DatasetGenerationPipelineV2:
                             self.generated_datasets.append(dataset)
                             generated_count += 1
 
-                            logger.info(f"  ✓ {dataset['dataset_name']} | {dataset['n_features']} features | {len(dataset['data'])} nuclei")
+                            logger.info(f"  [OK] {dataset['dataset_name']} | {dataset['n_features']} features | {len(dataset['data'])} nuclei")
 
                     except Exception as e:
                         logger.error(f"  ✗ Error generating {target}_{size_label}_{feature_set_name}: {e}")
