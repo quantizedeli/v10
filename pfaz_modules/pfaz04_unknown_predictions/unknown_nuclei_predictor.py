@@ -267,10 +267,22 @@ class UnknownNucleiPredictor:
             
             # Sheet 3: Summary
             ws3 = wb.create_sheet('Summary')
+
+            # Defensive: Handle empty DataFrames
+            ai_count = len(ai_df)
+            ai_r2 = ai_df['r2'].mean() if not ai_df.empty and 'r2' in ai_df.columns else 0.0
+            ai_rmse = ai_df['rmse'].mean() if not ai_df.empty and 'rmse' in ai_df.columns else 0.0
+            ai_mae = ai_df['mae'].mean() if not ai_df.empty and 'mae' in ai_df.columns else 0.0
+
+            anfis_count = len(anfis_df)
+            anfis_r2 = anfis_df['r2'].mean() if not anfis_df.empty and 'r2' in anfis_df.columns else 0.0
+            anfis_rmse = anfis_df['rmse'].mean() if not anfis_df.empty and 'rmse' in anfis_df.columns else 0.0
+            anfis_mae = anfis_df['mae'].mean() if not anfis_df.empty and 'mae' in anfis_df.columns else 0.0
+
             summary_data = [
                 ['Category', 'Count', 'Avg_R2', 'Avg_RMSE', 'Avg_MAE'],
-                ['AI Models', len(ai_df), ai_df['r2'].mean(), ai_df['rmse'].mean(), ai_df['mae'].mean()],
-                ['ANFIS Models', len(anfis_df), anfis_df['r2'].mean(), anfis_df['rmse'].mean(), anfis_df['mae'].mean()]
+                ['AI Models', ai_count, ai_r2, ai_rmse, ai_mae],
+                ['ANFIS Models', anfis_count, anfis_r2, anfis_rmse, anfis_mae]
             ]
             for row in summary_data:
                 ws3.append(row)
