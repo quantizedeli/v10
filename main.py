@@ -530,16 +530,25 @@ class NuclearPhysicsAIOrchestrator:
             return {'status': 'skipped'}
 
         try:
-            self.status_manager.update_pfaz(pfaz_id, 'running', 50)
-            from pfaz_modules.pfaz05_cross_model.cross_model_evaluator import CrossModelEvaluator
+            self.status_manager.update_pfaz(pfaz_id, 'running', 30)
+
+            # Use the complete cross-model analysis pipeline
+            from pfaz_modules.pfaz05_cross_model.faz5_cross_model_analysis import CrossModelAnalysisPipeline
 
             config = self.config['pfaz_config'][pfaz_id]
 
-            evaluator = CrossModelEvaluator(
-                output_dir=str(self.pfaz_outputs[5]),
-                use_best_model_selector=config.get('use_best_model_selector', True)
+            self.status_manager.update_pfaz(pfaz_id, 'running', 50)
+
+            # Initialize pipeline
+            pipeline = CrossModelAnalysisPipeline(
+                trained_models_dir=str(self.pfaz_outputs[2]),  # AI models from PFAZ2
+                output_dir=str(self.pfaz_outputs[5])
             )
-            results = evaluator.evaluate_all_models()
+
+            self.status_manager.update_pfaz(pfaz_id, 'running', 70)
+
+            # Run complete analysis
+            results = pipeline.run_complete_analysis()
 
             self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
             logger.info("[SUCCESS] PFAZ 5 tamamlandı!")
