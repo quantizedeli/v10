@@ -61,6 +61,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Import SeedTracker (after logging is configured)
+try:
+    from .seed_tracker import SeedTracker
+    SEED_TRACKER_AVAILABLE = True
+except ImportError:
+    SEED_TRACKER_AVAILABLE = False
+    logger.warning("SeedTracker not available")
+
 
 # ============================================================================
 # DATA STRUCTURES
@@ -450,14 +458,19 @@ class RandomForestTrainer(BaseAITrainer):
         
         logger.info(f"Training RF: n_estimators={n_estimators}, max_depth={max_depth}")
         
+        # Random seed
+        random_seed = 42
+
         # Create and train model
         self.model = RandomForestRegressor(
             n_estimators=n_estimators,
             max_depth=max_depth,
             min_samples_split=min_samples_split,
             n_jobs=-1,
-            random_state=42
+            random_state=random_seed
         )
+
+        logger.info(f"  Random seed: {random_seed}")
         
         start_time = time.time()
         self.model.fit(X_train, y_train)
@@ -498,14 +511,19 @@ class XGBoostTrainer(BaseAITrainer):
         
         logger.info(f"Training XGBoost: n_estimators={n_estimators}, lr={learning_rate}")
         
+        # Random seed
+        random_seed = 42
+
         # Create and train model
         self.model = XGBRegressor(
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             max_depth=max_depth,
             n_jobs=-1,
-            random_state=42
+            random_state=random_seed
         )
+
+        logger.info(f"  Random seed: {random_seed}")
         
         start_time = time.time()
         self.model.fit(
@@ -533,13 +551,35 @@ class XGBoostTrainer(BaseAITrainer):
 
 class DNNTrainer(BaseAITrainer):
     """Deep Neural Network Trainer"""
-    
-    def __init__(self, config: Dict, output_dir: Path):
+
+    def __init__(self, config: Dict, output_dir: Path, gpu_enabled: bool = False):
         super().__init__('DNN', config, output_dir)
-        
+
         if not TF_AVAILABLE:
             raise ImportError("TensorFlow not available")
+
+        self.gpu_enabled = gpu_enabled
+        self._configure_gpu()
     
+    def _configure_gpu(self):
+        """Configure GPU settings for TensorFlow"""
+        if not self.gpu_enabled:
+            # Disable GPU, use CPU only
+            tf.config.set_visible_devices([], 'GPU')
+            logger.info("[DNN] GPU DISABLED - Using CPU only")
+        else:
+            # Enable GPU with memory growth
+            gpus = tf.config.list_physical_devices('GPU')
+            if gpus:
+                try:
+                    for gpu in gpus:
+                        tf.config.experimental.set_memory_growth(gpu, True)
+                    logger.info(f"[DNN] GPU ENABLED - Found {len(gpus)} GPU(s)")
+                except RuntimeError as e:
+                    logger.warning(f"[DNN] GPU config error: {e}")
+            else:
+                logger.warning("[DNN] GPU enabled but no GPU found - Using CPU")
+
     def build_model(self, input_dim: int, output_dim: int) -> keras.Model:
         """Build DNN model"""
         
@@ -573,8 +613,13 @@ class DNNTrainer(BaseAITrainer):
         batch_size = self.config.get('batch_size', 32)
         epochs = self.config.get('epochs', 100)
         early_stopping_patience = self.config.get('early_stopping_patience', 15)
+        random_seed = 42
 
-        logger.info(f"Training DNN: batch_size={batch_size}, epochs={epochs}")
+        logger.info(f"Training DNN: batch_size={batch_size}, epochs={epochs}, seed={random_seed}")
+
+        # Set random seed for reproducibility
+        np.random.seed(random_seed)
+        tf.random.set_seed(random_seed)
 
         # CRITICAL: Scale features for neural networks
         from sklearn.preprocessing import StandardScaler
@@ -670,7 +715,8 @@ class ParallelAITrainer:
                  gpu_enabled: bool = False,
                  use_hyperparameter_tuning: bool = False,
                  use_model_validation: bool = True,
-                 use_advanced_models: bool = False):
+                 use_advanced_models: bool = False,
+                 use_parallel_training: bool = None):
         """
         Initialize Parallel AI Trainer
 
@@ -684,6 +730,7 @@ class ParallelAITrainer:
             use_hyperparameter_tuning: Enable hyperparameter tuning with Optuna
             use_model_validation: Enable cross-validation and robustness testing
             use_advanced_models: Enable advanced models (BNN, PINN)
+            use_parallel_training: Use parallel training (None = prompt user, True = parallel, False = sequential)
         """
         # Handle both parameter styles
         if models_dir is not None:
@@ -713,9 +760,21 @@ class ParallelAITrainer:
         self.use_model_validation = use_model_validation
         self.use_advanced_models = use_advanced_models
 
+        # PARALLEL TRAINING MODE
+        # If None, will prompt user in train_all_models_parallel()
+        self.use_parallel_training = use_parallel_training
+
         # Storage
         self.training_results = []
         self.failed_jobs = []
+
+        # SEED TRACKER: Track all random seeds for reproducibility
+        if SEED_TRACKER_AVAILABLE:
+            self.seed_tracker = SeedTracker(output_dir=str(self.output_dir / 'seed_reports'))
+            logger.info("[ACTIVATED] Seed Tracker initialized")
+        else:
+            self.seed_tracker = None
+            logger.warning("[SKIP] Seed Tracker not available")
 
         # ACTIVATED MODULES: Import optional modules
         self.overfitting_detector = None
@@ -842,7 +901,7 @@ class ParallelAITrainer:
             elif job.model_type in ['XGB', 'XGBoost']:
                 trainer = XGBoostTrainer(job.config, job.output_dir)
             elif job.model_type == 'DNN':
-                trainer = DNNTrainer(job.config, job.output_dir)
+                trainer = DNNTrainer(job.config, job.output_dir, gpu_enabled=self.gpu_enabled)
             else:
                 raise ValueError(f"Unknown model type: {job.model_type}")
             
@@ -868,6 +927,22 @@ class ParallelAITrainer:
             with open(metrics_file, 'w') as f:
                 json.dump(metrics, f, indent=2)
 
+            # SEED TRACKING: Record seed used for this model
+            if hasattr(self, 'seed_tracker') and self.seed_tracker:
+                self.seed_tracker.add_seed(
+                    operation='model_training',
+                    seed=42,  # Currently hardcoded
+                    dataset_name=job.dataset_name,
+                    model_name=job.model_type,
+                    config_id=job.config['id'],
+                    details={
+                        'config': job.config,
+                        'train_samples': len(X_train),
+                        'val_samples': len(X_val),
+                        'test_samples': len(X_test)
+                    }
+                )
+
             # ✅ ACTIVATED: Model Validation (Cross-validation)
             if self.use_model_validation:
                 try:
@@ -875,12 +950,16 @@ class ParallelAITrainer:
                     X_combined = np.vstack([X_train, X_val])
                     y_combined = np.concatenate([y_train, y_val])
 
+                    # CRITICAL: If parallel training is used, use n_jobs=1 for CV to avoid deadlock
+                    cv_n_jobs = 1 if self.use_parallel_training else -1
+
                     cv_results = self.run_model_validation(
                         model=trainer.model,
                         model_name=f"{job.model_type}_{job.config['id']}",
                         X=X_combined,
                         y=y_combined,
-                        cv_folds=5
+                        cv_folds=5,
+                        cv_n_jobs=cv_n_jobs
                     )
 
                     if cv_results.get('status') == 'completed':
@@ -1059,7 +1138,7 @@ class ParallelAITrainer:
 
         logger.info(f"Summary report saved: {report_file}")
 
-    def train_all_models_parallel(self, n_configs: int = 50, use_parallel: bool = True) -> Dict:
+    def train_all_models_parallel(self, n_configs: int = 50, use_parallel: bool = None) -> Dict:
         """
         Main entry point for training all models with multiple configurations
 
@@ -1067,18 +1146,55 @@ class ParallelAITrainer:
         1. Loads or creates training configurations
         2. Discovers datasets from datasets_dir
         3. Creates training jobs for all combinations
-        4. Trains all models in parallel
+        4. Trains all models in parallel or sequentially (prompts user if not specified)
         5. Saves summary report
 
         Args:
             n_configs: Number of configurations to use (max 50)
-            use_parallel: Whether to use parallel training
+            use_parallel: Whether to use parallel training (None = use self.use_parallel_training or prompt)
 
         Returns:
             Dictionary with training results
         """
         logger.info("\n" + "=" * 80)
         logger.info("TRAIN ALL MODELS - PARALLEL EXECUTION")
+        logger.info("=" * 80)
+
+        # Determine parallel vs sequential training mode
+        if use_parallel is None:
+            use_parallel = self.use_parallel_training
+
+        # If still None, prompt user
+        if use_parallel is None:
+            logger.info("\n" + "=" * 80)
+            logger.info("PARALEL EĞİTİM SEÇENEĞİ")
+            logger.info("=" * 80)
+            logger.info("Cross-validation ile paralel eğitim kullanılırsa deadlock riski vardır.")
+            logger.info("Seçenekler:")
+            logger.info("  1) PARALEL EĞİTİM (hızlı ama CV sıralı olacak)")
+            logger.info("  2) SIRALI EĞİTİM (yavaş ama CV paralel olabilir)")
+            logger.info("=" * 80)
+
+            while True:
+                choice = input("\nSeçiminiz (1 veya 2): ").strip()
+                if choice == '1':
+                    use_parallel = True
+                    logger.info("\n✅ PARALEL EĞİTİM SEÇİLDİ")
+                    logger.info("   - Model eğitimleri paralel çalışacak")
+                    logger.info("   - Cross-validation sıralı çalışacak (n_jobs=1)")
+                    break
+                elif choice == '2':
+                    use_parallel = False
+                    logger.info("\n✅ SIRALI EĞİTİM SEÇİLDİ")
+                    logger.info("   - Model eğitimleri sıralı çalışacak")
+                    logger.info("   - Cross-validation paralel çalışabilir (n_jobs=-1)")
+                    break
+                else:
+                    logger.warning("Geçersiz seçim! Lütfen 1 veya 2 girin.")
+
+        # Store the choice
+        self.use_parallel_training = use_parallel
+        logger.info(f"\nTraining mode: {'PARALLEL' if use_parallel else 'SEQUENTIAL'}")
         logger.info("=" * 80)
 
         # Step 1: Load or create training configurations
@@ -1115,11 +1231,12 @@ class ParallelAITrainer:
         )
 
         # Step 5: Train all models
-        if use_parallel and self.n_workers > 1:
+        if self.use_parallel_training and self.n_workers > 1:
+            logger.info(f"\n🚀 Starting PARALLEL training with {self.n_workers} workers...")
             results = self.train_all_parallel(jobs)
         else:
             # Sequential training
-            logger.info("Training sequentially...")
+            logger.info("\n🐢 Starting SEQUENTIAL training (one job at a time)...")
             results = []
             for i, job in enumerate(jobs):
                 logger.info(f"Training job {i+1}/{len(jobs)}: {job.job_id}")
@@ -1129,7 +1246,17 @@ class ParallelAITrainer:
         # Step 6: Save summary report
         self.save_summary_report()
 
-        # Step 7: Return summary
+        # Step 7: Save seed tracking report
+        if hasattr(self, 'seed_tracker') and self.seed_tracker:
+            try:
+                self.seed_tracker.print_summary()
+                self.seed_tracker.save_to_excel('seed_tracking_report.xlsx')
+                self.seed_tracker.save_to_json('seed_tracking_report.json')
+                logger.info("[OK] Seed tracking reports saved")
+            except Exception as e:
+                logger.warning(f"[WARNING] Could not save seed tracking report: {e}")
+
+        # Step 8: Return summary
         successful = len([r for r in results if r.success])
         failed = len([r for r in results if not r.success])
 
@@ -1292,7 +1419,7 @@ class ParallelAITrainer:
             logger.error(f"[HYPERPARAMETER TUNING] Error: {e}")
             return {'status': 'failed', 'error': str(e)}
 
-    def run_model_validation(self, model, model_name: str, X, y, cv_folds: int = 5) -> Dict:
+    def run_model_validation(self, model, model_name: str, X, y, cv_folds: int = 5, cv_n_jobs: int = 1) -> Dict:
         """
         Run cross-validation and robustness testing
 
@@ -1301,6 +1428,7 @@ class ParallelAITrainer:
             model_name: Model name
             X, y: Data for validation
             cv_folds: Number of CV folds
+            cv_n_jobs: Number of parallel jobs for CV (default=1 to avoid nested parallelization deadlock)
 
         Returns:
             Dictionary with validation results
@@ -1313,8 +1441,8 @@ class ParallelAITrainer:
             validation_dir = self.output_dir / 'model_validation'
             validator = CrossValidationAnalyzer(model, model_name, output_dir=str(validation_dir))
 
-            # Run cross-validation
-            cv_results = validator.run_cv(X, y, cv=cv_folds)
+            # Run cross-validation with controlled n_jobs
+            cv_results = validator.run_cv(X, y, cv=cv_folds, n_jobs=cv_n_jobs)
 
             logger.info(f"[MODEL VALIDATION] CV Results: {cv_results}")
 
@@ -1322,7 +1450,8 @@ class ParallelAITrainer:
                 'status': 'completed',
                 'cv_results': cv_results,
                 'model_name': model_name,
-                'cv_folds': cv_folds
+                'cv_folds': cv_folds,
+                'cv_n_jobs': cv_n_jobs
             }
 
         except ImportError as e:

@@ -59,29 +59,32 @@ class CrossValidationAnalyzer:
         
         logger.info(f"CV Analyzer başlatıldı: {model_name}")
     
-    def run_cv(self, X, y, cv=5, scoring=None, return_train_score=True):
+    def run_cv(self, X, y, cv=5, scoring=None, return_train_score=True, n_jobs=1):
         """
         Cross-validation çalıştır
-        
+
         Args:
             cv: Fold sayısı veya CV object
             scoring: Metrics list
             return_train_score: Training scores'ları da hesapla
+            n_jobs: Number of parallel jobs (default=1 to avoid nested parallelization deadlock)
+                    Use n_jobs=-1 only for sequential training mode
         """
-        
+
         if scoring is None:
             scoring = ['r2', 'neg_mean_squared_error', 'neg_mean_absolute_error']
-        
+
         logger.info(f"\n{self.model_name} - {cv}-Fold Cross-Validation")
         logger.info(f"Scoring: {scoring}")
-        
+        logger.info(f"n_jobs: {n_jobs} (1=sequential CV to avoid deadlock in parallel training)")
+
         # Run CV
         self.cv_results = cross_validate(
             self.model, X, y,
             cv=cv,
             scoring=scoring,
             return_train_score=return_train_score,
-            n_jobs=-1,
+            n_jobs=n_jobs,  # FIXED: Use n_jobs parameter instead of hardcoded -1
             verbose=1
         )
         
