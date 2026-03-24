@@ -55,7 +55,12 @@ except ImportError:
     logging.warning("Plotly not available - HTML plots disabled")
 
 # Excel
-import xlsxwriter
+try:
+    import xlsxwriter
+    XLSXWRITER_AVAILABLE = True
+except ImportError:
+    xlsxwriter = None
+    XLSXWRITER_AVAILABLE = False
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 AutoML Hyperparameter Optimization with Optuna
 
@@ -8,9 +9,16 @@ Find optimal hyperparameters automatically using:
 - Parallel trials
 """
 
-import optuna
-from optuna.pruners import MedianPruner
-from optuna.samplers import TPESampler
+try:
+    import optuna
+    from optuna.pruners import MedianPruner
+    from optuna.samplers import TPESampler
+    OPTUNA_AVAILABLE = True
+except ImportError:
+    OPTUNA_AVAILABLE = False
+    optuna = None
+    MedianPruner = None
+    TPESampler = None
 import numpy as np
 import logging
 from typing import Dict, Optional, List, Tuple

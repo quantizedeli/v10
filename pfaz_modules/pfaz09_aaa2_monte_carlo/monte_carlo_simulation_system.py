@@ -52,7 +52,12 @@ except ImportError:
     logging.warning("TensorFlow not available - MC Dropout disabled")
 
 # Excel
-import xlsxwriter
+try:
+    import xlsxwriter
+    XLSXWRITER_AVAILABLE = True
+except ImportError:
+    xlsxwriter = None
+    XLSXWRITER_AVAILABLE = False
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font, Alignment
 
@@ -1162,7 +1167,8 @@ class MonteCarloSimulationSystem:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         excel_file = excel_dir / f'MC_Analysis_{target}_{timestamp}.xlsx'
         
-        with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
+        excel_engine = 'xlsxwriter' if XLSXWRITER_AVAILABLE else 'openpyxl'
+        with pd.ExcelWriter(excel_file, engine=excel_engine) as writer:
             # Sheet 1: Executive Summary
             summary_data = {
                 'Metric': ['Target', 'Models Analyzed', 'Nuclei', 'Mean Uncertainty', 'Max Uncertainty'],

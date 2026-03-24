@@ -50,7 +50,12 @@ except ImportError:
     PLOTLY_AVAILABLE = False
 
 # Excel with pivot tables
-import xlsxwriter
+try:
+    import xlsxwriter
+    XLSXWRITER_AVAILABLE = True
+except ImportError:
+    xlsxwriter = None
+    XLSXWRITER_AVAILABLE = False
 from openpyxl import load_workbook
 from openpyxl.pivot.table import TableStyleInfo, PivotTable
 from openpyxl.pivot.fields import DataField, RowField, ColField
@@ -644,7 +649,8 @@ class AAA2ControlGroupAnalyzerComplete:
         excel_path = self.output_dir / f'AAA2_Complete_{target}.xlsx'
         
         # Create workbook with 15 sheets (simplified structure)
-        with pd.ExcelWriter(excel_path, engine='xlsxwriter') as writer:
+        excel_engine = 'xlsxwriter' if XLSXWRITER_AVAILABLE else 'openpyxl'
+        with pd.ExcelWriter(excel_path, engine=excel_engine) as writer:
             # Sheet 1: Raw predictions
             pred_df = pd.DataFrame({
                 'NUCLEUS': self.aaa2_df['NUCLEUS'],
