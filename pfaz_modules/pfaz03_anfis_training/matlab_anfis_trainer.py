@@ -316,13 +316,29 @@ class MATLABAnfisTrainer:
     def close_engine(self):
         """Close MATLAB engine"""
         if self.engine:
-            self.engine.quit()
-            self.engine = None
+            try:
+                self.engine.quit()
+            except Exception as e:
+                logger.warning(f"MATLAB engine quit error: {e}")
+            finally:
+                self.engine = None
             logger.info("MATLAB engine closed")
-    
-    def __del__(self):
-        """Cleanup on deletion"""
+
+    # Context manager support — preferred over __del__ for deterministic cleanup
+    def __enter__(self):
+        self.initialize_engine()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.close_engine()
+        return False  # Don't suppress exceptions
+
+    def __del__(self):
+        """Fallback cleanup — use context manager when possible."""
+        try:
+            self.close_engine()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

@@ -100,25 +100,41 @@ class AutoInstaller:
                 print(f"[MISSING] {package} - YÜKLENMESİ GEREKİYOR")
 
         if missing:
-            print(f"\n[WARNING] {len(missing)} eksik kütüphane bulundu!")
-            print(f"Yüklenecekler: {', '.join(missing)}")
+            print(f"\n[WARNING] {len(missing)} eksik kutüphane bulundu!")
+            print(f"Yuklenecekler: {', '.join(missing)}")
 
-            response = input("\nOtomatik yüklensin mi? (E/h): ").lower()
+            # HPC mode: auto-install not allowed
+            if os.environ.get('HPC_MODE') or 'SLURM_JOB_ID' in os.environ:
+                print(f"[HPC] Eksik kutüphaneler: {', '.join(missing)}")
+                print("HPC ortaminda otomatik kurulum yapilmaz. Lütfen onceden:")
+                print("  module load python/3.11")
+                print("  python -m venv ~/v10_env")
+                print("  source ~/v10_env/bin/activate")
+                print("  pip install -r requirements.txt")
+                sys.exit(1)
+
+            # Non-interactive mode: cannot prompt
+            if not sys.stdin.isatty():
+                print(f"[ERROR] Eksik: {missing}. Non-interactive modda otomatik install yapilmaz.")
+                print(f"  pip install {' '.join(missing)}")
+                sys.exit(1)
+
+            response = input("\nOtomatik yuklensin mi? (E/h): ").lower()
             if response == 'e' or response == '':
                 for package in missing:
-                    print(f"\n[INSTALL] {package} yükleniyor...")
+                    print(f"\n[INSTALL] {package} yukleniyor...")
                     try:
                         subprocess.check_call([
                             sys.executable, "-m", "pip", "install", package, "-q"
                         ])
-                        print(f"[OK] {package} başarıyla yüklendi")
+                        print(f"[OK] {package} basariyla yuklendi")
                     except Exception as e:
-                        print(f"[ERROR] {package} yüklenemedi: {e}")
-                print("\n[SUCCESS] Kütüphane yükleme tamamlandı!")
-                print("[RESTART] Lütfen programı yeniden başlatın...")
+                        print(f"[ERROR] {package} yuklenemedi: {e}")
+                print("\n[SUCCESS] Kutüphane yukleme tamamlandi!")
+                print("[RESTART] Lütfen programi yeniden baslatin...")
                 sys.exit(0)
             else:
-                print("\n[WARNING] Kütüphaneler yüklenmedi. Lütfen manuel yükleyin:")
+                print("\n[WARNING] Kutüphaneler yuklenmedi. Lütfen manuel yukleyin:")
                 print(f"pip install {' '.join(missing)}")
                 sys.exit(1)
         else:
@@ -1698,10 +1714,13 @@ class NuclearPhysicsAIOrchestrator:
                 logger.error(f"[ERROR] PFAZ {pfaz_id} başarısız ({_elapsed_str(pfaz_elapsed)}): {e}")
 
                 # Hata durumunda devam etmek istiyor musunuz?
-                response = input("\n[WARNING] Devam etmek istiyor musunuz? (E/h): ").lower()
-                if response == 'h':
-                    logger.info("[STOP] Kullanıcı tarafından durduruldu")
-                    break
+                if not sys.stdin.isatty() or os.environ.get('HPC_MODE'):
+                    logger.warning("[AUTO] Non-interactive mode: hatada devam ediliyor")
+                else:
+                    response = input("\n[WARNING] Devam etmek istiyor musunuz? (E/h): ").lower()
+                    if response == 'h':
+                        logger.info("[STOP] Kullanici tarafindan durduruldu")
+                        break
 
             done_count += 1
 
@@ -2112,4 +2131,9 @@ def main():
         logger.info("="*80)
 
 if __name__ == "__main__":
+    import multiprocessing as _mp
+    try:
+        _mp.set_start_method('spawn', force=True)
+    except RuntimeError:
+        pass  # Already set
     main()

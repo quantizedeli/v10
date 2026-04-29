@@ -75,7 +75,7 @@ class ComprehensiveContentGenerator:
                     with open(filepath, 'r') as f:
                         results[key] = json.load(f)
                     logger.info(f"[OK] Loaded {filename}")
-                except:
+                except Exception as e:
                     logger.warning(f"Could not load {filename}")
         
         return results

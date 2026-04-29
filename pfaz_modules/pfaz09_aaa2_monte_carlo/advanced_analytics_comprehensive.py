@@ -1,3 +1,10 @@
+import os
+
+
+def _inner_n_jobs() -> int:
+    """Return 1 if outer parallel pool is active, else -1."""
+    return 1 if os.environ.get("_PFAZ_PARALLEL_ACTIVE") == "1" else -1
+
 # -*- coding: utf-8 -*-
 """
 ADVANCED ANALYTICS COMPREHENSIVE SYSTEM
@@ -367,7 +374,7 @@ class FeatureImportanceSystem:
                 model, X_test, y_test,
                 n_repeats=n_repeats,
                 random_state=42,
-                n_jobs=-1
+                n_jobs=_inner_n_jobs()
             )
             
             importance_df = pd.DataFrame({

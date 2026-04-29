@@ -2279,10 +2279,19 @@ def main():
     print("PFAZ 10: MASTER THESIS INTEGRATION v5.0")
     print("=" * 70)
 
-    author     = input("  Author name     (Enter for default): ").strip() or None
-    supervisor = input("  Supervisor name (Enter for default): ").strip() or None
-    university = input("  University name (Enter for default): ").strip() or None
-    compile_yn = input("  Compile to PDF? [y/N]: ").strip().lower() == 'y'
+    import os as _os
+    _interactive = sys.stdin.isatty() and not _os.environ.get('HPC_MODE')
+    if _interactive:
+        author     = input("  Author name     (Enter for default): ").strip() or None
+        supervisor = input("  Supervisor name (Enter for default): ").strip() or None
+        university = input("  University name (Enter for default): ").strip() or None
+        compile_yn = input("  Compile to PDF? [y/N]: ").strip().lower() == 'y'
+    else:
+        author     = _os.environ.get('THESIS_AUTHOR') or None
+        supervisor = _os.environ.get('THESIS_SUPERVISOR') or None
+        university = _os.environ.get('THESIS_UNIVERSITY') or None
+        compile_yn = _os.environ.get('THESIS_COMPILE_PDF', 'n').lower() == 'y'
+        print("[AUTO] Non-interactive mode: using environment variables for thesis info")
 
     thesis = MasterThesisIntegration()
     results = thesis.execute_full_pipeline(

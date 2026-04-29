@@ -4,6 +4,115 @@
 
 ---
 
+## 2026-04-30 — QA Bug Fix Oturumu (17 Kritik Bug, HPC Hazırlık)
+
+**Yapan:** Claude Code (Senior QA Engineer review sonrası)  
+**Referans rapor:** `V10_QA_BUG_REPORT.md`  
+**Scope:** 128 Python dosyası, tüm PFAZ modülleri
+
+### PFAZ 02 — parallel_ai_trainer.py (5 fix)
+
+**BUG #1 — Nested Parallelism (KRİTİK)**
+- `RandomForestTrainer.train()`, `SVRTrainer`, `DNNTrainer` içindeki `n_jobs=-1` → `n_jobs=_inner_n_jobs()` ile değiştirildi
+- `model_trainer.py`, `hyperparameter_tuner.py`, `model_validator.py` ve 4 diğer dosyada da aynı pattern uygulandı
+- `_PFAZ_PARALLEL_ACTIVE=1` env flag'i `train_all_parallel()` başında set edilip sonunda temizleniyor
+- Sonuç: 22 worker × 24 RF thread = 528 thread sorunu giderildi
+
+**BUG #2 — TF/PyTorch Memory Leak (KRİTİK)**
+- `train_single_job()` `finally` bloğuna eklendi: `tf.keras.backend.clear_session()` + `torch.cuda.empty_cache()` + `gc.collect()`
+- Her job sonrası GPU/RAM serbest bırakılıyor
+
+**BUG #11 — NameError: `data_file` undefined**
+- `parallel_ai_trainer.py:313`: `data_file` → `dataset_path` değiştirildi (fonksiyon parametresi doğru isim)
+
+**BUG #12 — Checkpoint/Resume**
+- `train_single_job()` başına `completed.json` okuma (resume) eklendi
+- Başarılı eğitim sonunda `completed.json` yazılıyor
+- HPC'de 12 saatlik iş kesilebilir, yeniden başlatınca kaldığı yerden devam eder
+
+**BUG #16 — DNN/SVR Scaler Kaydedilmiyordu**
+- `DNNTrainer.save_model()` override: `scaler.pkl` + `y_scaler.pkl` kaydediliyor
+- `SVRTrainer.save_model()` override: `scaler.pkl` kaydediliyor
+- Predict zamanında yüklenerek inference doğru yapılabiliyor
+
+**BUG #10 — Random Seed Çeşitlendirme**
+- `random_seed = 42` sabit → `hashlib.md5(config_id)` ile config-bazlı deterministik seed
+- 50 config gerçekten 50 farklı rastgele başlangıç noktasından eğitiliyor
+
+### PFAZ 02 — gpu_optimization.py (2 fix)
+
+**BUG #3 — XGBoost Deprecated GPU API (KRİTİK)**
+- XGBoost ≥2.0: `gpu_hist` + `gpu_id` + `gpu_predictor` kaldırıldı
+- Yeni API: `tree_method='hist'` + `device='cuda'` (version-aware, geriye dönük uyumlu)
+
+**BUG #7 — GPUOptimizer Namespace Çakışması**
+- `advanced_models.py` PyTorch sınıfı → `PyTorchGPUOptimizer` olarak yeniden adlandırıldı
+- `gpu_optimization.py` TensorFlow sınıfı `GPUOptimizer` olarak kaldı (canonical)
+- `advanced_models_extended.py` import düzeltildi
+
+### PFAZ 02 — model_trainer.py, hyperparameter_tuner.py, model_validator.py
+
+- `_inner_n_jobs()` helper eklendi (env var okur)
+- Tüm `n_jobs=-1` → `n_jobs=_inner_n_jobs()` ile değiştirildi
+
+### PFAZ 03 — anfis training (2 fix)
+
+**BUG #6 — MATLABAnfisTrainer Import Typo (KRİTİK)**
+- `__init__.py`: `MatlabANFISTrainer` → `MATLABAnfisTrainer` (doğru class adı)
+- Backward compat alias korundu: `MatlabANFISTrainer = MATLABAnfisTrainer`
+- `except ImportError: pass` → loglama eklendi
+
+**BUG #14 — MATLAB Engine `__del__` Güvenli Değildi**
+- `matlab_anfis_trainer.py`: `__enter__` / `__exit__` context manager eklendi
+- `__del__` içine `try/except` eklendi (GC güvensizliğine karşı)
+
+### PFAZ 10 — thesis compilation (1 fix)
+
+**BUG #8 — input() Çağrıları HPC'de Donar**
+- `pfaz10_complete_package.py`, `pfaz10_master_integration.py`, `pfaz10_thesis_orchestrator.py`
+- `sys.stdin.isatty()` kontrolü eklendi
+- HPC'de env var'lardan okur: `THESIS_AUTHOR`, `THESIS_SUPERVISOR`, `THESIS_UNIVERSITY`, `THESIS_COMPILE_PDF`
+
+### PFAZ 11 — production (1 fix)
+
+**EXTRA BUG — ProductionModelServer isim uyumsuzluğu**
+- `__init__.py` `ProductionModelServer` import → gerçek sınıf `ModelServingManager`
+- `try/except ImportError` bloğuna alındı, alias oluşturuldu
+
+### Tüm PFAZ modülleri — genel fixler
+
+**BUG #5 — UTF-8 Encoding (KRİTİK)**
+- 3 dosya CP1254 → UTF-8'e dönüştürüldü: `pfaz01`, `pfaz10`, `pfaz11` `__init__.py`
+
+**BUG #4 — Multiprocessing Start Method (KRİTİK)**
+- `main.py`, `run_complete_pipeline.py`: `mp.set_start_method('spawn', force=True)` eklendi
+- Linux'ta TensorFlow + fork deadlock önleniyor
+
+**BUG #9 — Yanlış Import Yolu (KRİTİK)**
+- `run_complete_pipeline.py`: `data_processing.data_loader` → `pfaz_modules.pfaz01_dataset_generation.data_loader`
+- `data_processing.anomaly_detector` → `core_modules.anomaly_detector`
+
+**BUG #13 — AutoInstaller HPC İzni Yok (KRİTİK)**
+- `main.py AutoInstaller`: `SLURM_JOB_ID` veya `HPC_MODE` env var kontrolü eklendi
+- HPC'de çıkış mesajı + `sys.exit(1)` (pip install denemeden)
+
+**BUG #15 — Bare `except:` Blokları (25 yer)**
+- 16 dosyada `except:` → `except Exception as e:` olarak düzeltildi
+- `KeyboardInterrupt`/`SystemExit` artık yakalanmıyor
+
+### Yeni Dosyalar Oluşturuldu
+- `requirements-hpc.txt` — auto-sklearn/pickle5 olmayan HPC uyumlu bağımlılık listesi
+- `hpc_slurm_job.sh` — hazır SLURM job scripti (SBATCH direktifleri + OMP_NUM_THREADS=1 vb.)
+- `CODING_RULES.md` — Claude Code için tekrar önleme kuralları
+- `HPC_DEPLOYMENT_CHECKLIST.md` — HPC göndermeden önce kontrol listesi
+
+### Doğrulama
+- **128 Python dosyasının tamamı** `py_compile` syntax check'ten geçiyor
+- 6 smoke test: import chain, env flag, XGBoost API, UTF-8, spawn method — hepsi PASS
+- `scripts/health_check.py`: 4/5 modül OK (PFAZ11 artık da OK)
+
+---
+
 ## 2026-04-21 - Bug Fix Oturumu (Import Hatalari)
 
 ### PFAZ 10 - pfaz10_master_integration.py

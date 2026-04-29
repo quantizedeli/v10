@@ -29,11 +29,25 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional, Any
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+import os
+import hashlib
 import warnings
 warnings.filterwarnings('ignore')
 warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
 warnings.filterwarnings('ignore', message='.*sklearn.utils.parallel.*')
 warnings.filterwarnings('ignore', message='.*joblib.*')
+
+
+def _inner_n_jobs() -> int:
+    """Return n_jobs for inner (nested) models.
+
+    When the outer ThreadPoolExecutor is active (_PFAZ_PARALLEL_ACTIVE=1),
+    every thread already owns a worker slot, so inner sklearn parallelism
+    must be 1 to avoid the N_workers x cpu_count thread explosion.
+    """
+    if os.environ.get('_PFAZ_PARALLEL_ACTIVE') == '1':
+        return 1
+    return -1
 
 # Sklearn
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
@@ -297,7 +311,7 @@ class BaseAITrainer:
 
         if not target_cols:
             logger.error(f"Available columns: {list(df.columns)}")
-            raise ValueError(f"No target columns found for {requested_targets} in {data_file}")
+            raise ValueError(f"No target columns found for {requested_targets} in {dataset_path}")
 
         logger.info(f"Target columns: {target_cols}")
 
@@ -508,14 +522,15 @@ class RandomForestTrainer(BaseAITrainer):
         logger.info(f"Training RF: n_estimators={n_estimators}, max_depth={max_depth}")
         
         # Random seed
-        random_seed = 42
+        _cfg_id = str(self.config.get("id", "default"))
+        random_seed = self.config.get("random_seed", int(hashlib.md5(_cfg_id.encode()).hexdigest()[:8], 16) % (2**31))
 
         # Create and train model
         self.model = RandomForestRegressor(
             n_estimators=n_estimators,
             max_depth=max_depth,
             min_samples_split=min_samples_split,
-            n_jobs=-1,
+            n_jobs=_inner_n_jobs(),
             random_state=random_seed
         )
 
@@ -594,7 +609,8 @@ class XGBoostTrainer(BaseAITrainer):
         logger.info(f"Training XGBoost: n_estimators={n_estimators}, lr={learning_rate}")
 
         # Random seed
-        random_seed = 42
+        _cfg_id = str(self.config.get("id", "default"))
+        random_seed = self.config.get("random_seed", int(hashlib.md5(_cfg_id.encode()).hexdigest()[:8], 16) % (2**31))
 
         xgb_kwargs = dict(
             n_estimators=n_estimators,
@@ -649,7 +665,8 @@ class LightGBMTrainer(BaseAITrainer):
         learning_rate = self.config.get('learning_rate', 0.05)
         max_depth = self.config.get('max_depth', -1)  # -1 = no limit
         num_leaves = self.config.get('num_leaves', 31)
-        random_seed = 42
+        _cfg_id = str(self.config.get("id", "default"))
+        random_seed = self.config.get("random_seed", int(hashlib.md5(_cfg_id.encode()).hexdigest()[:8], 16) % (2**31))
 
         # GPU desteği: LightGBM GPU build gerektirir; yoksa sessizce CPU'ya duser
         lgbm_device = 'cpu'
@@ -709,7 +726,8 @@ class CatBoostTrainer(BaseAITrainer):
         n_estimators = self.config.get('n_estimators', 200)
         learning_rate = self.config.get('learning_rate', 0.05)
         depth = self.config.get('max_depth', 6)
-        random_seed = 42
+        _cfg_id = str(self.config.get("id", "default"))
+        random_seed = self.config.get("random_seed", int(hashlib.md5(_cfg_id.encode()).hexdigest()[:8], 16) % (2**31))
 
         logger.info(f"Training CatBoost: iterations={n_estimators}, lr={learning_rate}, depth={depth}")
 
@@ -761,7 +779,7 @@ class SVRTrainer(BaseAITrainer):
 
         is_multi = y_train.ndim > 1 and y_train.shape[1] > 1
         base_model = SVR(kernel=kernel, C=C, epsilon=epsilon, gamma=gamma)
-        self.model = MultiOutputRegressor(base_model, n_jobs=-1) if is_multi else base_model
+        self.model = MultiOutputRegressor(base_model, n_jobs=_inner_n_jobs()) if is_multi else base_model
 
         start_time = time.time()
         y_train_1d = y_train.flatten() if (not is_multi and y_train.ndim > 1) else y_train
@@ -781,6 +799,14 @@ class SVRTrainer(BaseAITrainer):
         if not hasattr(self, 'scaler'):
             raise ValueError("Scaler not fitted")
         return self.model.predict(self.scaler.transform(X))
+
+    def save_model(self, filepath: Path):
+        """Save SVR model and scaler."""
+        import joblib
+        joblib.dump(self.model, filepath)
+        if hasattr(self, 'scaler'):
+            joblib.dump(self.scaler, filepath.parent / 'scaler.pkl')
+        logger.info(f"SVR model + scaler saved: {filepath}")
 
 
 class DNNTrainer(BaseAITrainer):
@@ -860,7 +886,8 @@ class DNNTrainer(BaseAITrainer):
         batch_size = self.config.get('batch_size', 32)
         epochs = self.config.get('epochs', 200)
         early_stopping_patience = self.config.get('early_stopping_patience', 20)
-        random_seed = 42
+        _cfg_id = str(self.config.get("id", "default"))
+        random_seed = self.config.get("random_seed", int(hashlib.md5(_cfg_id.encode()).hexdigest()[:8], 16) % (2**31))
 
         logger.info(f"Training DNN: batch_size={batch_size}, epochs={epochs}, seed={random_seed}")
 
@@ -963,6 +990,16 @@ class DNNTrainer(BaseAITrainer):
         X_scaled = self.scaler.transform(X)
         y_pred_scaled = self.model.predict(X_scaled, verbose=0)
         return self.y_scaler.inverse_transform(y_pred_scaled)
+
+    def save_model(self, filepath: Path):
+        """Save DNN model and both scalers for correct inference later."""
+        import joblib
+        joblib.dump(self.model, filepath)
+        if hasattr(self, 'scaler'):
+            joblib.dump(self.scaler, filepath.parent / 'scaler.pkl')
+        if hasattr(self, 'y_scaler'):
+            joblib.dump(self.y_scaler, filepath.parent / 'y_scaler.pkl')
+        logger.info(f"DNN model + scalers saved: {filepath}")
 
 
 # ============================================================================
@@ -1197,16 +1234,36 @@ class ParallelAITrainer:
     def train_single_job(self, job: TrainingJob) -> TrainingResult:
         """
         Train single model (worker function)
-        
+
         Args:
             job: TrainingJob object
-        
+
         Returns:
             TrainingResult object
         """
+        # --- CHECKPOINT RESUME ---
+        checkpoint_file = job.output_dir / 'completed.json'
+        if checkpoint_file.exists():
+            try:
+                with open(checkpoint_file, encoding='utf-8') as _cf:
+                    _saved = json.load(_cf)
+                logger.info(f"[RESUME] Job {job.job_id} already completed, skipping")
+                return TrainingResult(
+                    job_id=_saved.get('job_id', job.job_id),
+                    model_type=_saved.get('model_type', job.model_type),
+                    config_id=_saved.get('config_id', job.config['id']),
+                    dataset_name=_saved.get('dataset_name', job.dataset_name),
+                    success=_saved.get('success', True),
+                    metrics=_saved.get('metrics', {}),
+                    training_time=_saved.get('training_time', 0.0),
+                    error_message=_saved.get('error_message'),
+                )
+            except Exception as _ce:
+                logger.warning(f"[RESUME] Could not load checkpoint {checkpoint_file}: {_ce}")
+
         try:
             start_time = time.time()
-            
+
             # Create trainer based on model type
             if job.model_type in ['RF', 'RandomForest']:
                 trainer = RandomForestTrainer(job.config, job.output_dir)
@@ -1364,12 +1421,28 @@ class ParallelAITrainer:
             )
 
             logger.info(f"[SUCCESS] {job.job_id} | R2={metrics['val'].get('r2', 0):.4f} | {training_time:.1f}s")
-            
+
+            # Save checkpoint so this job can be skipped on resume
+            try:
+                job.output_dir.mkdir(parents=True, exist_ok=True)
+                with open(job.output_dir / 'completed.json', 'w', encoding='utf-8') as _cpf:
+                    json.dump({
+                        'job_id': result.job_id,
+                        'model_type': result.model_type,
+                        'config_id': result.config_id,
+                        'dataset_name': result.dataset_name,
+                        'success': result.success,
+                        'metrics': result.metrics,
+                        'training_time': result.training_time,
+                    }, _cpf, indent=2)
+            except Exception as _cpe:
+                logger.warning(f"[CHECKPOINT] Could not save checkpoint: {_cpe}")
+
             return result
-            
+
         except Exception as e:
             logger.error(f"[ERROR] {job.job_id} | Error: {str(e)}")
-            
+
             result = TrainingResult(
                 job_id=job.job_id,
                 model_type=job.model_type,
@@ -1378,9 +1451,26 @@ class ParallelAITrainer:
                 success=False,
                 error_message=str(e)
             )
-            
+
             return result
-    
+
+        finally:
+            # Memory cleanup after every job to prevent GPU/RAM leak
+            try:
+                import tensorflow as _tf
+                _tf.keras.backend.clear_session()
+            except Exception:
+                pass
+            try:
+                import torch as _torch
+                if _torch.cuda.is_available():
+                    _torch.cuda.empty_cache()
+                    _torch.cuda.synchronize()
+            except Exception:
+                pass
+            import gc as _gc
+            _gc.collect()
+
     def train_all_parallel(self, jobs: List[TrainingJob]) -> List[TrainingResult]:
         """
         Train all jobs in parallel
@@ -1403,6 +1493,10 @@ class ParallelAITrainer:
         
         start_time = time.time()
         
+        # Set env flag so inner trainers use n_jobs=1 (prevent thread explosion)
+        # Set env flag so inner trainers use n_jobs=1 (prevent thread explosion)
+        os.environ['_PFAZ_PARALLEL_ACTIVE'] = '1'
+
         # Use ThreadPoolExecutor for I/O bound tasks with sklearn
         # Use ProcessPoolExecutor for CPU-intensive tasks
         with ThreadPoolExecutor(max_workers=self.n_workers) as executor:
@@ -1463,9 +1557,12 @@ class ParallelAITrainer:
             logger.info("Avg time per job: N/A (no jobs executed)")
         logger.info("=" * 80 + "\n")
         
+        # Clear parallel flag after pool exits
+        os.environ.pop('_PFAZ_PARALLEL_ACTIVE', None)
+
         self.training_results = results
         self.failed_jobs = failed
-        
+
         return results
     
     def save_summary_report(self):
@@ -1594,22 +1691,35 @@ class ParallelAITrainer:
             logger.info("  2) SIRALI EĞİTİM (yavaş ama CV paralel olabilir)")
             logger.info("=" * 80)
 
-            while True:
-                choice = input("\nSeçiminiz (1 veya 2): ").strip()
-                if choice == '1':
-                    use_parallel = True
-                    logger.info("\n✅ PARALEL EĞİTİM SEÇİLDİ")
-                    logger.info("   - Model eğitimleri paralel çalışacak")
-                    logger.info("   - Cross-validation sıralı çalışacak (n_jobs=1)")
-                    break
-                elif choice == '2':
-                    use_parallel = False
-                    logger.info("\n✅ SIRALI EĞİTİM SEÇİLDİ")
-                    logger.info("   - Model eğitimleri sıralı çalışacak")
-                    logger.info("   - Cross-validation paralel çalışabilir (n_jobs=-1)")
-                    break
-                else:
-                    logger.warning("Geçersiz seçim! Lütfen 1 veya 2 girin.")
+            # HPC / non-interactive: env var or default
+            import os as _os, sys as _sys
+            _env_choice = _os.environ.get('PARALLEL_TRAINING', '').lower()
+            if _env_choice in ('1', 'true', 'parallel'):
+                use_parallel = True
+                logger.info("[AUTO] PARALLEL_TRAINING env var -> PARALEL EGiTiM")
+            elif _env_choice in ('2', 'false', 'sequential'):
+                use_parallel = False
+                logger.info("[AUTO] PARALLEL_TRAINING env var -> SIRALI EGiTiM")
+            elif not _sys.stdin.isatty():
+                use_parallel = True
+                logger.warning("[AUTO] Non-interactive mode detected, defaulting to PARALLEL training")
+            else:
+                while True:
+                    choice = input("\nSeciminiz (1 veya 2): ").strip()
+                    if choice == '1':
+                        use_parallel = True
+                        logger.info("[OK] PARALEL EGITIM SECILDI")
+                        logger.info("   - Model egitimler paralel calisacak")
+                        logger.info("   - Cross-validation sirali calisacak (n_jobs=1)")
+                        break
+                    elif choice == '2':
+                        use_parallel = False
+                        logger.info("[OK] SIRALI EGITIM SECILDI")
+                        logger.info("   - Model egitimler sirali calisacak")
+                        logger.info("   - Cross-validation paralel calisabilir (n_jobs=-1)")
+                        break
+                    else:
+                        logger.warning("Gecersiz secim! Lutfen 1 veya 2 girin.")
 
         # Store the choice
         self.use_parallel_training = use_parallel

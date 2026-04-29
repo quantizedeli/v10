@@ -1,4 +1,10 @@
 from __future__ import annotations
+import os
+
+
+def _inner_n_jobs() -> int:
+    """Return 1 if outer parallel pool is active, else -1."""
+    return 1 if os.environ.get("_PFAZ_PARALLEL_ACTIVE") == "1" else -1
 """
 AutoML Hyperparameter Optimization with Optuna
 
@@ -230,7 +236,7 @@ class AutoMLOptimizer:
         except ImportError:
             logger.warning("TensorFlow not installed, falling back to RandomForest")
             from sklearn.ensemble import RandomForestRegressor
-            model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=-1)
+            model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=_inner_n_jobs())
             model.fit(self.X_train, self.y_train)
             return model
 
@@ -273,7 +279,7 @@ class AutoMLOptimizer:
         except Exception as e:
             logger.warning(f"DNN training failed: {e}, using simple model")
             from sklearn.ensemble import RandomForestRegressor
-            model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=-1)
+            model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=_inner_n_jobs())
             model.fit(self.X_train, self.y_train)
 
         return model

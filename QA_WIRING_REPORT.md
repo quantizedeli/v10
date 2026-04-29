@@ -1,8 +1,51 @@
 # QA Wiring Report — Dead Code Audit & Resolution
-**Tarih:** 2026-04-13  
+**Tarih:** 2026-04-30 (guncellendi; ilk: 2026-04-13)
 **Rol:** QA Engineer  
 **Proje:** Nuclear Physics AI Pipeline (nucdatav1)  
-**Durum:** TAMAMLANDI
+**Durum:** TAMAMLANDI + HPC BUG FIXES EKLENDI
+
+---
+
+## 2026-04-30 Ek: HPC / Stability Bug Fixes
+
+Bu oturumda dead code auditinin otesinde 18 adet kritik/yuksek/orta bug duzeltildi.
+Tam liste ve fix detaylari: `V10_QA_BUG_REPORT.md` ve `PFAZ_DEVELOPMENT_NOTES.md`.
+
+### Degistirilen Dosyalar (kisa ozet)
+
+| Dosya | Degisiklik |
+|-------|-----------|
+| `pfaz02/parallel_ai_trainer.py` | nested parallelism, memory cleanup, checkpoint, scaler, seed, NameError, input() |
+| `pfaz02/model_trainer.py` | `_inner_n_jobs()` helper |
+| `pfaz02/hyperparameter_tuner.py` | `_inner_n_jobs()` helper |
+| `pfaz02/model_validator.py` | `_inner_n_jobs()` helper |
+| `pfaz02/gpu_optimization.py` | XGBoost 2.0+ API, bare except fix |
+| `pfaz02/advanced_models.py` | `PyTorchGPUOptimizer` rename |
+| `pfaz02/advanced_models_extended.py` | import alias guncellendi |
+| `pfaz03/__init__.py` | MATLABAnfisTrainer typo + logging |
+| `pfaz03/matlab_anfis_trainer.py` | context manager eklendi |
+| `pfaz10/pfaz10_complete_package.py` | input() → isatty() + env var |
+| `pfaz10/pfaz10_master_integration.py` | input() → isatty() + env var |
+| `pfaz10/pfaz10_thesis_orchestrator.py` | input() → isatty() + env var |
+| `pfaz11/__init__.py` | ProductionModelServer typo + try/except |
+| `pfaz01/__init__.py` | CP1254 → UTF-8 |
+| `pfaz10/__init__.py` | CP1254 → UTF-8 |
+| `pfaz11/__init__.py` | CP1254 → UTF-8 |
+| `main.py` | spawn, AutoInstaller HPC, input() fix |
+| `run_complete_pipeline.py` | spawn, yanlis import yolu |
+| 5× automl/analysis/monte_carlo | `_inner_n_jobs()` helper |
+| 16× genel | bare except → except Exception as e: |
+
+### Yeni Dosyalar
+
+| Dosya | Amac |
+|-------|------|
+| `requirements-hpc.txt` | HPC uyumlu bagimlilik listesi |
+| `hpc_slurm_job.sh` | Hazir SLURM job scripti |
+| `CODING_RULES.md` | Claude Code icin kodlama kurallari |
+| `HPC_DEPLOYMENT_CHECKLIST.md` | HPC gondermeden once kontrol listesi |
+
+---
 
 ---
 

@@ -56,7 +56,7 @@ class UnifiedVisualizationManager:
             self.ai_viz = AIVisualizer(self.output_dir / 'ai_models')
             self.anfis_viz = ANFISVisualizer(self.output_dir / 'anfis')
             self.excel_charts = ExcelChartGenerator()
-        except:
+        except Exception as e:
             logger.warning("Some visualizers could not be initialized")
         
         logger.info("Unified Visualization Manager başlatıldı")

@@ -108,17 +108,17 @@ class AutoMLVisualizer:
             # Optional sheets
             try:
                 self.param_importance = pd.read_excel(self.excel_path, sheet_name='Parameter_Importance')
-            except:
+            except Exception as e:
                 self.param_importance = None
             
             try:
                 self.convergence = pd.read_excel(self.excel_path, sheet_name='Convergence_Analysis')
-            except:
+            except Exception as e:
                 self.convergence = None
             
             try:
                 self.r2_vs_time = pd.read_excel(self.excel_path, sheet_name='R2_vs_Time')
-            except:
+            except Exception as e:
                 self.r2_vs_time = None
             
             logger.info(f"  [OK] Loaded {len(self.all_trials)} trials")

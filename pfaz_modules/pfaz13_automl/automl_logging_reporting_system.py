@@ -363,7 +363,7 @@ class AutoMLTrialLogger:
                         'correlation': float(abs(corr)),  # absolute correlation
                         'p_value': float(p_value)
                     }
-                except:
+                except Exception as e:
                     pass
         
         if not correlations:

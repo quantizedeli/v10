@@ -55,9 +55,13 @@ except ImportError:
     ANFIS_VISUALIZER_AVAILABLE = False
 
 try:
-    from .matlab_anfis_trainer import MatlabANFISTrainer
+    from .matlab_anfis_trainer import MATLABAnfisTrainer
+    MatlabANFISTrainer = MATLABAnfisTrainer  # backward compat alias
     MATLAB_ANFIS_TRAINER_AVAILABLE = True
-except ImportError:
+except ImportError as _e:
+    import logging as _logging
+    _logging.warning(f"MATLAB ANFIS trainer not available: {_e}")
+    MATLABAnfisTrainer = None
     MatlabANFISTrainer = None
     MATLAB_ANFIS_TRAINER_AVAILABLE = False
 
@@ -70,5 +74,5 @@ __all__ = [
     'ANFISPerformanceAnalyzer', 'ANFIS_PERFORMANCE_ANALYZER_AVAILABLE',
     'ANFISRobustnessTester', 'ANFIS_ROBUSTNESS_TESTER_AVAILABLE',
     'ANFISVisualizer', 'ANFIS_VISUALIZER_AVAILABLE',
-    'MatlabANFISTrainer', 'MATLAB_ANFIS_TRAINER_AVAILABLE',
+    'MATLABAnfisTrainer', 'MatlabANFISTrainer', 'MATLAB_ANFIS_TRAINER_AVAILABLE',
 ]

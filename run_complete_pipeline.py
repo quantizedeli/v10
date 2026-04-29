@@ -59,8 +59,7 @@ def step_1_load_and_clean_data(input_file='aaa2.txt', output_dir='output'):
     ADIM 1: Veri Yükleme ve Temizleme
     """
     try:
-        # DÜZELTILMIŞ IMPORT
-        from data_processing.data_loader import NuclearDataLoader
+        from pfaz_modules.pfaz01_dataset_generation.data_loader import NuclearDataLoader
         
         logger.info("Veri yükleniyor...")
         loader = NuclearDataLoader(input_file)
@@ -120,8 +119,7 @@ def step_3_anomaly_detection(enriched_data, output_dir='output'):
     ADIM 3: Anomali Tespiti
     """
     try:
-        # DÜZELTILMIŞ IMPORT
-        from data_processing.anomaly_detector import AnomalyDetector
+        from core_modules.anomaly_detector import AnomalyDetector
         
         logger.info("Anomali tespiti yapılıyor...")
         detector = AnomalyDetector()
@@ -388,4 +386,9 @@ def main():
 
 
 if __name__ == "__main__":
+    import multiprocessing as _mp
+    try:
+        _mp.set_start_method('spawn', force=True)
+    except RuntimeError:
+        pass  # Already set
     main()

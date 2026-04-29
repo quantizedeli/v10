@@ -1348,7 +1348,7 @@ pause
             for file in self.thesis_dir.glob(f'*{ext}'):
                 try:
                     file.unlink()
-                except:
+                except Exception as e:
                     pass
         
         logger.info("  [OK] Cleanup complete")
@@ -1376,10 +1376,18 @@ def main():
     orchestrator.collect_all_results()
     
     # Get author info
+    import sys as _sys, os as _os
+    _interactive = _sys.stdin.isatty() and not _os.environ.get('HPC_MODE')
     print("\n-> Author information:")
-    author = input("  Yazar Adı (Enter = varsayılan): ").strip() or "Yazar Adı"
-    supervisor = input("  Danışman Adı (Enter = varsayılan): ").strip() or "Danışman Adı"
-    university = input("  Üniversite Adı (Enter = varsayılan): ").strip() or "Üniversite Adı"
+    if _interactive:
+        author = input("  Yazar Adi (Enter = varsayilan): ").strip() or "Yazar Adi"
+        supervisor = input("  Danisan Adi (Enter = varsayilan): ").strip() or "Danisan Adi"
+        university = input("  Universite Adi (Enter = varsayilan): ").strip() or "Universite Adi"
+    else:
+        author = _os.environ.get('THESIS_AUTHOR', 'Yazar Adi')
+        supervisor = _os.environ.get('THESIS_SUPERVISOR', 'Danisan Adi')
+        university = _os.environ.get('THESIS_UNIVERSITY', 'Universite Adi')
+        print(f"[AUTO] author={author}, supervisor={supervisor}, university={university}")
     
     # Generate thesis
     print("\n-> Generating complete thesis...")
@@ -1392,7 +1400,11 @@ def main():
     print(f"\n[OK] Thesis generated: {main_file}")
     
     # Compile option
-    compile_opt = input("\nPDF'e derlemek ister misiniz? (LaTeX gerekli) [y/N]: ").strip().lower()
+    if _interactive:
+        compile_opt = input("\nPDF'e derlemek ister misiniz? (LaTeX gerekli) [y/N]: ").strip().lower()
+    else:
+        compile_opt = _os.environ.get('THESIS_COMPILE_PDF', 'n').lower()
+        print(f"[AUTO] compile_pdf={compile_opt}")
     
     if compile_opt == 'y':
         pdf_file = orchestrator.compile_pdf(cleanup=True)

@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-04-30T02:32:43.767582",
+  "checks": {
+    "File I/O Utilities": {
+      "status": "PASS",
+      "message": "File I/O utilities working correctly"
+    },
+    "Data Files": {
+      "status": "PASS",
+      "message": "All required data files found"
+    },
+    "PFAZ Modules": {
+      "status": "WARN",
+      "message": "4/5 modules available"
+    },
+    "Anomaly Detection System": {
+      "status": "PASS",
+      "message": "Anomaly detection working (detected 5 anomalies, Excel report created)"
+    },
+    "Excel Export Capabilities": {
+      "status": "PASS",
+      "message": "Excel export working (openpyxl, xlsxwriter available)"
+    },
+    "Required Libraries": {
+      "status": "PASS",
+      "message": "All required libraries available"
+    },
+    "File Format Support": {
+      "status": "PASS",
+      "message": "All formats supported: .csv, .txt, .tsv, .xlsx"
+    }
+  },
+  "passed": 6,
+  "failed": 0,
+  "warnings": 1
+}

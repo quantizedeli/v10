@@ -153,32 +153,33 @@ This system will:
         print("THESIS INFORMATION")
         print("=" * 80)
         
-        author = input("Author Name: ").strip()
-        if not author:
-            author = "Research Student"
-        
-        supervisor = input("Supervisor Name: ").strip()
-        if not supervisor:
-            supervisor = "Prof. Supervisor"
-        
-        university = input("University Name: ").strip()
-        if not university:
-            university = "University Name"
-        
-        department = input("Department (default: Physics): ").strip()
-        if not department:
-            department = "Physics Department"
-        
+        import sys as _sys, os as _os
+        _interactive = _sys.stdin.isatty() and not _os.environ.get('HPC_MODE')
+
+        def _ask(prompt, default):
+            if _interactive:
+                val = input(prompt).strip()
+                return val if val else default
+            return _os.environ.get(prompt.split()[0].upper().replace(' ', '_'), default)
+
+        author = _os.environ.get('THESIS_AUTHOR', '') or (input("Author Name: ").strip() if _interactive else '') or "Research Student"
+        supervisor = _os.environ.get('THESIS_SUPERVISOR', '') or (input("Supervisor Name: ").strip() if _interactive else '') or "Prof. Supervisor"
+        university = _os.environ.get('THESIS_UNIVERSITY', '') or (input("University Name: ").strip() if _interactive else '') or "University Name"
+        department = _os.environ.get('THESIS_DEPARTMENT', '') or (input("Department (default: Physics): ").strip() if _interactive else '') or "Physics Department"
+
         print("\n" + "=" * 80)
         print("GENERATION OPTIONS")
         print("=" * 80)
-        
-        compile_pdf = input("\nCompile to PDF? (requires LaTeX) [y/N]: ").lower() == 'y'
-        
-        run_qa = input("Run quality assurance checks? [Y/n]: ").lower() != 'n'
-        
-        generate_gallery = input("Generate visualization gallery appendix? [Y/n]: ").lower() != 'n'
-        
+
+        if _interactive:
+            compile_pdf = input("\nCompile to PDF? (requires LaTeX) [y/N]: ").lower() == 'y'
+            run_qa = input("Run quality assurance checks? [Y/n]: ").lower() != 'n'
+            generate_gallery = input("Generate visualization gallery appendix? [Y/n]: ").lower() != 'n'
+        else:
+            compile_pdf = _os.environ.get('THESIS_COMPILE_PDF', 'n').lower() == 'y'
+            run_qa = _os.environ.get('THESIS_RUN_QA', 'y').lower() != 'n'
+            generate_gallery = _os.environ.get('THESIS_GALLERY', 'y').lower() != 'n'
+
         # Confirmation
         print("\n" + "=" * 80)
         print("CONFIRMATION")
@@ -190,11 +191,14 @@ This system will:
         print(f"Compile PDF: {'Yes' if compile_pdf else 'No'}")
         print(f"Quality Assurance: {'Yes' if run_qa else 'No'}")
         print(f"Visualization Gallery: {'Yes' if generate_gallery else 'No'}")
-        
-        confirm = input("\nProceed with thesis generation? [Y/n]: ").lower()
-        if confirm == 'n':
-            print("Operation cancelled.")
-            return
+
+        if _interactive:
+            confirm = input("\nProceed with thesis generation? [Y/n]: ").lower()
+            if confirm == 'n':
+                print("Operation cancelled.")
+                return
+        else:
+            print("[AUTO] Non-interactive mode: proceeding automatically")
         
         # Execute generation
         print("\n" + "=" * 80)

@@ -304,10 +304,10 @@ class DatasetGenerationPipelineV2:
             # First try tab-delimited, then comma, then whitespace
             try:
                 self.raw_data = pd.read_csv(self.source_data_path, sep='\t', encoding='utf-8')
-            except:
+            except Exception as e:
                 try:
                     self.raw_data = pd.read_csv(self.source_data_path, sep=',', encoding='utf-8')
-                except:
+                except Exception as e:
                     # Last resort: whitespace-delimited
                     self.raw_data = pd.read_csv(self.source_data_path, delim_whitespace=True, encoding='utf-8')
         else:

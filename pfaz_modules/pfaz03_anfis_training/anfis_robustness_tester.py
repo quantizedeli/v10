@@ -423,7 +423,7 @@ class ANFISRobustnessTester:
                     try:
                         if len(str(cell.value)) > max_length:
                             max_length = len(str(cell.value))
-                    except:
+                    except Exception as e:
                         pass
                 adjusted_width = min(max_length + 2, 20)
                 ws.column_dimensions[column_letter].width = adjusted_width

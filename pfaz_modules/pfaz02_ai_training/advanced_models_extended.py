@@ -24,9 +24,9 @@ import math
 
 # Import GPU optimizer from existing advanced_models
 try:
-    from .advanced_models import GPUOptimizer
+    from .advanced_models import PyTorchGPUOptimizer as GPUOptimizer
 except ImportError:
-    from advanced_models import GPUOptimizer
+    from advanced_models import PyTorchGPUOptimizer as GPUOptimizer
 
 logger = logging.getLogger(__name__)
 

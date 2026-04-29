@@ -123,7 +123,7 @@ class SHAPAnalyzer:
             shap.plots.bar(shap_values, show=False)
             plt.savefig(save_dir / 'shap_summary_bar.html', dpi=300, bbox_inches='tight')
             plt.close()
-        except:
+        except Exception as e:
             pass
     
     def _plot_beeswarm(self, shap_values, feature_names, save_dir):
@@ -146,7 +146,7 @@ class SHAPAnalyzer:
             shap.plots.beeswarm(shap_values, show=False)
             plt.savefig(save_dir / 'shap_beeswarm.html', dpi=300, bbox_inches='tight')
             plt.close()
-        except:
+        except Exception as e:
             pass
     
     def _plot_dependence(self, shap_values, X_test, feature_names, save_dir, top_n=3):

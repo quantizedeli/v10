@@ -1,6 +1,26 @@
 # Pipeline Durum Raporu
-**Tarih:** 2026-04-21  
+**Tarih:** 2026-04-30 (guncellendi)
+**Onceki rapor:** 2026-04-21  
 **Proje:** Nuclear Moments AI Pipeline (PFAZ 0-13)
+
+## 2026-04-30 Guncelleme — HPC Bug Fixes
+
+17 kritik/yuksek oncelikli bug duzeltildi. Detay: `PFAZ_DEVELOPMENT_NOTES.md` ve `V10_QA_BUG_REPORT.md`.
+
+| Kategori | Oncesi | Sonrasi |
+|----------|--------|---------|
+| Kritik bug sayisi | 17 | 0 |
+| UTF-8 encoding sorunu | 3 dosya | 0 dosya |
+| Nested parallelism riski | Var (528 thread) | Giderildi |
+| TF memory leak | Var | `clear_session()` eklendi |
+| HPC input() donmasi | Var | `isatty()` + env var kontrolu |
+| XGBoost GPU API | Eskimis | XGBoost 2.0+ uyumlu |
+| Checkpoint/Resume | Eksik | Implement edildi |
+| Syntax check | - | 128/128 dosya PASS |
+
+**Sonraki adim:** HPC'ye gonderimindan once `HPC_DEPLOYMENT_CHECKLIST.md` takip edilmeli.
+
+---
 
 ---
 
