@@ -11,6 +11,11 @@ Tüm ML Model Trainerları
 - Adaptive learning integration
 """
 
+import warnings
+warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
+warnings.filterwarnings('ignore', message='.*sklearn.utils.parallel.*')
+
 import numpy as np
 import pandas as pd
 from pathlib import Path

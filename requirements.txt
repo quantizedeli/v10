@@ -1,84 +1,98 @@
-# Core Scientific Computing
-numpy>=1.21.0
-pandas>=1.3.0
-scipy>=1.7.0
+# ============================================================
+# Nuclear Physics AI Project — requirements.txt
+# Python 3.11+, Windows 11, new PC
+# Install: pip install -r requirements.txt
+# ============================================================
 
-# Machine Learning
-scikit-learn>=1.0.0
-xgboost>=1.5.0
-lightgbm>=3.3.0
+# --- Core Scientific Computing ---
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
 
-# Deep Learning
-tensorflow>=2.8.0
-torch>=1.10.0
-keras>=2.8.0
+# --- Machine Learning ---
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+lightgbm>=4.0.0
+catboost>=1.2.0
 
-# Hyperparameter Optimization & AutoML
-optuna>=3.0.0
+# --- Deep Learning (pick one; both optional) ---
+tensorflow>=2.13.0
+# torch>=2.0.0              # PyTorch — uncomment if needed
+# keras is bundled with tensorflow 2.x — do NOT install standalone
+
+# --- Hyperparameter Optimisation ---
+optuna>=3.3.0
 hyperopt>=0.2.7
-auto-sklearn>=0.15.0
-tpot>=0.11.7
 
-# Data Visualization
-matplotlib>=3.5.0
-seaborn>=0.11.0
-plotly>=5.5.0
-bokeh>=2.4.0
+# --- AutoML (optional, heavy) ---
+# auto-sklearn is Linux-only; skip on Windows
+# tpot>=0.12.0              # TPOT — uncomment on Linux/Mac
 
-# Excel & Reporting
-openpyxl>=3.0.9
-xlsxwriter>=3.0.2
-python-docx>=0.8.11
+# --- Data Visualisation ---
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.17.0
+kaleido>=0.2.1              # plotly static PNG/PDF export
 
-# Progress Bars & Logging
-tqdm>=4.62.0
-colorama>=0.4.4
-rich>=12.0.0
+# --- Excel & Reporting ---
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+# python-docx>=0.8.11       # Word export — uncomment if needed
 
-# File I/O
-joblib>=1.1.0
-h5py>=3.6.0
-pickle5>=0.0.12
+# --- Progress & Logging ---
+tqdm>=4.65.0
+colorama>=0.4.6
+rich>=13.0.0
 
-# Statistical Analysis
-statsmodels>=0.13.0
-pingouin>=0.5.0
+# --- File I/O ---
+joblib>=1.3.0
+h5py>=3.9.0
+pyarrow>=12.0.0             # fast parquet/feather (pandas 2.x perf)
 
-# SHAP & Model Interpretability
-shap>=0.40.0
-lime>=0.2.0.1
+# --- Statistical Analysis ---
+statsmodels>=0.14.0
+pingouin>=0.5.3
 
-# Testing & QA
-pytest>=7.0.0
-pytest-cov>=3.0.0
-pytest-xdist>=2.5.0
-coverage>=6.2.0
+# --- Model Interpretability ---
+shap>=0.43.0
+# lime>=0.2.0.1             # uncomment if needed
 
-# Code Quality
-black>=22.0.0
-flake8>=4.0.0
-pylint>=2.12.0
-mypy>=0.931
-
-# Utilities
+# --- Utilities ---
 python-dateutil>=2.8.2
-pytz>=2021.3
-requests>=2.27.0
+pytz>=2023.3
+psutil>=5.9.0               # memory/CPU monitoring in training loops
 
-# MATLAB Integration (optional)
-# matlab-engine>=9.11.0  # Uncomment if MATLAB available
+# --- LaTeX / Template Generation ---
+jinja2>=3.1.0
 
-# LaTeX Generation
-jinja2>=3.0.0
+# --- Testing & QA ---
+pytest>=7.4.0
+pytest-cov>=4.1.0
+coverage>=7.3.0
 
-# Jupyter (optional, for analysis)
-# jupyter>=1.0.0
-# ipykernel>=6.7.0
-# notebook>=6.4.8
+# --- MATLAB Integration (optional) ---
+# matlab-engine             # Uncomment & install from MATLAB: cd <matlabroot>/extern/engines/python && pip install .
 
-# GPU Support (optional)
-# tensorflow-gpu>=2.8.0  # For NVIDIA GPUs
-# cupy-cuda11x>=10.0.0   # For CUDA operations
+# --- GPU Support (optional) ---
+# tensorflow[and-cuda]      # TF + CUDA all-in-one (TF 2.13+)
+# cupy-cuda12x>=12.0.0      # CUDA 12.x array ops
 
-# NOTE: Install with: pip install -r requirements.txt
-# For GPU support: pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu117
+# ============================================================
+# Quick-install notes for a fresh Windows PC:
+#
+#   1. Create venv:
+#      python -m venv venv && venv\Scripts\activate
+#
+#   2. Upgrade pip:
+#      python -m pip install --upgrade pip
+#
+#   3. Install requirements:
+#      pip install -r requirements.txt
+#
+#   4. Verify:
+#      python -c "import sklearn, xgboost, lightgbm, catboost, optuna, plotly; print('OK')"
+#
+#   5. TensorFlow GPU (NVIDIA):
+#      pip install tensorflow[and-cuda]
+#      (requires CUDA 12.x + cuDNN 8.x on the host)
+# ============================================================

@@ -4,13 +4,7 @@
 # Main pipeline (ACTIVE)
 from .aaa2_control_group_complete_v4 import AAA2ControlGroupAnalyzerComplete
 
-#  ACTIVATED MODULES: Advanced Analytics (4 modüller aktif edildi)
-try:
-    from .aaa2_control_group_comprehensive import AAA2ControlGroupComprehensive
-    AAA2_CONTROL_GROUP_COMPREHENSIVE_AVAILABLE = True
-except ImportError:
-    AAA2ControlGroupComprehensive = None
-    AAA2_CONTROL_GROUP_COMPREHENSIVE_AVAILABLE = False
+# Removed: AAA2ControlGroupComprehensive (replaced by aaa2_control_group_complete_v4.py)
 
 try:
     from .aaa2_quality_checker import AAA2QualityChecker
@@ -35,7 +29,6 @@ except ImportError:
 
 __all__ = [
     'AAA2ControlGroupAnalyzerComplete',
-    'AAA2ControlGroupComprehensive', 'AAA2_CONTROL_GROUP_COMPREHENSIVE_AVAILABLE',
     'AAA2QualityChecker', 'AAA2_QUALITY_CHECKER_AVAILABLE',
     'AdvancedAnalyticsComprehensive', 'ADVANCED_ANALYTICS_COMPREHENSIVE_AVAILABLE',
     'MonteCarloSimulationSystem', 'MONTE_CARLO_SIMULATION_AVAILABLE',

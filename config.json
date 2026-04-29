@@ -11,13 +11,13 @@
     "input_file": "aaa2.txt",
     "total_nuclei": 267,
     "features": 44,
-    "targets": ["MM", "QM", "Beta_2", "MM_QM"]
+    "targets": ["MM", "QM"]
   },
 
   "pfaz01_dataset_generation": {
     "enabled": true,
     "dataset_sizes": [75, 100, 150, 200, 267],
-    "targets": ["MM", "QM", "MM_QM", "Beta_2"],
+    "targets": ["MM", "QM"],
     "qm_filtering": {
       "enabled": true,
       "strategies": ["even_even", "odd_A", "odd_odd"]
@@ -201,7 +201,9 @@
     "python_version": "3.8+",
     "cuda_version": "11.0+",
     "ram_required_gb": 16,
-    "gpu_memory_gb": 8,
-    "disk_space_gb": 50
+    "gpu_memory_gb": 4,
+    "gpu_model": "GTX 1650 (4GB VRAM)",
+    "disk_space_gb": 50,
+    "notes": "GPU auto-detect aktif: TF -> PyTorch -> config.json fallback sirasi"
   }
 }

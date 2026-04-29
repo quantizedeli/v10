@@ -31,9 +31,14 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from dataclasses import dataclass
 import warnings
 warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
+warnings.filterwarnings('ignore', message='.*sklearn.utils.parallel.*')
+warnings.filterwarnings('ignore', message='.*joblib.*')
 
 # Sklearn
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.svm import SVR
+from sklearn.multioutput import MultiOutputRegressor
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.impute import SimpleImputer
 
@@ -44,6 +49,22 @@ try:
 except ImportError:
     XGBOOST_AVAILABLE = False
     logging.warning("XGBoost not available")
+
+# LightGBM (optional)
+try:
+    from lightgbm import LGBMRegressor
+    LIGHTGBM_AVAILABLE = True
+except ImportError:
+    LIGHTGBM_AVAILABLE = False
+    logging.warning("LightGBM not available — install: pip install lightgbm")
+
+# CatBoost (optional)
+try:
+    from catboost import CatBoostRegressor
+    CATBOOST_AVAILABLE = True
+except ImportError:
+    CATBOOST_AVAILABLE = False
+    logging.warning("CatBoost not available — install: pip install catboost")
 
 # TensorFlow (optional)
 try:
@@ -60,6 +81,9 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Minimum val_R2 to save a model .pkl (Poor: <0.5, Failed: <0 — not saved)
+R2_MIN_SAVE_THRESHOLD = 0.5
 
 # Import SeedTracker (after logging is configured)
 try:
@@ -116,30 +140,21 @@ class BaseAITrainer:
         self.history = {}
         
     def _get_feature_set_from_name(self, dataset_name: str) -> List[str]:
-        """Özellik setlerini dataset adından belirle"""
+        """Feature set kolonlarini dataset adindan belirle.
 
-        # Önceden tanımlı özellik setleri
-        FEATURE_SETS = {
-            'AZN': ['A', 'Z', 'N'],
-            'AZNS': ['A', 'Z', 'N', 'SPIN'],
-            'AZNP': ['A', 'Z', 'N', 'PARITY'],
-            'AZNSP': ['A', 'Z', 'N', 'SPIN', 'PARITY'],
-            'AZN_beta': ['A', 'Z', 'N', 'Beta_2_estimated'],
-            'AZN_p': ['A', 'Z', 'N', 'P-factor'],
-            'AZN_beta_p': ['A', 'Z', 'N', 'Beta_2_estimated', 'P-factor'],
-            'AZNSP_beta_p': ['A', 'Z', 'N', 'SPIN', 'PARITY', 'Beta_2_estimated', 'P-factor'],
-            'GELISMIS': ['A', 'Z', 'N', 'SPIN', 'PARITY', 'Beta_2_estimated', 'P-factor',
-                         'BE_per_A', 'Z_magic_dist', 'N_magic_dist']
-        }
+        Yeni format: {TARGET}_{SIZE}_{SCENARIO}_{FEATURE_CODE}_{SCALING}_{SAMPLING}[_NoAnomaly]
+        Ornek: MM_75_S70_AZS_NoScaling_Random
 
-        # Dataset adından özellik setini çıkar
-        for feature_set_name in FEATURE_SETS:
-            if feature_set_name in dataset_name:
-                logger.info(f"Detected feature set: {feature_set_name}")
-                return FEATURE_SETS[feature_set_name]
+        Dataset dosyasi zaten sadece ilgili feature kolonlarini iceriyor.
+        None dondurerek adaptive selection'in dogru kolonlari sec. birakilir.
 
-        # Eğer "ALL" varsa veya tanımlı bir set yoksa, None döndür (tüm özellikleri kullan)
-        logger.info("No specific feature set detected, using adaptive selection")
+        NOT: substring matching YAPILMAZ. 'AZN' kodu 'AZNNP' icinde de bulunur
+        ve yanlis eslemeye yol acar.
+        """
+        # Her zaman None dondur: dataset CSV'i zaten dogru feature'lari iceriyor.
+        # load_dataset'teki adaptive selection (target + NUCLEUS disindaki tum kolonlar)
+        # yeni format icin en guvenilir yontemdir.
+        logger.debug(f"Adaptive feature selection for: {dataset_name}")
         return None
 
     def load_dataset(self, dataset_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -157,24 +172,38 @@ class BaseAITrainer:
         """
 
         # Check for train/val/test split files
-        # Try Excel first (preferred), then CSV
+        # CSV oncelikli — headerless pure-number format; xlsx fallback (eski datasetler)
         split_files = {}
         for split_name in ['train', 'val', 'test']:
-            # Try .xlsx first
+            csv_file  = dataset_path / f"{split_name}.csv"
             xlsx_file = dataset_path / f"{split_name}.xlsx"
-            csv_file = dataset_path / f"{split_name}.csv"
 
-            if xlsx_file.exists():
-                split_files[split_name] = xlsx_file
-            elif csv_file.exists():
+            if csv_file.exists():
                 split_files[split_name] = csv_file
+            elif xlsx_file.exists():
+                split_files[split_name] = xlsx_file
             else:
                 raise FileNotFoundError(f"Missing {split_name} file in {dataset_path}")
 
         logger.info(f"Loading pre-split dataset from: {dataset_path}")
         logger.info(f"  Train: {split_files['train'].name}")
-        logger.info(f"  Val: {split_files['val'].name}")
-        logger.info(f"  Test: {split_files['test'].name}")
+        logger.info(f"  Val:   {split_files['val'].name}")
+        logger.info(f"  Test:  {split_files['test'].name}")
+
+        # metadata.json'dan sutun adlarini al (yeni format: headerless CSV)
+        _col_names = None
+        _meta_file = dataset_path / 'metadata.json'
+        if _meta_file.exists():
+            try:
+                with open(_meta_file, encoding='utf-8') as _f:
+                    _meta = json.load(_f)
+                _feat = _meta.get('feature_names') or _meta.get('feature_columns', [])
+                _tgt  = _meta.get('target_names')  or _meta.get('target_columns',  [])
+                if _feat and _tgt:
+                    _col_names = list(_feat) + list(_tgt)
+                    logger.info(f"  metadata.json: {len(_feat)} feature + {len(_tgt)} target = {len(_col_names)} sutun")
+            except Exception as _e:
+                logger.warning(f"  metadata.json okunamadi: {_e}")
 
         # Load each split
         splits = {}
@@ -182,7 +211,13 @@ class BaseAITrainer:
             if file_path.suffix == '.xlsx':
                 df = pd.read_excel(file_path)
             elif file_path.suffix == '.csv':
-                df = pd.read_csv(file_path, encoding='utf-8')
+                if _col_names:
+                    # Yeni format: headerless CSV — metadata'dan sutun adlari atanir
+                    df = pd.read_csv(file_path, header=None, names=_col_names,
+                                     encoding='utf-8')
+                else:
+                    # Eski format: baslik satiri var (geriye donuk uyumluluk)
+                    df = pd.read_csv(file_path, encoding='utf-8')
             else:
                 raise ValueError(f"Unsupported file format: {file_path.suffix}")
 
@@ -394,9 +429,15 @@ class BaseAITrainer:
         X_val, y_val = processed_splits['val']
         X_test, y_test = processed_splits['test']
 
-        # DNN warning for small datasets
-        if self.model_type == 'DNN' and len(X_train) < 70:
-            logger.warning(f"[WARNING] Only {len(X_train)} train samples! DNNs need 100+ for good performance")
+        # DNN minimum dataset boyutu filtresi
+        # DNN, küçük veri setlerinde (< DNN_MIN_SAMPLES) genellikle ıraksar veya overfitting yapar.
+        # Bu eşiğin altındaki eğitimler atlanır; zaman ve disk alanı tasarrufu sağlanır.
+        DNN_MIN_SAMPLES = 80  # eğitim seti için minimum satır sayısı
+        if self.model_type == 'DNN' and len(X_train) < DNN_MIN_SAMPLES:
+            raise ValueError(
+                f"[DNN-SKIP] Eğitim seti çok küçük ({len(X_train)} < {DNN_MIN_SAMPLES}). "
+                f"DNN bu dataset için atlanıyor."
+            )
 
         logger.info(f"Final: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
 
@@ -500,36 +541,73 @@ class RandomForestTrainer(BaseAITrainer):
         return metrics
 
 
+def _detect_xgb_gpu() -> dict:
+    """XGBoost surumune gore GPU parametrelerini dondur."""
+    try:
+        import xgboost as xgb
+        ver = tuple(int(x) for x in xgb.__version__.split('.')[:2])
+        import subprocess, sys
+        # Hizli CUDA kontrolu: kucuk deneme modeli
+        test = xgb.XGBRegressor(n_estimators=2, device='cuda', verbosity=0)
+        import numpy as _np
+        test.fit(_np.array([[1], [2]]), _np.array([1, 2]))
+        if ver >= (2, 0):
+            return {'device': 'cuda'}
+        else:
+            return {'tree_method': 'gpu_hist', 'predictor': 'gpu_predictor'}
+    except Exception:
+        return {}  # CPU fallback
+
+
+_XGB_GPU_PARAMS: dict = None  # lazy-init, modül seviyesinde cache
+
+
 class XGBoostTrainer(BaseAITrainer):
     """XGBoost Trainer"""
-    
-    def __init__(self, config: Dict, output_dir: Path):
+
+    def __init__(self, config: Dict, output_dir: Path, gpu_enabled: bool = False):
         super().__init__('XGBoost', config, output_dir)
-        
+        self.gpu_enabled = gpu_enabled
         if not XGBOOST_AVAILABLE:
             raise ImportError("XGBoost not available")
-    
+
     def train(self, X_train, y_train, X_val, y_val) -> Dict:
         """Train XGBoost"""
-        
+        global _XGB_GPU_PARAMS
+
         # Get config parameters
         n_estimators = self.config.get('n_estimators', 100)
         learning_rate = self.config.get('learning_rate', 0.1)
         max_depth = self.config.get('max_depth', 6)
-        
+
+        # GPU params (lazy detect once)
+        gpu_params = {}
+        if self.gpu_enabled:
+            if _XGB_GPU_PARAMS is None:
+                _XGB_GPU_PARAMS = _detect_xgb_gpu()
+            gpu_params = _XGB_GPU_PARAMS
+            if gpu_params:
+                logger.info(f"[XGB] GPU aktif: {gpu_params}")
+            else:
+                logger.info("[XGB] GPU bulunamadi, CPU kullaniliyor")
+
         logger.info(f"Training XGBoost: n_estimators={n_estimators}, lr={learning_rate}")
-        
+
         # Random seed
         random_seed = 42
 
-        # Create and train model
-        self.model = XGBRegressor(
+        xgb_kwargs = dict(
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             max_depth=max_depth,
-            n_jobs=-1,
-            random_state=random_seed
+            random_state=random_seed,
+            **gpu_params
         )
+        if not gpu_params:
+            xgb_kwargs['n_jobs'] = -1
+
+        # Create and train model
+        self.model = XGBRegressor(**xgb_kwargs)
 
         logger.info(f"  Random seed: {random_seed}")
         
@@ -553,8 +631,156 @@ class XGBoostTrainer(BaseAITrainer):
             'val': val_metrics,
             'training_time': training_time
         }
-        
+
         return metrics
+
+
+class LightGBMTrainer(BaseAITrainer):
+    """LightGBM Trainer — fast gradient boosting, handles missing values natively"""
+
+    def __init__(self, config: Dict, output_dir: Path, gpu_enabled: bool = False):
+        super().__init__('LightGBM', config, output_dir)
+        self.gpu_enabled = gpu_enabled
+        if not LIGHTGBM_AVAILABLE:
+            raise ImportError("LightGBM not available — install: pip install lightgbm")
+
+    def train(self, X_train, y_train, X_val, y_val) -> Dict:
+        n_estimators = self.config.get('n_estimators', 200)
+        learning_rate = self.config.get('learning_rate', 0.05)
+        max_depth = self.config.get('max_depth', -1)  # -1 = no limit
+        num_leaves = self.config.get('num_leaves', 31)
+        random_seed = 42
+
+        # GPU desteği: LightGBM GPU build gerektirir; yoksa sessizce CPU'ya duser
+        lgbm_device = 'cpu'
+        if self.gpu_enabled:
+            try:
+                _test = LGBMRegressor(n_estimators=2, device='gpu', verbosity=-1)
+                import numpy as _np
+                _test.fit(_np.array([[1], [2]]), _np.array([1.0, 2.0]))
+                lgbm_device = 'gpu'
+                logger.info("[LGB] GPU aktif")
+            except Exception:
+                logger.info("[LGB] GPU build bulunamadi, CPU kullaniliyor")
+
+        logger.info(f"Training LightGBM: n_estimators={n_estimators}, lr={learning_rate}, leaves={num_leaves}, device={lgbm_device}")
+
+        # Multi-output: wrap with MultiOutputRegressor
+        is_multi = y_train.ndim > 1 and y_train.shape[1] > 1
+        base_model = LGBMRegressor(
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            num_leaves=num_leaves,
+            random_state=random_seed,
+            device=lgbm_device,
+            n_jobs=(-1 if lgbm_device == 'cpu' else 1),
+            verbose=-1
+        )
+        self.model = MultiOutputRegressor(base_model, n_jobs=1) if is_multi else base_model
+
+        start_time = time.time()
+        if is_multi:
+            self.model.fit(X_train, y_train)
+        else:
+            y_1d = y_train.flatten() if y_train.ndim > 1 else y_train
+            self.model.fit(X_train, y_1d)
+        training_time = time.time() - start_time
+
+        y_train_pred = self.model.predict(X_train)
+        y_val_pred = self.model.predict(X_val)
+
+        return {
+            'train': self.calculate_metrics(y_train, y_train_pred),
+            'val': self.calculate_metrics(y_val, y_val_pred),
+            'training_time': training_time
+        }
+
+
+class CatBoostTrainer(BaseAITrainer):
+    """CatBoost Trainer — handles categorical features and small datasets well"""
+
+    def __init__(self, config: Dict, output_dir: Path):
+        super().__init__('CatBoost', config, output_dir)
+        if not CATBOOST_AVAILABLE:
+            raise ImportError("CatBoost not available — install: pip install catboost")
+
+    def train(self, X_train, y_train, X_val, y_val) -> Dict:
+        n_estimators = self.config.get('n_estimators', 200)
+        learning_rate = self.config.get('learning_rate', 0.05)
+        depth = self.config.get('max_depth', 6)
+        random_seed = 42
+
+        logger.info(f"Training CatBoost: iterations={n_estimators}, lr={learning_rate}, depth={depth}")
+
+        is_multi = y_train.ndim > 1 and y_train.shape[1] > 1
+        base_model = CatBoostRegressor(
+            iterations=n_estimators,
+            learning_rate=learning_rate,
+            depth=depth,
+            random_seed=random_seed,
+            verbose=0,
+            loss_function='RMSE'
+        )
+        self.model = MultiOutputRegressor(base_model, n_jobs=1) if is_multi else base_model
+
+        start_time = time.time()
+        y_train_1d = y_train.flatten() if (not is_multi and y_train.ndim > 1) else y_train
+        self.model.fit(X_train, y_train_1d, eval_set=(X_val, y_val.flatten() if (not is_multi and y_val.ndim > 1) else y_val) if not is_multi else None)
+        training_time = time.time() - start_time
+
+        y_train_pred = self.model.predict(X_train)
+        y_val_pred = self.model.predict(X_val)
+
+        return {
+            'train': self.calculate_metrics(y_train, y_train_pred),
+            'val': self.calculate_metrics(y_val, y_val_pred),
+            'training_time': training_time
+        }
+
+
+class SVRTrainer(BaseAITrainer):
+    """SVR Trainer — Support Vector Regression, good for small nuclear datasets"""
+
+    def __init__(self, config: Dict, output_dir: Path):
+        super().__init__('SVR', config, output_dir)
+
+    def train(self, X_train, y_train, X_val, y_val) -> Dict:
+        from sklearn.preprocessing import StandardScaler
+        kernel = self.config.get('kernel', 'rbf')
+        C = self.config.get('C', 10.0)
+        epsilon = self.config.get('epsilon', 0.1)
+        gamma = self.config.get('gamma', 'scale')
+
+        logger.info(f"Training SVR: kernel={kernel}, C={C}, epsilon={epsilon}")
+
+        # SVR requires scaled features
+        self.scaler = StandardScaler()
+        X_train_scaled = self.scaler.fit_transform(X_train)
+        X_val_scaled = self.scaler.transform(X_val)
+
+        is_multi = y_train.ndim > 1 and y_train.shape[1] > 1
+        base_model = SVR(kernel=kernel, C=C, epsilon=epsilon, gamma=gamma)
+        self.model = MultiOutputRegressor(base_model, n_jobs=-1) if is_multi else base_model
+
+        start_time = time.time()
+        y_train_1d = y_train.flatten() if (not is_multi and y_train.ndim > 1) else y_train
+        self.model.fit(X_train_scaled, y_train_1d)
+        training_time = time.time() - start_time
+
+        y_train_pred = self.model.predict(X_train_scaled)
+        y_val_pred = self.model.predict(X_val_scaled)
+
+        return {
+            'train': self.calculate_metrics(y_train, y_train_pred),
+            'val': self.calculate_metrics(y_val, y_val_pred),
+            'training_time': training_time
+        }
+
+    def predict(self, X):
+        if not hasattr(self, 'scaler'):
+            raise ValueError("Scaler not fitted")
+        return self.model.predict(self.scaler.transform(X))
 
 
 class DNNTrainer(BaseAITrainer):
@@ -589,38 +815,51 @@ class DNNTrainer(BaseAITrainer):
                 logger.warning("[DNN] GPU enabled but no GPU found - Using CPU")
 
     def build_model(self, input_dim: int, output_dim: int) -> keras.Model:
-        """Build DNN model"""
-        
-        architecture = self.config.get('architecture', [256, 128, 64, 32])
-        dropout = self.config.get('dropout', [0.1, 0.1, 0.1, 0.0])
+        """Build DNN model with BatchNorm and L2 regularization for numerical stability"""
+        from tensorflow.keras import regularizers
+
+        architecture = self.config.get('architecture', [128, 64, 32])
+        dropout = self.config.get('dropout', [0.2, 0.2, 0.1])
         activation = self.config.get('activation', 'relu')
         learning_rate = self.config.get('learning_rate', 0.001)
-        
+        l2_reg = self.config.get('l2_reg', 1e-4)
+
+        # Pad dropout list if shorter than architecture
+        while len(dropout) < len(architecture):
+            dropout.append(0.0)
+
         # Build model
         inputs = keras.Input(shape=(input_dim,))
         x = inputs
-        
+
         for units, drop in zip(architecture, dropout):
-            x = layers.Dense(units, activation=activation)(x)
+            x = layers.Dense(units, activation=None,
+                             kernel_regularizer=regularizers.l2(l2_reg))(x)
+            x = layers.BatchNormalization()(x)
+            x = layers.Activation(activation)(x)
             if drop > 0:
                 x = layers.Dropout(drop)(x)
-        
+
         outputs = layers.Dense(output_dim)(x)
-        
+
         model = keras.Model(inputs=inputs, outputs=outputs)
-        
-        # Compile
-        optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
-        
+
+        # clipnorm=1.0 prevents gradient explosion; clipvalue as extra safety
+        optimizer = keras.optimizers.Adam(
+            learning_rate=learning_rate,
+            clipnorm=1.0,
+            clipvalue=0.5
+        )
+        model.compile(optimizer=optimizer, loss='huber', metrics=['mae'])
+
         return model
-    
+
     def train(self, X_train, y_train, X_val, y_val) -> Dict:
-        """Train DNN"""
+        """Train DNN with feature AND target scaling to prevent R2 divergence"""
 
         batch_size = self.config.get('batch_size', 32)
-        epochs = self.config.get('epochs', 100)
-        early_stopping_patience = self.config.get('early_stopping_patience', 15)
+        epochs = self.config.get('epochs', 200)
+        early_stopping_patience = self.config.get('early_stopping_patience', 20)
         random_seed = 42
 
         logger.info(f"Training DNN: batch_size={batch_size}, epochs={epochs}, seed={random_seed}")
@@ -629,39 +868,49 @@ class DNNTrainer(BaseAITrainer):
         np.random.seed(random_seed)
         tf.random.set_seed(random_seed)
 
-        # CRITICAL: Scale features for neural networks
+        # CRITICAL: Scale BOTH features AND targets for neural networks
+        # Without target scaling, large-magnitude targets (MM, QM) cause extreme R2 values
         from sklearn.preprocessing import StandardScaler
         self.scaler = StandardScaler()
         X_train_scaled = self.scaler.fit_transform(X_train)
         X_val_scaled = self.scaler.transform(X_val)
 
-        logger.info(f"Features scaled using StandardScaler (mean=0, std=1)")
+        self.y_scaler = StandardScaler()
+        y_train_2d = y_train.reshape(-1, 1) if y_train.ndim == 1 else y_train
+        y_val_2d = y_val.reshape(-1, 1) if y_val.ndim == 1 else y_val
+        y_train_scaled = self.y_scaler.fit_transform(y_train_2d)
+        y_val_scaled = self.y_scaler.transform(y_val_2d)
+
+        logger.info(f"Features and targets scaled using StandardScaler (mean=0, std=1)")
+        logger.info(f"Target stats — mean: {self.y_scaler.mean_}, std: {self.y_scaler.scale_}")
 
         # Build model
         input_dim = X_train.shape[1]
-        output_dim = y_train.shape[1] if y_train.ndim > 1 else 1
+        output_dim = y_train_scaled.shape[1]
 
         self.model = self.build_model(input_dim, output_dim)
-        
+
         # Callbacks
         early_stop = callbacks.EarlyStopping(
             monitor='val_loss',
             patience=early_stopping_patience,
-            restore_best_weights=True
+            restore_best_weights=True,
+            min_delta=1e-4
         )
-        
+
         reduce_lr = callbacks.ReduceLROnPlateau(
             monitor='val_loss',
             factor=0.5,
             patience=10,
-            min_lr=1e-6
+            min_lr=1e-7,
+            verbose=0
         )
-        
+
         # Train
         start_time = time.time()
         history = self.model.fit(
-            X_train_scaled, y_train,
-            validation_data=(X_val_scaled, y_val),
+            X_train_scaled, y_train_scaled,
+            validation_data=(X_val_scaled, y_val_scaled),
             batch_size=batch_size,
             epochs=epochs,
             callbacks=[early_stop, reduce_lr],
@@ -671,31 +920,49 @@ class DNNTrainer(BaseAITrainer):
 
         self.history = history.history
 
-        # Evaluate
-        y_train_pred = self.model.predict(X_train_scaled, verbose=0)
-        y_val_pred = self.model.predict(X_val_scaled, verbose=0)
-        
-        train_metrics = self.calculate_metrics(y_train, y_train_pred)
-        val_metrics = self.calculate_metrics(y_val, y_val_pred)
-        
+        # Evaluate — inverse transform to original scale for meaningful R2
+        y_train_pred_scaled = self.model.predict(X_train_scaled, verbose=0)
+        y_val_pred_scaled = self.model.predict(X_val_scaled, verbose=0)
+
+        y_train_pred = self.y_scaler.inverse_transform(y_train_pred_scaled)
+        y_val_pred = self.y_scaler.inverse_transform(y_val_pred_scaled)
+
+        train_metrics = self.calculate_metrics(y_train_2d, y_train_pred)
+        val_metrics = self.calculate_metrics(y_val_2d, y_val_pred)
+
+        # DIVERGENCE DETECTION: Flag if DNN diverged
+        val_r2 = val_metrics.get('r2', val_metrics.get('r2_avg', float('nan')))
+        diverged = False
+        if not np.isnan(val_r2) and val_r2 < -2.0:
+            diverged = True
+            logger.warning(
+                f"[DNN DIVERGED] val_R2={val_r2:.4f} < -2.0 threshold. "
+                f"Model is saved but marked as diverged. "
+                f"Check: target variance, dataset size, or reduce learning_rate."
+            )
+
         metrics = {
             'train': train_metrics,
             'val': val_metrics,
             'training_time': training_time,
-            'epochs_trained': len(history.history['loss'])
+            'epochs_trained': len(history.history['loss']),
+            'diverged': diverged
         }
 
         return metrics
 
     def predict(self, X):
-        """Make predictions with feature scaling"""
+        """Make predictions with feature AND target inverse scaling"""
         if self.model is None:
             raise ValueError("Model not trained yet")
         if not hasattr(self, 'scaler'):
-            raise ValueError("Scaler not fitted yet")
+            raise ValueError("Feature scaler not fitted yet")
+        if not hasattr(self, 'y_scaler'):
+            raise ValueError("Target scaler not fitted yet")
 
         X_scaled = self.scaler.transform(X)
-        return self.model.predict(X_scaled, verbose=0)
+        y_pred_scaled = self.model.predict(X_scaled, verbose=0)
+        return self.y_scaler.inverse_transform(y_pred_scaled)
 
 
 # ============================================================================
@@ -759,7 +1026,10 @@ class ParallelAITrainer:
         # Determine number of workers
         if n_workers is None:
             import multiprocessing
-            self.n_workers = max(1, multiprocessing.cpu_count() - 2)
+            cpu_count = multiprocessing.cpu_count()
+            # GPU varsa model eğitimi GPU'da; CPU işçisi sayısını cpu-1 yap (min 2)
+            # GPU yoksa cpu-1 yap (sistem responsiveness için 1 core serbest bırak)
+            self.n_workers = max(2, cpu_count - 1)
         else:
             self.n_workers = n_workers
 
@@ -867,17 +1137,25 @@ class ParallelAITrainer:
             dataset_name = dataset_path.name
             nuclei_count = None
 
-            # Try to extract nuclei count from dataset name (e.g., "MM_100nuclei", "Beta_2_75nuclei")
             import re
-            match = re.search(r'(\d+)nuclei', dataset_name)
-            if match:
-                nuclei_count = int(match.group(1))
-            elif 'ALL' in dataset_name:
-                nuclei_count = 999  # Assume ALL has enough data for DNN
+            # New format: MM_75_S70_AZS_... or Beta_2_100_S70_...
+            # Second numeric token after the target prefix is the size
+            match_new = re.search(r'(?:MM_QM|Beta_2|MM|QM)_(\d+)_', dataset_name)
+            if match_new:
+                nuclei_count = int(match_new.group(1))
+            else:
+                # Legacy format: "MM_100nuclei", "Beta_2_75nuclei"
+                match_old = re.search(r'(\d+)nuclei', dataset_name)
+                if match_old:
+                    nuclei_count = int(match_old.group(1))
+
+            if 'ALL' in dataset_name:
+                nuclei_count = 999  # ALL size -> enough for DNN
 
             for model_type in model_types:
-                # SKIP DNN for small datasets (< 100 nuclei)
-                if model_type == 'DNN' and nuclei_count is not None and nuclei_count < 100:
+                # SKIP DNN for small/medium datasets (< 200 nuclei)
+                # Nuclear datasets are small (75-200 samples) - DNN overfits, RF/XGBoost preferred
+                if model_type == 'DNN' and (nuclei_count is None or nuclei_count < 200):
                     logger.info(f"Skipping DNN for {dataset_name}: only {nuclei_count} nuclei (DNN requires 100+)")
                     skipped_dnn_jobs += len(configs)
                     continue
@@ -886,6 +1164,12 @@ class ParallelAITrainer:
                     job_id = f"{dataset_path.name}_{model_type}_{config['id']}"
 
                     output_dir = self.output_dir / dataset_path.name / model_type / config['id']
+
+                    # Resume: skip already-trained jobs (model file exists)
+                    model_filename = f"model_{model_type}_{config['id']}.pkl"
+                    if (output_dir / model_filename).exists():
+                        logger.info(f"[SKIP] Already trained: {job_id}")
+                        continue
 
                     job = TrainingJob(
                         job_id=job_id,
@@ -927,7 +1211,13 @@ class ParallelAITrainer:
             if job.model_type in ['RF', 'RandomForest']:
                 trainer = RandomForestTrainer(job.config, job.output_dir)
             elif job.model_type in ['XGB', 'XGBoost']:
-                trainer = XGBoostTrainer(job.config, job.output_dir)
+                trainer = XGBoostTrainer(job.config, job.output_dir, gpu_enabled=self.gpu_enabled)
+            elif job.model_type in ['LGB', 'LightGBM']:
+                trainer = LightGBMTrainer(job.config, job.output_dir, gpu_enabled=self.gpu_enabled)
+            elif job.model_type in ['CB', 'CatBoost']:
+                trainer = CatBoostTrainer(job.config, job.output_dir)
+            elif job.model_type == 'SVR':
+                trainer = SVRTrainer(job.config, job.output_dir)
             elif job.model_type == 'DNN':
                 trainer = DNNTrainer(job.config, job.output_dir, gpu_enabled=self.gpu_enabled)
             else:
@@ -944,12 +1234,55 @@ class ParallelAITrainer:
             test_metrics = trainer.calculate_metrics(y_test, y_test_pred)
             metrics['test'] = test_metrics
             
+            # DIVERGENCE CHECK: Skip saving model if DNN diverged (R2 < -2)
+            job.output_dir.mkdir(parents=True, exist_ok=True)
+            diverged = metrics.get('diverged', False)
+            if diverged:
+                logger.warning(
+                    f"[DIVERGED] {job.job_id} — DNN diverged (val_R2 < -2.0). "
+                    f"Model NOT saved. Marked as failed in summary."
+                )
+                metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
+                with open(metrics_file, 'w') as f:
+                    json.dump(metrics, f, indent=2)
+                return TrainingResult(
+                    job_id=job.job_id,
+                    model_type=job.model_type,
+                    config_id=job.config['id'],
+                    dataset_name=job.dataset_name,
+                    success=False,
+                    metrics=metrics,
+                    training_time=time.time() - start_time,
+                    error_message=f"DNN diverged: val_R2={metrics.get('val',{}).get('r2', 'N/A')}"
+                )
+
+            # QUALITY FILTER: Skip saving model if val_R2 < 0.5 (Poor or Failed category)
+            _val_m = metrics.get('val', {})
+            _val_r2 = _val_m.get('r2', _val_m.get('r2_avg', None))
+            if isinstance(_val_r2, float) and _val_r2 < R2_MIN_SAVE_THRESHOLD:
+                logger.warning(
+                    f"[POOR] {job.job_id} — val_R2={_val_r2:.4f} < {R2_MIN_SAVE_THRESHOLD} "
+                    f"(Poor/Failed category). Model NOT saved."
+                )
+                metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
+                with open(metrics_file, 'w') as f:
+                    json.dump(metrics, f, indent=2)
+                return TrainingResult(
+                    job_id=job.job_id,
+                    model_type=job.model_type,
+                    config_id=job.config['id'],
+                    dataset_name=job.dataset_name,
+                    success=False,
+                    metrics=metrics,
+                    training_time=time.time() - start_time,
+                    error_message=f"Poor/Failed: val_R2={_val_r2:.4f} < {R2_MIN_SAVE_THRESHOLD}"
+                )
+
             # Save model
             model_filename = f"model_{job.model_type}_{job.config['id']}.pkl"
             model_path = job.output_dir / model_filename
-            job.output_dir.mkdir(parents=True, exist_ok=True)
             trainer.save_model(model_path)
-            
+
             # Save metrics
             metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
             with open(metrics_file, 'w') as f:
@@ -1170,6 +1503,60 @@ class ParallelAITrainer:
 
         logger.info(f"Summary report saved: {report_file}")
 
+        # ✅ Excel özet raporu — tüm model sonuçları tek tabloda (başarısız dahil)
+        try:
+            import pandas as pd
+            rows = []
+            for result in self.training_results:
+                m = result.metrics or {}
+                train_m = m.get('train', {})
+                val_m = m.get('val', {})
+                test_m = m.get('test', {})
+                val_r2  = val_m.get('r2', val_m.get('r2_avg', float('nan')))
+                test_r2 = test_m.get('r2', test_m.get('r2_avg', float('nan')))
+                _err = result.error_message or ''
+                if result.success:
+                    _status = 'OK'
+                elif 'Poor/Failed' in _err:
+                    _status = 'POOR_R2_FILTER'
+                elif 'diverged' in _err.lower():
+                    _status = 'DIVERGED'
+                elif _err:
+                    _status = f'ERROR: {_err[:80]}'
+                else:
+                    _status = 'FAILED'
+                rows.append({
+                    'Model_Type':      result.model_type,
+                    'Config_ID':       result.config_id,
+                    'Dataset':         result.dataset_name,
+                    'PKL_Saved':       result.success,
+                    'Status_Note':     _status,
+                    'Train_R2':        train_m.get('r2', train_m.get('r2_avg', float('nan'))),
+                    'Train_RMSE':      train_m.get('rmse', train_m.get('rmse_avg', float('nan'))),
+                    'Train_MAE':       train_m.get('mae',  train_m.get('mae_avg',  float('nan'))),
+                    'Val_R2':          val_r2,
+                    'Val_RMSE':        val_m.get('rmse', val_m.get('rmse_avg', float('nan'))),
+                    'Val_MAE':         val_m.get('mae',  val_m.get('mae_avg',  float('nan'))),
+                    'Test_R2':         test_r2,
+                    'Test_RMSE':       test_m.get('rmse', test_m.get('rmse_avg', float('nan'))),
+                    'Test_MAE':        test_m.get('mae',  test_m.get('mae_avg',  float('nan'))),
+                    'Training_Time_s': result.training_time,
+                    'Error':           result.error_message if not result.success else '',
+                })
+
+            if rows:
+                df = pd.DataFrame(rows)
+                excel_file = self.output_dir / 'training_results_summary.xlsx'
+                with pd.ExcelWriter(excel_file, engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name='All_Results', index=False)
+                    for mtype in df['Model_Type'].unique():
+                        sub = df[df['Model_Type'] == mtype]
+                        sheet = mtype[:31]
+                        sub.to_excel(writer, sheet_name=sheet, index=False)
+                logger.info(f"[OK] Excel özet raporu: {excel_file}")
+        except Exception as e:
+            logger.warning(f"[WARNING] Excel rapor oluşturulamadı: {e}")
+
     def train_all_models_parallel(self, n_configs: int = 50, use_parallel: bool = None) -> Dict:
         """
         Main entry point for training all models with multiple configurations
@@ -1249,9 +1636,22 @@ class ParallelAITrainer:
         logger.info(f"Found {len(dataset_paths)} datasets")
 
         # Step 3: Define model types to train
-        model_types = ['RF', 'XGBoost'] if XGBOOST_AVAILABLE else ['RF']
-        if TF_AVAILABLE:
+        # Base models — always included if available
+        model_types = ['RF']
+        if XGBOOST_AVAILABLE:
+            model_types.append('XGBoost')
+        if LIGHTGBM_AVAILABLE:
+            model_types.append('LightGBM')
+        if CATBOOST_AVAILABLE:
+            model_types.append('CatBoost')
+        # SVR — always available (sklearn)
+        model_types.append('SVR')
+        # DNN only if TF available AND use_advanced_models=True
+        # For nuclear datasets (75-200 samples), DNN needs explicit opt-in
+        if TF_AVAILABLE and self.use_advanced_models:
             model_types.append('DNN')
+        elif TF_AVAILABLE and not self.use_advanced_models:
+            logger.info("DNN available (TF installed) but disabled (use_advanced_models=False)")
 
         logger.info(f"Model types: {model_types}")
 
@@ -1288,7 +1688,37 @@ class ParallelAITrainer:
             except Exception as e:
                 logger.warning(f"[WARNING] Could not save seed tracking report: {e}")
 
-        # Step 8: Return summary
+        # Step 8: NuclearPatternAnalyzer — nükleer desen analizi
+        try:
+            from pfaz_modules.pfaz12_advanced_analytics.nuclear_pattern_analyzer import NuclearPatternAnalyzer
+            from pathlib import Path as _Path
+            _npa_candidates = [
+                'aaa2.txt',
+                str(self.output_dir / 'aaa2.txt'),
+            ]
+            # enriched CSV'yi de dene
+            _enriched_candidates = list(_Path('outputs').glob('**/aaa2_enriched*.csv')) + \
+                                   list(_Path('outputs').glob('**/aaa2_enriched*.xlsx'))
+            _npa_data = None
+            for _c in _npa_candidates:
+                if _Path(_c).exists():
+                    _npa_data = _c
+                    break
+            if _npa_data is None and _enriched_candidates:
+                _npa_data = str(_enriched_candidates[0])
+            if _npa_data:
+                _npa = NuclearPatternAnalyzer(
+                    data_path=_npa_data,
+                    output_dir=str(self.output_dir / 'nuclear_patterns')
+                )
+                _npa.run_all()
+                logger.info("[OK] NuclearPatternAnalyzer: Excel + grafikler -> nuclear_patterns/")
+            else:
+                logger.warning("[WARNING] NuclearPatternAnalyzer: veri dosyası bulunamadı (aaa2.txt yok)")
+        except Exception as _npa_e:
+            logger.warning(f"[WARNING] NuclearPatternAnalyzer basarisiz (devam): {_npa_e}")
+
+        # Step 9: Return summary
         successful = len([r for r in results if r.success])
         failed = len([r for r in results if not r.success])
 
@@ -1390,14 +1820,14 @@ class ParallelAITrainer:
                 ([128, 64, 32], [0.1, 0.1, 0.0], 0.001, 32),
                 ([256, 128, 64], [0.1, 0.1, 0.1], 0.001, 32),
                 ([512, 256, 128, 64], [0.2, 0.2, 0.1, 0.1], 0.001, 64),
-                ([128, 64], [0.1, 0.0], 0.01, 32),
+                ([128, 64], [0.1, 0.0], 0.001, 32),      # DNN_039: lr 0.01->0.001 (divergence fix)
                 ([256, 128], [0.2, 0.1], 0.001, 64),
                 ([512, 256], [0.2, 0.2], 0.0005, 64),
                 ([256, 256, 128], [0.1, 0.1, 0.1], 0.001, 32),
                 ([128, 128, 64, 32], [0.1, 0.1, 0.1, 0.0], 0.001, 32),
                 ([512, 256, 128], [0.3, 0.2, 0.1], 0.0005, 128),
                 ([256, 128, 64, 32], [0.2, 0.1, 0.1, 0.0], 0.001, 64),
-                ([128, 64, 32, 16], [0.1, 0.1, 0.1, 0.0], 0.002, 32),
+                ([128, 64, 32, 16], [0.1, 0.1, 0.1, 0.0], 0.001, 32),  # DNN_046: lr 0.002->0.001
                 ([512, 384, 256], [0.2, 0.2, 0.1], 0.001, 64),
                 ([384, 256, 128, 64], [0.2, 0.2, 0.1, 0.1], 0.001, 64),
                 ([256, 192, 128, 64], [0.1, 0.1, 0.1, 0.1], 0.001, 32),

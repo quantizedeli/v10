@@ -62,14 +62,14 @@ class ScalingManager:
     - JSON export of scaling metadata
     """
 
-    AVAILABLE_METHODS = ['NoScaling', 'Standard', 'Robust']
+    AVAILABLE_METHODS = ['NoScaling', 'Standard', 'Robust', 'MinMax']
 
     def __init__(self, method: str = 'NoScaling'):
         """
         Initialize ScalingManager.
 
         Args:
-            method: Scaling method ('NoScaling', 'Standard', 'Robust')
+            method: Scaling method ('NoScaling', 'Standard', 'Robust', 'MinMax')
         """
         if method not in self.AVAILABLE_METHODS:
             raise ValueError(
@@ -155,6 +155,15 @@ class ScalingManager:
             }
             logger.info("Robust scaler fitted (median, IQR)")
 
+        elif self.method == 'MinMax':
+            # MinMaxScaler: (X - min) / (max - min)  →  [0, 1]
+            self.scaler_params = {
+                'min': np.min(X, axis=0).tolist(),
+                'max': np.max(X, axis=0).tolist(),
+                'range': (np.max(X, axis=0) - np.min(X, axis=0)).tolist()
+            }
+            logger.info("MinMax scaler fitted (min, max) → [0, 1]")
+
         self.is_fitted = True
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -197,6 +206,13 @@ class ScalingManager:
             # Avoid division by zero
             iqr = np.where(iqr == 0, 1.0, iqr)
             X_scaled = (X - median) / iqr
+
+        elif self.method == 'MinMax':
+            min_val = np.array(self.scaler_params['min'])
+            range_val = np.array(self.scaler_params['range'])
+            # Avoid division by zero
+            range_val = np.where(range_val == 0, 1.0, range_val)
+            X_scaled = (X - min_val) / range_val
 
         # Update only the scaled features
         df_scaled[self.features_to_scale] = X_scaled
@@ -252,6 +268,11 @@ class ScalingManager:
             median = np.array(self.scaler_params['median'])
             iqr = np.array(self.scaler_params['iqr'])
             X_original = X_scaled * iqr + median
+
+        elif self.method == 'MinMax':
+            min_val = np.array(self.scaler_params['min'])
+            range_val = np.array(self.scaler_params['range'])
+            X_original = X_scaled * range_val + min_val
 
         # Update features
         df_original[self.features_to_scale] = X_original

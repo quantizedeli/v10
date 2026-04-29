@@ -1,22 +1,15 @@
-# PFAZ 11: Production Deployment
+# PFAZ 11 — Production Deployment
 
-## Description
+**Durum: Tasarım gereği devre dışı bırakılmıştır.**
 
-Production Deployment - Model serving, web interface, monitoring, and CI/CD pipeline.
+Bu faz web arayüzü, REST API ve Docker altyapısı içerir; proje araştırma odaklı olduğu için çalıştırılmaz. `pfaz_status.json` dosyasında durumu `skipped` olarak kalır.
 
-## Modules
+## Modüller (Referans)
 
-- `production_model_serving.py` - Model serving API
-- `production_monitoring_system.py` - Production monitoring
-- `production_web_interface.py` - Web interface for predictions
-- `production_cicd_pipeline.py` - CI/CD pipeline setup
-- `pfaz7_production_complete.py` - Complete production system
-
-## Usage
-
-```python
-from pfaz_modules.pfaz11_production import production_model_serving
-
-# Start model serving
-server = production_model_serving.start_server(models)
-```
+| Dosya | İçerik |
+|-------|--------|
+| `production_web_interface.py` | Flask/FastAPI web arayüzü |
+| `production_model_serving.py` | Model servis katmanı |
+| `production_monitoring_system.py` | İzleme ve loglama |
+| `production_cicd_pipeline.py` | CI/CD pipeline |
+| `pfaz7_production_complete.py` | Üretim ensemble servisi |

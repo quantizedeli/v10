@@ -4,20 +4,13 @@
 # Main pipeline (ACTIVE)
 from .anfis_parallel_trainer_v2 import ANFISParallelTrainerV2
 
-#  ACTIVATED MODULES: ANFIS Components (9 modüller aktif edildi)
+#  ACTIVATED MODULES: ANFIS Components (9 modï¿½ller aktif edildi)
 try:
     from .anfis_adaptive_strategy import ANFISAdaptiveStrategy
     ANFIS_ADAPTIVE_STRATEGY_AVAILABLE = True
 except ImportError:
     ANFISAdaptiveStrategy = None
     ANFIS_ADAPTIVE_STRATEGY_AVAILABLE = False
-
-try:
-    from .anfis_all_nuclei_predictor import ANFISAllNucleiPredictor
-    ANFIS_ALL_NUCLEI_PREDICTOR_AVAILABLE = True
-except ImportError:
-    ANFISAllNucleiPredictor = None
-    ANFIS_ALL_NUCLEI_PREDICTOR_AVAILABLE = False
 
 try:
     from .anfis_config_manager import ANFISConfigManager
@@ -71,7 +64,6 @@ except ImportError:
 __all__ = [
     'ANFISParallelTrainerV2',
     'ANFISAdaptiveStrategy', 'ANFIS_ADAPTIVE_STRATEGY_AVAILABLE',
-    'ANFISAllNucleiPredictor', 'ANFIS_ALL_NUCLEI_PREDICTOR_AVAILABLE',
     'ANFISConfigManager', 'ANFIS_CONFIG_MANAGER_AVAILABLE',
     'ANFISDatasetSelector', 'ANFIS_DATASET_SELECTOR_AVAILABLE',
     'ANFISModelSaver', 'ANFIS_MODEL_SAVER_AVAILABLE',

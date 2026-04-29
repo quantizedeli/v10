@@ -71,14 +71,18 @@ except ImportError:
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
 
-# Local imports
+# Local imports — use package-relative import
 try:
-    import sys
-    sys.path.append('/home/claude')
-    from automl_logging_reporting_system import AutoMLTrialLogger, AutoMLTrialRecord
+    from .automl_logging_reporting_system import AutoMLTrialLogger, AutoMLTrialRecord
     LOGGING_AVAILABLE = True
 except ImportError:
-    LOGGING_AVAILABLE = False
+    try:
+        from automl_logging_reporting_system import AutoMLTrialLogger, AutoMLTrialRecord
+        LOGGING_AVAILABLE = True
+    except ImportError:
+        AutoMLTrialLogger = None
+        AutoMLTrialRecord = None
+        LOGGING_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -91,12 +95,14 @@ logger = logging.getLogger(__name__)
 ANFIS_CONFIG_SPACE = {
     'fis_generation': {
         'type': 'categorical',
-        'choices': ['grid', 'subclust', 'fcm']
+        # Must match TakagiSugenoANFIS 'method' parameter (pfaz03)
+        'choices': ['grid', 'subclust']
     },
     
     'mf_type': {
         'type': 'categorical',
-        'choices': ['gaussmf', 'trimf', 'trapmf', 'gbellmf']
+        # Names must match TakagiSugenoANFIS mf_type parameter (pfaz03)
+        'choices': ['trapezoid', 'bell', 'gaussian', 'triangle']
     },
     
     'n_mfs': {
@@ -515,43 +521,66 @@ class AutoMLANFISOptimizer:
                             y_train: np.ndarray,
                             X_val: np.ndarray) -> Tuple:
         """
-        Approximate ANFIS using sklearn
-        
-        ANFIS ≈ Fuzzy system with neural network training
-        Approximation: Neural network with specific architecture
+        Train using actual TakagiSugenoANFIS from PFAZ3 if available,
+        otherwise fall back to MLPRegressor approximation.
         """
-        
-        # ANFIS approximation using MLP
-        # Layer 1: Fuzzy membership (approximated by hidden layer)
-        # Layer 2: Fuzzy rules (approximated by second hidden layer)
-        # Layer 3: Normalization + defuzz (approximated by output layer)
-        
-        n_inputs = X_train.shape[1]
-        n_mfs = config['n_mfs']
-        
-        # Hidden layer sizes
-        # Layer 1: n_inputs × n_mfs (membership layer)
-        # Layer 2: n_mfs^n_inputs (rule layer) - simplified to n_mfs × n_inputs
+        from sklearn.preprocessing import StandardScaler as _SS
+
+        # Scale inputs (ANFIS is input-scale sensitive)
+        scaler = _SS()
+        X_tr_sc = scaler.fit_transform(X_train)
+        X_vl_sc = scaler.transform(X_val)
+        y_tr = np.asarray(y_train).ravel()
+
+        # Try actual PFAZ3 ANFIS
+        try:
+            from pfaz_modules.pfaz03_anfis_training.anfis_core import TakagiSugenoANFIS, _adaptive_n_mfs
+            n_inputs = X_tr_sc.shape[1]
+            method   = config.get('fis_generation', 'grid')
+            mf_type  = config.get('mf_type', 'trapezoid')
+            n_mfs_req = int(config.get('n_mfs', 2))
+            safe_mfs  = _adaptive_n_mfs(n_inputs, len(X_tr_sc), n_mfs_req) if method == 'grid' else n_mfs_req
+            anfis = TakagiSugenoANFIS(
+                n_inputs=n_inputs,
+                n_mfs=safe_mfs,
+                mf_type=mf_type,
+                method=method,
+                max_iter=int(config.get('epochs', 200)),
+                patience=20,
+                alpha=1e-2,
+                use_gradient=True,
+            )
+            anfis.fit(X_tr_sc, y_tr, X_val=X_vl_sc, y_val=np.asarray(X_val[:, 0]))
+
+            class _WrappedANFIS:
+                def __init__(self, m, sc): self._m, self._sc = m, sc
+                def predict(self, X): return self._m.predict(self._sc.transform(X))
+
+            wrapped = _WrappedANFIS(anfis, scaler)
+            y_pred_train = wrapped.predict(X_train)
+            y_pred_val   = wrapped.predict(X_val)
+            return wrapped, y_pred_train, y_pred_val
+
+        except Exception:
+            pass
+
+        # Fallback: MLP approximation
+        n_inputs = X_tr_sc.shape[1]
+        n_mfs    = int(config.get('n_mfs', 2))
         hidden_layer_sizes = (n_inputs * n_mfs, n_mfs * n_inputs)
-        
-        # Create MLP as ANFIS approximation
+
         anfis_approx = MLPRegressor(
             hidden_layer_sizes=hidden_layer_sizes,
-            activation='tanh',  # Approximate membership functions
+            activation='tanh',
             solver='adam',
-            learning_rate_init=config['step_size_init'],
-            max_iter=config['epochs'],
-            tol=config['error_goal'],
-            random_state=42
+            learning_rate_init=float(config.get('step_size_init', 0.05)),
+            max_iter=int(config.get('epochs', 200)),
+            tol=float(config.get('error_goal', 1e-4)),
+            random_state=42,
         )
-        
-        # Train
-        anfis_approx.fit(X_train, y_train)
-        
-        # Predict
-        y_pred_train = anfis_approx.predict(X_train)
-        y_pred_val = anfis_approx.predict(X_val)
-        
+        anfis_approx.fit(X_tr_sc, y_tr)
+        y_pred_train = anfis_approx.predict(X_tr_sc)
+        y_pred_val   = anfis_approx.predict(X_vl_sc)
         return anfis_approx, y_pred_train, y_pred_val
     
     # ========================================================================

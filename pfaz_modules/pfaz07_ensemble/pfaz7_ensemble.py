@@ -219,7 +219,7 @@ class EnsemblePipeline:
         logger.info(f"\n[OK] Excel: {report_file}")
         return report_file
     
-    def run_complete_pipeline(self, targets=['MM', 'QM', 'MM_QM', 'Beta_2']):
+    def run_complete_pipeline(self, targets=['MM', 'QM']):
         """Tam ensemble pipeline"""
         start = datetime.now()
         

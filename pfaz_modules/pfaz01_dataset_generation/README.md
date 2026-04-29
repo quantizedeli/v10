@@ -1,200 +1,130 @@
-# PFAZ 01: Dataset Generation
+# PFAZ 1 — Dataset Generation
 
-## Description
+Ham nükleer veriyi (aaa2.txt) 848 eğitim/doğrulama/test veri setine dönüştürür.
 
-Dataset Generation phase - Comprehensive nuclear physics dataset creation with theoretical calculations, quality control, and detailed distribution analysis.
+## Ana Sınıf
 
-## Features
-
-- **Multiple Training Scenarios**: 70/15/15, 80/10/10 (train/validation/test splits)
-- **Nuclei Counts**: 75, 100, 150, 200, and ALL available nuclei
-- **Target Variables**: Magnetic Moment (MM), Quadrupole Moment (Q), Combined (MM_QM), Beta_2 deformation
-- **Advanced Sampling**: Stratified and random sampling methods
-- **Quality Control**: Anomaly detection and filtering
-- **Comprehensive Reporting**: Nuclei distributions, statistics, and catalogs
-
-## Training Scenarios
-
-The module supports two different data split scenarios:
-
-1. **S70 (70/15/15)**: Standard split
-   - 70% Training
-   - 15% Validation (Check)
-   - 15% Testing
-
-2. **S80 (80/10/10)**: High training ratio
-   - 80% Training
-   - 10% Validation (Check)
-   - 10% Testing
-
-## Output Formats
-
-Each generated dataset includes:
-
-1. **Data Files**:
-   - `train.csv`, `check.csv`, `test.csv` - CSV format
-   - `train.xlsx`, `check.xlsx`, `test.xlsx` - Excel format
-   - `train.mat`, `check.mat`, `test.mat` - MATLAB format
-
-2. **Documentation**:
-   - `metadata.json` - Dataset configuration and statistics
-   - `nucleus_selection.xlsx` - List of nuclei used in this dataset
-   - `nuclei_distribution_report.xlsx` - Detailed distribution analysis
-   - `scaler.pkl` - Fitted scaler (if scaling applied)
-
-3. **Master Catalog**:
-   - `Master_Nuclei_Catalog.xlsx` - Complete catalog of all nuclei used across all datasets
-   - `Dataset_Catalog.xlsx` - Summary of all generated datasets
-
-## Distribution Reports
-
-The `nuclei_distribution_report.xlsx` includes:
-
-- **Summary**: Total nuclei, ranges, unique counts
-- **Z Distribution**: Proton number distribution
-- **N Distribution**: Neutron number distribution
-- **A Distribution**: Mass number distribution
-- **Mass Groups**: Light, medium, heavy nuclei counts
-- **Nucleus Types**: even-even, odd-odd, even-odd, odd-even distributions
-- **Isotope Diversity**: Number of isotopes per element
-- **Magic Numbers**: Proximity to magic numbers analysis
-- **Deformation**: Beta_2 deformation statistics (when applicable)
-
-## Modules
-
-- `data_loader.py` - Load nuclear physics data from aaa2.txt
-- `dataset_generator.py` - Generate training/test datasets with multiple scenarios
-- `nuclei_distribution_analyzer.py` - Analyze and report nuclei distributions
-- `data_quality_modules.py` - Quality control and validation
-- `qm_filter_manager.py` - Quantum mechanics filtering
-- `control_group_generator.py` - Control group generation
-- `data_enricher.py` - Feature enrichment and engineering
-
-## Usage Example
+**`DatasetGenerationPipelineV2`** (`dataset_generation_pipeline_v2.py`)
 
 ```python
-from pfaz_modules.pfaz01_dataset_generation import DatasetGenerator
-from pfaz_modules.pfaz01_dataset_generation import data_loader
-
-# Load enriched data
-df = data_loader.load_and_enrich_data()
-
-# Create dataset generator
-generator = DatasetGenerator(base_path='ANFIS_Datasets')
-
-# Generate all dataset combinations
-# This will create datasets for all scenarios (S70, S80)
-generator.generate_all_datasets(df)
-
-# Output will include:
-# - Individual datasets in ANFIS_Datasets/{target}/{scenario}/{dataset_name}/
-# - Master_Nuclei_Catalog.xlsx - All nuclei used
-# - Dataset_Catalog.xlsx - Summary of all datasets
-# - distribution_reports/ - Detailed distribution analyses
+pipeline = DatasetGenerationPipelineV2(
+    source_data_path="data/aaa2.txt",
+    output_dir="outputs/generated_datasets",
+    targets=["MM", "QM", "Beta_2", "MM_QM"],
+    feature_sets=None,          # None → TARGET_RECOMMENDED_SETS kullanılır
+    scenarios=["S70", "S80"],
+    nucleus_counts=[75, 100, 150, 200, "ALL"],
+    scaling_methods=["NoScaling"],
+    sampling_methods=["Random"],
+)
+pipeline.run_complete_pipeline()
 ```
 
-## Generated Files Structure
+## Çalışma Adımları
+
+| Adım | Metod | Açıklama |
+|------|-------|---------|
+| 1 | `_load_raw_data()` | CSV/XLSX/TXT yükle, sütun adlarını standartlaştır |
+| 2 | `_add_theoretical_calculations()` | SEMF, Woods-Saxon, Nilsson, Kabuk modeli özellikleri ekle |
+| 3 | `_apply_qm_filtering()` | QM hedefi için QM=NaN satırları çıkar (219 çekirdek kalır) |
+| 4 | `_perform_quality_control()` | IQR tabanlı aykırı değer tespiti (threshold=3.0) |
+| 5 | `_generate_all_datasets()` | Tüm kombinasyonları üret, böl, kaydet |
+| 6 | `_create_metadata_and_reports()` | metadata.json, exclusion tracker, datasets_summary.xlsx |
+
+## Veri Seti İsimlendirme
 
 ```
-ANFIS_Datasets/
-├── Master_Nuclei_Catalog.xlsx
-├── Dataset_Catalog.xlsx
-├── distribution_reports/
-│   └── [Various distribution analysis reports]
-├── MM/
-│   ├── S70/
-│   │   └── MM_75_S70_anomalisiz_AZN_standard_stratified/
-│   │       ├── train.csv, train.xlsx, train.mat
-│   │       ├── check.csv, check.xlsx, check.mat
-│   │       ├── test.csv, test.xlsx, test.mat
-│   │       ├── metadata.json
-│   │       ├── nucleus_selection.xlsx
-│   │       ├── nuclei_distribution_report.xlsx
-│   │       └── scaler.pkl
-│   └── S80/
-│       └── [Similar structure]
-├── QM/
-│   └── [Similar structure]
-├── MM_QM/
-│   └── [Similar structure]
-└── Beta_2/
-    └── [Similar structure]
+{HEDEF}_{BOYUT}_{SENARYO}_{ÖZELLIK_KODU}_{ÖLÇEKLEME}_{ÖRNEKLEME}[_NoAnomaly]
 ```
 
-## MATLAB Format Details
+Örnekler:
+- `MM_150_S70_AZSMC_NoScaling_Random`
+- `QM_200_S80_AZB2EMC_NoScaling_Random_NoAnomaly`
+- `Beta_2_ALL_S70_MCZMNM_NoScaling_Random_NoAnomaly`
 
-The `.mat` files are compatible with MATLAB and include:
+### Kısıtlar
+- `SMALL_NUCLEUS_THRESHOLD = 100` — boyut ≤100 yalnızca S70 + Basic/Standard feature set üretir
+- `NOANOMALY_SIZES = {150, 200, "ALL"}` — NoAnomaly varyantı yalnızca bu boyutlarda
+- S70: %70 train / %15 val / %15 test
+- S80: %80 train / %10 val / %10 test
 
-**train.mat**:
-- `train_input`: Input features matrix (n_samples × n_features)
-- `train_output`: Target values matrix (n_samples × n_targets)
-- `feature_names`: Cell array of feature names
-- `target_names`: Cell array of target variable names
+## Özellik Setleri (`feature_combination_manager.py`)
 
-**check.mat** and **test.mat**:
-- `check_input` / `test_input`: Input features
-- `check_output` / `test_output`: Target values
+60+ kombinasyon, hedef bazlı önerilen setler:
 
-### MATLAB Usage Example
+| Hedef | Set Sayısı | Örnek Setler |
+|-------|-----------|--------------|
+| MM | 13 | AZS, AZSMC, AZSMCBEPA, AZSNNNP |
+| QM | 13 | AZB2E, AZB2EMC, AZB2EMCS |
+| Beta_2 | 13 | MCZMNM, MCZMNMZV, MCZMNMZVNV |
+| MM_QM | 11 | AZS, AZSMC, AZSMCB2E |
 
-```matlab
-% Load training data
-data = load('train.mat');
+**FEATURE_ABBREV** — kısaltma → gerçek sütun adı:
 
-% Access data
-X_train = data.train_input;
-y_train = data.train_output;
-features = data.feature_names;
-targets = data.target_names;
+| Kısaltma | Sütun | Kısaltma | Sütun |
+|---|---|---|---|
+| A | A | ZV | Z_valence |
+| Z | Z | NV | N_valence |
+| S | SPIN | ZSG | Z_shell_gap |
+| MC | magic_character | NSG | N_shell_gap |
+| BEPA | BE_per_A | BEP | BE_pairing |
+| B2E | Beta_2_estimated | SPHI | spherical_index |
+| ZMD | Z_magic_dist | CP | Q0_intrinsic |
+| NMD | N_magic_dist | NN | Nn |
+| BEA | BE_asymmetry | NP | Np |
 
-% Train ANFIS model
-fis = anfis([X_train y_train]);
+Ayrık özellikler (A, Z, N, SPIN, PARITY, magic_character) **hiçbir zaman ölçeklenmez.**
 
-% Load test data and evaluate
-test_data = load('test.mat');
-predictions = evalfis(fis, test_data.test_input);
+## Ölçekleme (`scaling_manager.py`)
+
+| Yöntem | Formül |
+|--------|--------|
+| NoScaling | ham değer (varsayılan) |
+| Standard | (X − μ) / σ |
+| Robust | (X − median) / IQR |
+
+Ölçekleme yalnızca train özellikleri üzerinde fit edilir; val/test aynı parametreyle dönüştürülür. Hedef sütunları ölçeklenmez.
+
+## I/O Yapısı
+
+**Giriş:** `data/aaa2.txt` (267 çekirdek, 12 ham sütun)
+
+**Çıkış:**
+```
+outputs/generated_datasets/
+├── MM_75_S70_AZS_NoScaling_Random/
+│   ├── train.csv       <- başlıksız, sayısal (özellikler + hedef)
+│   ├── val.csv
+│   ├── test.csv
+│   ├── train.xlsx      <- NUCLEUS, A, Z, N + özellikler + hedef
+│   ├── val.xlsx
+│   ├── test.xlsx
+│   └── metadata.json   <- feature_names, target_col, split_ratios, scaling...
+├── ...
+├── datasets_summary.xlsx
+└── AAA2_enriched_all_nuclei.xlsx
 ```
 
-## Nuclei Selection
+**Toplam: 848 veri seti**
 
-The `nucleus_selection.xlsx` file contains:
-- NUCLEUS: Nuclear symbol (e.g., "He4", "O16")
-- A: Mass number
-- Z: Proton number
-- N: Neutron number
-- SPIN: Nuclear spin (if available)
-- PARITY: Parity (+1 or -1)
-- Beta_2: Quadrupole deformation parameter
-- MM: Magnetic moment
-- Q: Quadrupole moment
-- p_factor: Pairing factor
+| Hedef | Standart | NoAnomaly | Toplam |
+|-------|----------|-----------|--------|
+| MM | 140 | 84 | 224 |
+| QM | 150 | 90 | 240 |
+| Beta_2 | 130 | 78 | 208 |
+| MM_QM | 110 | 66 | 176 |
 
-This allows you to identify exactly which nuclei were used in training vs validation vs test sets.
+## Modüller
 
-## Configuration
-
-Key parameters (defined in `core_modules/constants.py`):
-
-```python
-NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']
-SCENARIOS = {
-    'S70': (0.70, 0.15, 0.15),
-    'S80': (0.80, 0.10, 0.10)
-}
-TARGETS = {
-    'MM': ['MM'],
-    'QM': ['Q'],
-    'MM_QM': ['MM', 'Q'],
-    'Beta_2': ['Beta_2']
-}
-SCALING_METHODS = ['none', 'standard', 'robust']
-SAMPLING_METHODS = ['random', 'stratified']
-```
-
-## Quality Assurance
-
-- Automatic NaN handling
-- Anomaly detection and filtering options
-- Stratified sampling for representative splits
-- Data validation and consistency checks
-- Detailed logging of all operations
+| Dosya | Sınıf | Görev |
+|-------|-------|-------|
+| `dataset_generation_pipeline_v2.py` | DatasetGenerationPipelineV2 | Ana orkestratör |
+| `feature_combination_manager.py` | FeatureCombinationManager | 60+ özellik seti tanımları, SHAP öncelikleri |
+| `io_config_manager.py` | InputOutputConfigManager, ScenarioManager | I/O config ve bölme oranları |
+| `scaling_manager.py` | ScalingManager | Ayrık özellikleri koruyarak ölçekleme |
+| `data_loader.py` | DataLoader | Ham veri yükleme, otomatik format tespiti |
+| `data_quality_modules.py` | DataQualityChecker | IQR aykırı değer analizi |
+| `qm_filter_manager.py` | QMFilterManager | QM=NaN filtreleme |
+| `sampling_manager.py` | SamplingManager | Stratified / Random örnekleme |
+| `data_enricher.py` | DataEnricher | Teorik özellik zenginleştirme |
+| `control_group_generator.py` | ControlGroupGenerator | AAA2 kontrol grubu üretimi |

@@ -2,9 +2,10 @@
 # ==============================
 
 # Main pipeline (ACTIVE)
-from .visualization_master_system import VisualizationMasterSystem
+from .visualization_master_system import MasterVisualizationSystem
+VisualizationMasterSystem = MasterVisualizationSystem  # alias for backward compat
 
-#  ACTIVATED MODULES: Visualization Tools (10 modüller aktif edildi)
+#  ACTIVATED MODULES: Visualization Tools (10 modï¿½ller aktif edildi)
 try:
     from .shap_analysis import SHAPAnalyzer
     SHAP_ANALYSIS_AVAILABLE = True
@@ -76,6 +77,7 @@ except ImportError:
     ADVANCED_VIZ_MODULES_AVAILABLE = False
 
 __all__ = [
+    'MasterVisualizationSystem',
     'VisualizationMasterSystem',
     'SHAPAnalyzer', 'SHAP_ANALYSIS_AVAILABLE',
     'AIVisualizer', 'AI_VISUALIZER_AVAILABLE',

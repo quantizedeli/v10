@@ -123,20 +123,70 @@ class InputOutputConfigManager:
     }
 
     # Feature set to I/O config mapping
+    # SHAP-bazli yeni setler + legacy setler
     FEATURE_SET_TO_CONFIG = {
-        # Feature sets with fixed input counts
-        'Basic': '3In1Out',              # 6 features → 3 core inputs (A, Z, N)
-        'Basic_SEMF': '3In1Out',         # 12 features → 3 core inputs
-        'Basic_Shell': '3In1Out',        # 12 features → 3 core inputs
-        'Physics_Optimized': '3In1Out',  # 12 features → 3 core inputs
+        # --- Legacy sets ---
+        'Basic': '3In1Out',
+        'Basic_SEMF': '3In1Out',
+        'Basic_Shell': '3In1Out',
+        'Physics_Optimized': '3In1Out',
+        'ANFIS_Compact': '3In1Out',
+        'ANFIS_Standard': '3In1Out',
+        'ANFIS_Extended': '4In1Out',
+        'Extended': 'AUTO',
+        'Full': 'AUTO',
 
-        'ANFIS_Compact': '3In1Out',      # 5 features → 3 main inputs
-        'ANFIS_Standard': '3In1Out',     # 8 features → 3 main inputs
-        'ANFIS_Extended': '4In1Out',     # 10 features → 4 main inputs
+        # --- Common 3-input SHAP sets ---
+        'AZN':    '3In1Out',
+        'AZS':    '3In1Out',
+        'AZMC':   '3In1Out',
+        'AZBEPA': '3In1Out',
+        'AZB2E':  '3In1Out',
 
-        # Variable input counts (depends on actual feature count)
-        'Extended': 'AUTO',              # 21 features → 5InAdv or 10InAdv
-        'Full': 'AUTO'                   # 44+ features → 10InAdv or 20InAdv
+        # --- Common 4-input SHAP sets ---
+        'AZNS':   '4In1Out',
+
+        # --- MM 3-input ---
+        'ASMC':    '3In1Out',
+        'AMCBEPA': '3In1Out',
+
+        # --- MM 4-input ---
+        'AZSMC':    '4In1Out',
+        'AZSBEPA':  '4In1Out',
+        'AZMCBEPA': '4In1Out',
+        'AZSB2E':   '4In1Out',
+
+        # --- MM 5-input ---
+        'AZSMCBEPA': '5InAdv',
+        'AZSMCB2E':  '5InAdv',
+
+        # --- QM 3-input ---
+        'ZB2EMC':   '3In1Out',
+        'B2EMCBEA': '3In1Out',
+
+        # --- QM 4-input ---
+        'AZB2EMC':  '4In1Out',
+        'ZB2EMCS':  '4In1Out',
+        'AZB2EBEA': '4In1Out',
+
+        # --- QM 5-input ---
+        'AZB2EMCS':   '5InAdv',
+        'AZB2EMCBEA': '5InAdv',
+
+        # --- Beta_2 3-input ---
+        'MCZMNM':  '3In1Out',
+        'AZVNV':   '3In1Out',
+        'ZMNMBEA': '3In1Out',
+
+        # --- Beta_2 4-input ---
+        'MCZMNMZV':  '4In1Out',
+        'MCZMNMBEA': '4In1Out',
+        'AMCZMNM':   '4In1Out',
+        'ZVNVZMNM':  '4In1Out',
+
+        # --- Beta_2 5-input ---
+        'MCZMNMZVNV': '5InAdv',
+        'AMCZMNMBEA': '5InAdv',
     }
 
     def __init__(self):
