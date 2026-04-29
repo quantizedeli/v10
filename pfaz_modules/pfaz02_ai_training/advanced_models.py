@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 # ==================== GPU OPTIMIZER ====================
 
-class GPUOptimizer:
+class PyTorchGPUOptimizer:
     """Manage GPU resources for PyTorch models"""
     
     def __init__(self, config: Dict = None):
@@ -90,7 +90,7 @@ class BayesianNeuralNetwork:
         self.config = config or {}
         
         # GPU optimizer
-        self.gpu_optimizer = GPUOptimizer(self.config.get('gpu', {}))
+        self.gpu_optimizer = PyTorchGPUOptimizer(self.config.get('gpu', {}))
         
         # Model architecture
         hidden_layers = self.config.get('bnn', {}).get('hidden_layers', [64, 32, 16])
@@ -277,7 +277,7 @@ class PhysicsInformedNN:
         self.config = config or {}
         
         # GPU optimizer
-        self.gpu_optimizer = GPUOptimizer(self.config.get('gpu', {}))
+        self.gpu_optimizer = PyTorchGPUOptimizer(self.config.get('gpu', {}))
         
         # Model architecture
         hidden_layers = self.config.get('pinn', {}).get('hidden_layers', [64, 64, 32])

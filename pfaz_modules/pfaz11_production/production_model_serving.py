@@ -338,7 +338,7 @@ class ModelServingManager:
                     tree_predictions = [tree.predict(X)[0] for tree in model.estimators_]
                     return float(np.std(tree_predictions))
                 return None
-        except:
+        except Exception as e:
             return None
     
     def _update_metrics(self, model_name: str, inference_time_ms: float, success: bool):

@@ -1,3 +1,10 @@
+import os
+
+
+def _inner_n_jobs() -> int:
+    """Return 1 if outer parallel pool is active, else -1."""
+    return 1 if os.environ.get("_PFAZ_PARALLEL_ACTIVE") == "1" else -1
+
 """
 Model Interpretability Module - UPDATED
 SHAP Analysis & Feature Importance FOR ALL MODELS
@@ -111,7 +118,7 @@ class UniversalSHAPAnalyzer:
         try:
             logger.info("  -> Using DeepExplainer")
             return shap.DeepExplainer(self.model, X_background)
-        except:
+        except Exception as e:
             logger.warning("  -> DeepExplainer failed, falling back to KernelExplainer")
             return self._create_kernel_explainer(X_background)
     
@@ -124,11 +131,11 @@ class UniversalSHAPAnalyzer:
             try:
                 # Try standard predict
                 return self.model.predict(X)
-            except:
+            except Exception as e:
                 try:
                     # Try with __call__ (for custom models)
                     return self.model(X)
-                except:
+                except Exception as e:
                     raise ValueError("Cannot create predict function for model")
         
         return shap.KernelExplainer(predict_fn, X_background)
@@ -232,11 +239,11 @@ class PermutationImportanceAnalyzer:
             try:
                 y_pred = estimator.predict(X)
                 return r2_score(y, y_pred)
-            except:
+            except Exception as e:
                 try:
                     y_pred = estimator(X)  # For custom models
                     return r2_score(y, y_pred)
-                except:
+                except Exception as e:
                     return 0.0
         
         self.importance_result = permutation_importance(
@@ -245,7 +252,7 @@ class PermutationImportanceAnalyzer:
             n_repeats=n_repeats,
             random_state=random_state,
             scoring=custom_scorer,
-            n_jobs=-1
+            n_jobs=_inner_n_jobs()
         )
         
         logger.info("[OK] Permutation importance calculated")
@@ -490,7 +497,7 @@ def test_universal_interpretability():
     
     # Train simple model
     from sklearn.ensemble import RandomForestRegressor
-    model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+    model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=_inner_n_jobs())
     model.fit(X_train, y_train)
     
     score = r2_score(y_test, model.predict(X_test))
@@ -625,7 +632,7 @@ class SHAPAnalyzer:
             try:
                 self.explainer = shap.DeepExplainer(self.model, X_background)
                 logger.info("  -> DeepExplainer kullanılıyor")
-            except:
+            except Exception as e:
                 # Fallback to KernelExplainer
                 logger.warning("  -> DeepExplainer başarısız, KernelExplainer kullanılıyor")
                 self.explainer = shap.KernelExplainer(self.model.predict, X_background)
@@ -882,7 +889,7 @@ class PermutationImportanceAnalyzer:
             n_repeats=n_repeats,
             random_state=random_state,
             scoring=scoring,
-            n_jobs=-1
+            n_jobs=_inner_n_jobs()
         )
         
         logger.info("[OK] Permutation importance hesaplandı")
@@ -1172,7 +1179,7 @@ def test_interpretability():
     
     # Train simple model
     from sklearn.ensemble import RandomForestRegressor
-    model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+    model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=_inner_n_jobs())
     model.fit(X_train, y_train)
     
     score = r2_score(y_test, model.predict(X_test))

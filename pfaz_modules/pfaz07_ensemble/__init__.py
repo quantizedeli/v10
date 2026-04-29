@@ -2,9 +2,18 @@
 # ================================
 
 # Main pipeline (ACTIVE)
-from .pfaz7_production_complete import run_pfaz7_production
+try:
+    from .pfaz7_production_complete import run_pfaz7_production
+    PFAZ7_PRODUCTION_AVAILABLE = True
+except ImportError:
+    try:
+        from .pfaz7_complete_ensemble_pipeline import pfaz7_complete_pipeline as run_pfaz7_production
+        PFAZ7_PRODUCTION_AVAILABLE = True
+    except ImportError:
+        run_pfaz7_production = None
+        PFAZ7_PRODUCTION_AVAILABLE = False
 
-#  ACTIVATED MODULES: Ensemble Tools (6 modüller aktif edildi)
+#  ACTIVATED MODULES: Ensemble Tools (6 modï¿½ller aktif edildi)
 try:
     from .ensemble_evaluator import EnsembleEvaluator
     ENSEMBLE_EVALUATOR_AVAILABLE = True

@@ -57,8 +57,15 @@ except ImportError:
     xlsxwriter = None
     XLSXWRITER_AVAILABLE = False
 from openpyxl import load_workbook
-from openpyxl.pivot.table import TableStyleInfo, PivotTable
-from openpyxl.pivot.fields import DataField, RowField, ColField
+try:
+    from openpyxl.pivot.table import TableStyleInfo, PivotTable
+    from openpyxl.pivot.fields import DataField, RowField, ColField
+    OPENPYXL_PIVOT_AVAILABLE = True
+except ImportError:
+    TableStyleInfo = None
+    PivotTable = None
+    DataField = RowField = ColField = None
+    OPENPYXL_PIVOT_AVAILABLE = False
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import PatternFill, Font, Alignment
 
@@ -124,7 +131,11 @@ class TheoreticalFeaturesCalculator:
         if 'Beta_2' not in df.columns:
             df['Beta_2_estimated'] = df.apply(self._estimate_beta2, axis=1)
         else:
-            df['Beta_2_estimated'] = df['Beta_2']
+            # Convert to numeric - aaa2.txt may use comma as decimal separator
+            beta2_raw = df['Beta_2']
+            if beta2_raw.dtype == object:
+                beta2_raw = beta2_raw.astype(str).str.replace(',', '.', regex=False)
+            df['Beta_2_estimated'] = pd.to_numeric(beta2_raw, errors='coerce').fillna(0.0)
         
         # Nilsson deformation parameter epsilon
         df['Nilsson_epsilon'] = 0.95 * df['Beta_2_estimated']
@@ -313,11 +324,12 @@ class ExcelPivotTableCreator:
             for c_idx, value in enumerate(row, 1):
                 ws.cell(row=r_idx, column=c_idx, value=value)
         
-        # Create pivot table
-        pivot = PivotTable()
-        pivot.name = "ModelPerformancePivot"
-        pivot.location = ws['A1']
-        
+        # Create pivot table (only if openpyxl pivot is available)
+        if OPENPYXL_PIVOT_AVAILABLE:
+            pivot = PivotTable()
+            pivot.name = "ModelPerformancePivot"
+            pivot.location = ws['A1']
+
         logger.info("    [OK] Pivot 1: Model Performance")
     
     def _add_pivot_nucleus_category(self, wb, category_df):
@@ -456,6 +468,8 @@ class AAA2ControlGroupAnalyzerComplete:
         self.trained_models_dir = Path(trained_models_dir)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        # Derive generated_datasets dir (sibling of trained_models)
+        self.generated_datasets_dir = self.trained_models_dir.parent / 'generated_datasets'
         
         # Initialize helper classes
         self.theoretical_calc = TheoreticalFeaturesCalculator()
@@ -535,77 +549,172 @@ class AAA2ControlGroupAnalyzerComplete:
     # ========================================================================
     
     def select_top50_models(self, target: str):
-        """Select top 50 models based on R² and RMSE"""
-        logger.info(f"\n-> Selecting top 50 models for {target}...")
-        
-        # Load model performance summaries
-        perf_file = self.trained_models_dir / f'{target}_model_performance.json'
-        
-        if not perf_file.exists():
-            logger.warning(f"Performance file not found: {perf_file}")
-            return []
-        
-        with open(perf_file) as f:
-            perf_data = json.load(f)
-        
-        # Sort by R² (descending) and RMSE (ascending)
-        sorted_models = sorted(perf_data.items(), 
-                             key=lambda x: (-x[1].get('R2', 0), x[1].get('RMSE', 999)))
-        
-        top50 = sorted_models[:50]
-        self.top50_models[target] = [m[0] for m in top50]
-        
-        logger.info(f"[OK] Selected {len(self.top50_models[target])} models")
-        return self.top50_models[target]
-    
+        """Select top 50 models (AI + ANFIS) by test R2 scanning trained_models and anfis_models."""
+        logger.info(f"\n-> Selecting top 50 models (AI + ANFIS) for {target}...")
+
+        target_prefix = target + '_'
+        model_records = []
+
+        # ---- AI models (outputs/trained_models/) -------------------------
+        if self.trained_models_dir.exists():
+            for dataset_dir in sorted(self.trained_models_dir.iterdir()):
+                if not dataset_dir.is_dir():
+                    continue
+                if not dataset_dir.name.startswith(target_prefix):
+                    continue
+
+                metadata_path = self.generated_datasets_dir / dataset_dir.name / 'metadata.json'
+                if not metadata_path.exists():
+                    continue
+                try:
+                    with open(metadata_path, encoding='utf-8') as f:
+                        meta = json.load(f)
+                    feature_names = meta.get('feature_names', [])
+                except Exception:
+                    continue
+
+                for model_type_dir in dataset_dir.iterdir():
+                    if not model_type_dir.is_dir():
+                        continue
+                    for config_dir in model_type_dir.iterdir():
+                        if not config_dir.is_dir():
+                            continue
+                        config_id = config_dir.name
+                        metrics_file = config_dir / f'metrics_{config_id}.json'
+                        if not metrics_file.exists():
+                            continue
+                        try:
+                            with open(metrics_file, encoding='utf-8') as f:
+                                metrics = json.load(f)
+                            test_r2 = metrics.get('test', {}).get('r2', -999)
+                            if test_r2 < 0:
+                                continue
+                            pkls = list(config_dir.glob('*.pkl'))
+                            if not pkls:
+                                continue
+                            model_records.append({
+                                'dataset':      dataset_dir.name,
+                                'model_type':   model_type_dir.name,
+                                'config_id':    config_id,
+                                'model_path':   str(pkls[0]),
+                                'feature_names': feature_names,
+                                'test_r2':      test_r2,
+                                'source':       'AI',
+                            })
+                        except Exception:
+                            continue
+
+        # ---- ANFIS models (outputs/anfis_models/) -------------------------
+        anfis_models_dir = self.trained_models_dir.parent / 'anfis_models'
+        if anfis_models_dir.exists():
+            for dataset_dir in sorted(anfis_models_dir.iterdir()):
+                if not dataset_dir.is_dir():
+                    continue
+                if not dataset_dir.name.startswith(target_prefix):
+                    continue
+
+                metadata_path = self.generated_datasets_dir / dataset_dir.name / 'metadata.json'
+                if not metadata_path.exists():
+                    continue
+                try:
+                    with open(metadata_path, encoding='utf-8') as f:
+                        meta = json.load(f)
+                    feature_names = meta.get('feature_names', [])
+                except Exception:
+                    continue
+
+                for config_dir in dataset_dir.iterdir():
+                    if not config_dir.is_dir():
+                        continue
+                    config_id = config_dir.name
+                    metrics_file = config_dir / f'metrics_{config_id}.json'
+                    if not metrics_file.exists():
+                        continue
+                    try:
+                        with open(metrics_file, encoding='utf-8') as f:
+                            metrics = json.load(f)
+                        test_r2 = metrics.get('test', {}).get('r2', -999)
+                        if test_r2 < 0:
+                            continue
+                        pkls = list(config_dir.glob('*.pkl'))
+                        if not pkls:
+                            continue
+                        model_records.append({
+                            'dataset':      dataset_dir.name,
+                            'model_type':   'ANFIS',
+                            'config_id':    config_id,
+                            'model_path':   str(pkls[0]),
+                            'feature_names': feature_names,
+                            'test_r2':      test_r2,
+                            'source':       'ANFIS',
+                        })
+                    except Exception:
+                        continue
+
+        model_records.sort(key=lambda x: x['test_r2'], reverse=True)
+        top50 = model_records[:50]
+        self.top50_models[target] = top50
+
+        n_ai    = sum(1 for r in top50 if r.get('source') == 'AI')
+        n_anfis = sum(1 for r in top50 if r.get('source') == 'ANFIS')
+        logger.info(f"[OK] Scanned {len(model_records)} models "
+                    f"(AI: {sum(1 for r in model_records if r.get('source')=='AI')}, "
+                    f"ANFIS: {sum(1 for r in model_records if r.get('source')=='ANFIS')})")
+        logger.info(f"  Top-50 breakdown: AI={n_ai}, ANFIS={n_anfis}")
+        if top50:
+            logger.info(f"  Best test R2: {top50[0]['test_r2']:.4f} "
+                        f"({top50[0]['source']} / {top50[0]['dataset']})")
+        return top50
+
     def predict_with_top50(self, target: str) -> Tuple[pd.DataFrame, Dict]:
-        """Generate predictions with top 50 models"""
+        """Generate predictions with top 50 models using per-model feature sets"""
         logger.info(f"\n-> Generating predictions for {target}...")
-        
-        model_ids = self.top50_models.get(target, [])
-        
-        if len(model_ids) == 0:
+
+        model_records = self.top50_models.get(target, [])
+
+        if not model_records:
             logger.warning("No models selected")
             return None, {}
-        
-        # Get feature columns
-        feature_cols = [col for col in self.aaa2_df.columns 
-                       if col not in ['NUCLEUS', 'A', 'Z', 'N', 
-                                     'MAGNETIC MOMENT [μ]', 'QUADRUPOLE MOMENT [Q]', 
-                                     'Beta_2']]
-        
-        X = self.aaa2_df[feature_cols].values
-        
-        # Collect predictions
+
         predictions_array = []
         timing_info = {}
-        
-        for model_id in tqdm(model_ids, desc=f"Predicting {target}"):
+
+        for record in tqdm(model_records, desc=f"Predicting {target}"):
             try:
-                # Load model
-                model_path = self.trained_models_dir / target / f'{model_id}.pkl'
-                model = joblib.load(model_path)
-                
-                # Predict
+                feature_names = record['feature_names']
+                # Check all features available in AAA2 enriched data
+                missing = [f for f in feature_names if f not in self.aaa2_df.columns]
+                if missing:
+                    logger.debug(f"  Skip {record['config_id']}: missing {missing}")
+                    continue
+
+                X = self.aaa2_df[feature_names].apply(
+                    pd.to_numeric, errors='coerce'
+                ).fillna(0.0).values
+
+                model = joblib.load(record['model_path'])
+
                 start_time = time.perf_counter()
                 y_pred = model.predict(X).flatten()
                 pred_time = (time.perf_counter() - start_time) * 1000
-                
+
+                if len(y_pred) != len(self.aaa2_df):
+                    continue
+
                 predictions_array.append(y_pred)
-                timing_info[model_id] = pred_time
-                
+                timing_info[record['config_id']] = pred_time
+
             except Exception as e:
-                logger.warning(f"Failed to load/predict {model_id}: {e}")
+                logger.debug(f"  Failed {record.get('config_id', '?')}: {e}")
                 continue
-        
-        # Convert to array (n_models, n_samples)
+
+        if not predictions_array:
+            logger.warning(f"No successful predictions for {target}")
+            return None, {}
+
         predictions_array = np.array(predictions_array)
-        
         logger.info(f"[OK] Predictions shape: {predictions_array.shape}")
-        
-        # Store predictions
         self.predictions[target] = predictions_array
-        
         return predictions_array, timing_info
     
     # ========================================================================
@@ -643,40 +752,134 @@ class AAA2ControlGroupAnalyzerComplete:
     # ========================================================================
     
     def generate_comprehensive_excel(self, target: str):
-        """Generate 15-sheet Excel with 8 pivot tables"""
+        """Generate comprehensive Excel: experimental vs predicted, per-model, uncertainty."""
         logger.info(f"\n-> Generating comprehensive Excel for {target}...")
-        
+
         excel_path = self.output_dir / f'AAA2_Complete_{target}.xlsx'
-        
-        # Create workbook with 15 sheets (simplified structure)
+
+        # Resolve experimental column name
+        tcfg = self.target_configs.get(target, {})
+        exp_col = tcfg.get('column', target)
+        exp_values = None
+        if exp_col in self.aaa2_df.columns:
+            exp_values = pd.to_numeric(self.aaa2_df[exp_col], errors='coerce').values
+        elif target in self.aaa2_df.columns:
+            exp_values = pd.to_numeric(self.aaa2_df[target], errors='coerce').values
+
+        # Ensemble mean/std from stored predictions
+        preds_array = self.predictions.get(target)  # shape: (n_models, n_nuclei)
+        ens_mean = np.nanmean(preds_array, axis=0) if preds_array is not None else None
+        ens_std  = np.nanstd(preds_array,  axis=0) if preds_array is not None else None
+
+        model_records = self.top50_models.get(target, [])
+
         excel_engine = 'xlsxwriter' if XLSXWRITER_AVAILABLE else 'openpyxl'
         with pd.ExcelWriter(excel_path, engine=excel_engine) as writer:
-            # Sheet 1: Raw predictions
-            pred_df = pd.DataFrame({
-                'NUCLEUS': self.aaa2_df['NUCLEUS'],
-                'A': self.aaa2_df['A'],
-                'Z': self.aaa2_df['Z'],
-                'N': self.aaa2_df['N']
-            })
+
+            # ----------------------------------------------------------
+            # Sheet 1: Predictions — experimental vs ensemble prediction
+            # ----------------------------------------------------------
+            pred_data = {
+                'NUCLEUS':          self.aaa2_df['NUCLEUS'],
+                'A':                self.aaa2_df['A'],
+                'Z':                self.aaa2_df['Z'],
+                'N':                self.aaa2_df['N'],
+            }
+            if exp_values is not None:
+                pred_data[f'Experimental_{target}'] = exp_values
+            if ens_mean is not None:
+                pred_data['Ensemble_Mean_Pred'] = np.round(ens_mean, 6)
+                pred_data['Ensemble_Std_Pred']  = np.round(ens_std,  6)
+                if exp_values is not None:
+                    pred_data['Residual'] = np.round(exp_values - ens_mean, 6)
+                    abs_res = np.abs(exp_values - ens_mean)
+                    pred_data['Abs_Residual'] = np.round(abs_res, 6)
+            # Top-model source labels
+            if model_records:
+                best = model_records[0]
+                pred_data['Best_Model_Type']   = best.get('model_type', '')
+                pred_data['Best_Model_Source'] = best.get('source', 'AI')
+                pred_data['Best_Model_TestR2'] = round(best.get('test_r2', float('nan')), 4)
+
+            pred_df = pd.DataFrame(pred_data)
             pred_df.to_excel(writer, sheet_name='Predictions', index=False)
-            
+            logger.info(f"  [OK] Sheet 'Predictions': {len(pred_df)} nuclei, "
+                        f"{len(pred_df.columns)} columns")
+
+            # ----------------------------------------------------------
             # Sheet 2: Uncertainty
+            # ----------------------------------------------------------
             if target in self.uncertainty:
                 unc = self.uncertainty[target]
-                unc_df = pd.DataFrame({
-                    'NUCLEUS': self.aaa2_df['NUCLEUS'],
-                    'Mean_Prediction': unc['mean'],
-                    'Std_Prediction': unc['std'],
-                    'CI_Lower': unc['ci_lower'],
-                    'CI_Upper': unc['ci_upper'],
-                    'Entropy': unc['entropy'],
-                    'CV': unc['cv']
+                unc_data = {
+                    'NUCLEUS':         self.aaa2_df['NUCLEUS'],
+                    'A':               self.aaa2_df['A'],
+                    'Z':               self.aaa2_df['Z'],
+                    'N':               self.aaa2_df['N'],
+                }
+                if exp_values is not None:
+                    unc_data[f'Experimental_{target}'] = exp_values
+                unc_data.update({
+                    'Mean_Prediction': np.round(unc['mean'],     6),
+                    'Std_Prediction':  np.round(unc['std'],      6),
+                    'CI_Lower':        np.round(unc['ci_lower'], 6),
+                    'CI_Upper':        np.round(unc['ci_upper'], 6),
+                    'CI_Width':        np.round(unc['ci_upper'] - unc['ci_lower'], 6),
+                    'CV':              np.round(unc['cv'],       6),
                 })
-                unc_df.to_excel(writer, sheet_name='Uncertainty', index=False)
-            
-            # Sheets 3-15: Additional analyses (placeholder)
-            for i in range(3, 16):
-                pd.DataFrame({'Info': [f'Sheet {i}']}).to_excel(
+                if exp_values is not None:
+                    unc_data['Residual'] = np.round(exp_values - unc['mean'], 6)
+                pd.DataFrame(unc_data).to_excel(writer, sheet_name='Uncertainty', index=False)
+                logger.info(f"  [OK] Sheet 'Uncertainty': {len(unc_data['Mean_Prediction'])} rows")
+
+            # ----------------------------------------------------------
+            # Sheet 3: Per-model predictions (top 25 columns)
+            # ----------------------------------------------------------
+            if preds_array is not None and len(model_records) > 0:
+                permodel_data = {
+                    'NUCLEUS': self.aaa2_df['NUCLEUS'],
+                    'A':       self.aaa2_df['A'],
+                    'Z':       self.aaa2_df['Z'],
+                    'N':       self.aaa2_df['N'],
+                }
+                if exp_values is not None:
+                    permodel_data[f'Experimental_{target}'] = exp_values
+                n_show = min(25, preds_array.shape[0])
+                for mi in range(n_show):
+                    rec = model_records[mi] if mi < len(model_records) else {}
+                    src  = rec.get('source', 'AI')
+                    mtyp = rec.get('model_type', f'M{mi+1}')
+                    r2   = rec.get('test_r2', float('nan'))
+                    col  = f'{src}_{mtyp}_R2={r2:.3f}'[:31]
+                    permodel_data[col] = np.round(preds_array[mi], 6)
+                pd.DataFrame(permodel_data).to_excel(
+                    writer, sheet_name='PerModel_Top25', index=False)
+                logger.info(f"  [OK] Sheet 'PerModel_Top25': {n_show} model columns")
+
+            # ----------------------------------------------------------
+            # Sheet 4: Model ranking summary
+            # ----------------------------------------------------------
+            if model_records:
+                rank_rows = []
+                for i, rec in enumerate(model_records, 1):
+                    rank_rows.append({
+                        'Rank':         i,
+                        'Source':       rec.get('source', 'AI'),
+                        'Model_Type':   rec.get('model_type', ''),
+                        'Dataset':      rec.get('dataset', ''),
+                        'Config_ID':    rec.get('config_id', ''),
+                        'Test_R2':      round(rec.get('test_r2', float('nan')), 4),
+                        'N_Features':   len(rec.get('feature_names', [])),
+                    })
+                pd.DataFrame(rank_rows).to_excel(
+                    writer, sheet_name='Model_Ranking', index=False)
+                logger.info(f"  [OK] Sheet 'Model_Ranking': {len(rank_rows)} models")
+
+            # ----------------------------------------------------------
+            # Sheets 5+: Additional pivot/analysis placeholders
+            # ----------------------------------------------------------
+            for i in range(5, 16):
+                pd.DataFrame({'Info': [f'Analysis sheet {i} - reserved for pivot tables']}).to_excel(
                     writer, sheet_name=f'Analysis_{i}', index=False
                 )
         
@@ -685,9 +888,9 @@ class AAA2ControlGroupAnalyzerComplete:
         # Add pivot tables
         pivot_creator = ExcelPivotTableCreator(excel_path)
         
-        # Create dummy dataframes for pivot tables
-        predictions_df = pd.DataFrame({'NUCLEUS': self.aaa2_df['NUCLEUS']})
-        delta_df = pd.DataFrame({'NUCLEUS': self.aaa2_df['NUCLEUS']})
+        # Dataframes for pivot tables - use full AAA2 data so A/Z/N columns are available
+        predictions_df = self.aaa2_df.copy()
+        delta_df = self.aaa2_df[['NUCLEUS']].copy()
         success_df = pd.DataFrame({'Model': ['Model1'], 'R2': [0.9]})
         category_df = pd.DataFrame({'Category': ['Light'], 'Accuracy': [0.85]})
         
@@ -700,7 +903,7 @@ class AAA2ControlGroupAnalyzerComplete:
     # MAIN PIPELINE
     # ========================================================================
     
-    def run_complete_pfaz9_pipeline(self, targets=['MM', 'QM', 'Beta_2']):
+    def run_complete_pfaz9_pipeline(self, targets=['MM', 'QM']):
         """
         Run complete PFAZ 9 pipeline
         """
@@ -739,21 +942,63 @@ class AAA2ControlGroupAnalyzerComplete:
             # Final summary
             end_time = datetime.now()
             duration = (end_time - start_time).total_seconds()
-            
+
+            # ---- AAA2QualityChecker: detayli veri kalitesi Excel raporu ----
+            try:
+                from pfaz_modules.pfaz09_aaa2_monte_carlo.aaa2_quality_checker import AAA2DataQualityChecker
+                _qc = AAA2DataQualityChecker(output_dir=str(self.output_dir / 'data_quality'))
+                # aaa2.txt dosyasini bul
+                _aaa2_path = self.aaa2_txt_path if hasattr(self, 'aaa2_txt_path') else 'aaa2.txt'
+                if not Path(_aaa2_path).exists():
+                    for _cand_qc in ['aaa2.txt', '../aaa2.txt', '../../aaa2.txt']:
+                        if Path(_cand_qc).exists():
+                            _aaa2_path = _cand_qc
+                            break
+                if Path(_aaa2_path).exists():
+                    _qc.load_and_check(filepath=str(_aaa2_path))
+                    logger.info("[OK] AAA2QualityChecker: veri kalitesi raporu -> data_quality/")
+                else:
+                    logger.info("  [INFO] AAA2QualityChecker: aaa2.txt bulunamadı — atlanıyor")
+            except Exception as _qce:
+                logger.warning(f"[WARNING] AAA2QualityChecker basarisiz (devam): {_qce}")
+
+            # ---- MonteCarloSimulationSystem: belirsizlik nicellestirme ----
+            try:
+                from pfaz_modules.pfaz09_aaa2_monte_carlo.monte_carlo_simulation_system import MonteCarloSimulationSystem
+                _mc_models_dir = self.trained_models_dir if hasattr(self, 'trained_models_dir') else 'trained_models'
+                _mc = MonteCarloSimulationSystem(
+                    models_dir=str(_mc_models_dir),
+                    aaa2_data_path=str(self.output_dir),
+                    output_dir=str(self.output_dir / 'monte_carlo_analysis'),
+                )
+                _mc_done = 0
+                for _mc_tgt in targets:
+                    try:
+                        _mc.run_complete_mc_analysis(target=_mc_tgt)
+                        _mc_done += 1
+                    except Exception as _mce2:
+                        logger.warning(f"  [WARNING] MC {_mc_tgt}: {_mce2}")
+                if _mc_done > 0:
+                    logger.info(f"[OK] MonteCarloSimulationSystem: {_mc_done} hedef MC analizi -> monte_carlo_analysis/")
+                else:
+                    logger.info("  [INFO] MonteCarloSimulationSystem: hicbir hedef tamamlanamadı")
+            except Exception as _mce:
+                logger.warning(f"[WARNING] MonteCarloSimulationSystem basarisiz (devam): {_mce}")
+
             logger.info("\n" + "="*80)
             logger.info("[SUCCESS] PFAZ 9 COMPLETE!")
             logger.info("="*80)
             logger.info(f"Duration: {duration:.1f}s ({duration/60:.1f}min)")
             logger.info(f"Targets processed: {len(self.predictions)}")
             logger.info(f"Output: {self.output_dir}")
-            
+
             return {
                 'success': True,
                 'duration': duration,
                 'targets': list(self.predictions.keys()),
                 'output_dir': str(self.output_dir)
             }
-        
+
         except Exception as e:
             logger.error(f"\n[ERROR] PIPELINE FAILED: {e}")
             import traceback
@@ -775,7 +1020,7 @@ def main():
         output_dir='aaa2_pfaz9_complete_results'
     )
     
-    results = analyzer.run_complete_pfaz9_pipeline(targets=['MM', 'QM', 'Beta_2'])
+    results = analyzer.run_complete_pfaz9_pipeline(targets=['MM', 'QM'])
     
     return results
 

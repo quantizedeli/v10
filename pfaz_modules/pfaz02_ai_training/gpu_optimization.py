@@ -66,7 +66,7 @@ class GPUOptimizer:
         try:
             import tensorflow as tf
             return len(tf.config.list_physical_devices('GPU'))
-        except:
+        except Exception as e:
             return 0
 
     def _get_gpu_name(self) -> Optional[str]:
@@ -77,7 +77,7 @@ class GPUOptimizer:
             if gpus:
                 gpu_details = tf.config.experimental.get_device_details(gpus[0])
                 return gpu_details.get('device_name', 'Unknown GPU')
-        except:
+        except Exception as e:
             pass
         return None
 
@@ -128,20 +128,33 @@ class GPUOptimizer:
             params['tree_method'] = 'hist'  # CPU fallback
             return params
 
-        # GPU-specific parameters
-        gpu_params = {
-            'tree_method': 'gpu_hist',  # Use GPU for tree construction
-            'gpu_id': 0,  # Use first GPU
-            'predictor': 'gpu_predictor',  # GPU prediction
-            'sampling_method': 'gradient_based',  # Faster sampling
-        }
+        # GPU-specific parameters — version-aware (XGBoost 2.0 removed gpu_hist)
+        try:
+            import xgboost as xgb
+            xgb_version = tuple(int(x) for x in xgb.__version__.split('.')[:2])
+        except Exception:
+            xgb_version = (0, 0)
+
+        if xgb_version >= (2, 0):
+            gpu_params = {
+                'tree_method': 'hist',
+                'device': 'cuda',
+                'sampling_method': 'gradient_based',
+            }
+            logger.info("[OK] XGBoost GPU optimization enabled (XGBoost 2.0+ API)")
+            logger.info("  - tree_method: hist, device: cuda")
+        else:
+            gpu_params = {
+                'tree_method': 'gpu_hist',
+                'gpu_id': 0,
+                'predictor': 'gpu_predictor',
+                'sampling_method': 'gradient_based',
+            }
+            logger.info("[OK] XGBoost GPU optimization enabled (legacy API)")
+            logger.info("  - tree_method: gpu_hist, predictor: gpu_predictor")
 
         # Merge with original params (original params take precedence for duplicates)
         optimized_params = {**params, **gpu_params}
-
-        logger.info("[OK] XGBoost GPU optimization enabled")
-        logger.info(f"  - tree_method: gpu_hist")
-        logger.info(f"  - predictor: gpu_predictor")
 
         return optimized_params
 
@@ -280,7 +293,7 @@ class GPUOptimizer:
                 if gpus:
                     details = tf.config.experimental.get_device_details(gpus[0])
                     info['compute_capability'] = details.get('compute_capability', 'Unknown')
-            except:
+            except Exception as e:
                 pass
 
         return info

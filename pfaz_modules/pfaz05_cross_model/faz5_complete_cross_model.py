@@ -432,7 +432,7 @@ class CrossModelAnalysisPipeline:
         self.ai_models = ['RandomForest', 'GradientBoosting', 'XGBoost', 'DNN', 'BNN', 'PINN']
         self.anfis_configs = ['GAU2MF', 'GEN2MF', 'TRI2MF', 'TRA2MF', 'GAU3MF', 
                              'SUBR03', 'SUBR05', 'SUBR07']
-        self.targets = ['MM', 'QM', 'MM_QM', 'Beta_2']
+        self.targets = ['MM', 'QM']
         
         self.all_predictions = {}
         

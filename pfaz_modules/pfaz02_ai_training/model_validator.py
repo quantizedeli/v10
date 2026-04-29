@@ -17,10 +17,16 @@ Cross-validation & Robustness Testing
 Yazar: Nükleer Fizik AI Projesi
 """
 
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
 import json
+
+
+def _inner_n_jobs() -> int:
+    """Return 1 if outer parallel pool is active, else -1."""
+    return 1 if os.environ.get('_PFAZ_PARALLEL_ACTIVE') == '1' else -1
 import logging
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -68,7 +74,7 @@ class CrossValidationAnalyzer:
             scoring: Metrics list
             return_train_score: Training scores'ları da hesapla
             n_jobs: Number of parallel jobs (default=1 to avoid nested parallelization deadlock)
-                    Use n_jobs=-1 only for sequential training mode
+                    Use n_jobs=_inner_n_jobs() only for sequential training mode
         """
 
         if scoring is None:
@@ -218,7 +224,7 @@ class LearningCurveAnalyzer:
             train_sizes=train_sizes,
             cv=cv,
             scoring=scoring,
-            n_jobs=-1,
+            n_jobs=_inner_n_jobs(),
             verbose=1
         )
         
@@ -320,7 +326,7 @@ class ValidationCurveAnalyzer:
             param_range=param_range,
             cv=cv,
             scoring=scoring,
-            n_jobs=-1
+            n_jobs=_inner_n_jobs()
         )
         
         # Plot
@@ -811,7 +817,7 @@ def test_model_validation():
     
     # Train model
     from sklearn.ensemble import RandomForestRegressor
-    model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+    model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=_inner_n_jobs())
     model.fit(X_train, y_train)
     
     # Validate

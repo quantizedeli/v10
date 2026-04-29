@@ -111,6 +111,7 @@ class DatasetGenerationPipelineV2:
                  targets: List[str] = None,
                  feature_sets: List[str] = None,
                  scenario: str = None,
+                 scenarios: List[str] = None,
                  scaling: str = None,
                  sampling: str = None,
                  # Backward compatibility aliases
@@ -143,15 +144,27 @@ class DatasetGenerationPipelineV2:
         # Default parameters (updated per requirements)
         # [UPDATED]: 75, 100, 150, 200, ALL (all available nuclei)
         self.nucleus_counts = nucleus_counts or [75, 100, 150, 200, 'ALL']
-        self.targets = targets or ['MM', 'QM', 'MM_QM', 'Beta_2']
+        self.targets = targets or ['MM', 'QM']
 
         # [FAZ 1 NEW]: Feature combinations
-        self.feature_sets = feature_sets or get_default_feature_sets()  # ['Basic', 'Extended', 'Full']
+        # None = target-specific SHAP-based sets kullan (TARGET_RECOMMENDED_SETS)
+        self.feature_sets = feature_sets  # None -> target-specific, list -> tum targetlar icin ayni
 
-        # [FAZ 2 NEW]: Scenario, Scaling, Sampling
-        self.scenario = scenario or 'S70'  # Default: 70/15/15 split
-        self.scaling = scaling or 'NoScaling'  # Default: no scaling (FAZ 3 will add options)
-        self.sampling = sampling or 'Random'  # Default: random (FAZ 3 will add stratified)
+        # NoAnomaly varyanti uretilecek boyutlar
+        self.NOANOMALY_SIZES: set = {150, 200, 'ALL'}
+
+        # Scenario(s): tek string veya liste desteklenir
+        # scenarios=['S70','S80'] -> her ikisi de uretilir (iki kat dataset)
+        if scenarios is not None:
+            self.scenarios = scenarios
+        elif scenario is not None:
+            self.scenarios = [scenario]
+        else:
+            self.scenarios = ['S70']  # varsayilan
+        self.scenario = self.scenarios[0]  # geri uyumluluk icin
+
+        self.scaling = scaling or 'NoScaling'
+        self.sampling = sampling or 'Random'
 
         # Target column name mapping (simplified name -> actual column name)
         self.target_column_map = {
@@ -194,7 +207,8 @@ class DatasetGenerationPipelineV2:
         logger.info(f"Output directory: {self.output_base_dir}")
         logger.info(f"Nucleus counts: {self.nucleus_counts}")
         logger.info(f"Targets: {self.targets}")
-        logger.info(f"Feature sets: {self.feature_sets}")  # [FAZ 1]
+        logger.info(f"Feature sets: {self.feature_sets if self.feature_sets else 'TARGET_SPECIFIC'}")
+        logger.info(f"Scenarios: {self.scenarios}")
         logger.info(f"Scenario: {self.scenario}")  # [FAZ 2]
         logger.info(f"Scaling: {self.scaling}")  # [FAZ 2]
         logger.info(f"Sampling: {self.sampling}")  # [FAZ 2]
@@ -261,8 +275,20 @@ class DatasetGenerationPipelineV2:
     
     def _load_raw_data(self):
         """Ham veriyi yükle"""
+        # Resolve path: if relative and not found, try project root and data/ subdir
+        if not self.source_data_path.is_absolute() and not self.source_data_path.exists():
+            _pipeline_dir = Path(__file__).parent
+            _project_root = _pipeline_dir.parent.parent  # pfaz01 -> pfaz_modules -> project root
+            for candidate in [
+                _project_root / self.source_data_path,
+                _project_root / 'data' / self.source_data_path.name,
+            ]:
+                if candidate.exists():
+                    self.source_data_path = candidate
+                    break
+
         logger.info(f"Loading data from: {self.source_data_path}")
-        
+
         if not self.source_data_path.exists():
             raise FileNotFoundError(f"Source data not found: {self.source_data_path}")
         
@@ -278,10 +304,10 @@ class DatasetGenerationPipelineV2:
             # First try tab-delimited, then comma, then whitespace
             try:
                 self.raw_data = pd.read_csv(self.source_data_path, sep='\t', encoding='utf-8')
-            except:
+            except Exception as e:
                 try:
                     self.raw_data = pd.read_csv(self.source_data_path, sep=',', encoding='utf-8')
-                except:
+                except Exception as e:
                     # Last resort: whitespace-delimited
                     self.raw_data = pd.read_csv(self.source_data_path, delim_whitespace=True, encoding='utf-8')
         else:
@@ -295,6 +321,14 @@ class DatasetGenerationPipelineV2:
         missing_cols = [col for col in required_cols if col not in self.raw_data.columns]
         if missing_cols:
             raise ValueError(f"Missing required columns: {missing_cols}")
+
+        # Standardize known column names
+        rename_map = {}
+        if 'P-factor' in self.raw_data.columns:
+            rename_map['P-factor'] = 'P_FACTOR'
+        if rename_map:
+            self.raw_data = self.raw_data.rename(columns=rename_map)
+            logger.info(f"[OK] Renamed columns: {rename_map}")
 
         # Clean and convert numeric columns
         self._clean_and_convert_numeric_columns()
@@ -374,6 +408,16 @@ class DatasetGenerationPipelineV2:
             'n_added_features': n_added_features,
             'calculations_performed': self.theoretical_calc_manager.calculations_done
         }
+
+        # Tum cekirdekler icin zenginlestirilmis veriyi kaydet (tez referansi icin)
+        try:
+            enriched_csv = self.output_base_dir / 'AAA2_enriched_all_nuclei.csv'
+            enriched_xlsx = self.output_base_dir / 'AAA2_enriched_all_nuclei.xlsx'
+            self.enriched_data.to_csv(enriched_csv, index=False, encoding='utf-8')
+            self.enriched_data.to_excel(enriched_xlsx, index=False, engine='openpyxl')
+            logger.info(f"[OK] Full enriched data saved: {enriched_xlsx.name} ({len(self.enriched_data)} nuclei, {len(self.enriched_data.columns)} features)")
+        except Exception as e:
+            logger.warning(f"[WARNING] Could not save enriched data file: {e}")
     
     def _apply_qm_filtering(self):
         """Her target için QM filtreleme uygula"""
@@ -475,81 +519,265 @@ class DatasetGenerationPipelineV2:
         
         self.generation_report['quality_control'] = quality_reports
     
+    def _remove_outliers(self, df: pd.DataFrame) -> pd.DataFrame:
+        """IQR bazli outlier temizleme (NoAnomaly varyanti icin)."""
+        clean_df, _ = self._remove_outliers_explained(df)
+        return clean_df
+
+    def _remove_outliers_explained(self, df: pd.DataFrame):
+        """IQR bazli outlier temizleme + her cekirdek icin neden anomali oldugunu acikla.
+
+        Returns:
+            (clean_df, anomaly_records) where anomaly_records is a list of dicts:
+              {NUCLEUS, A, Z, N, triggered_columns: [{col, value, lower, upper, iqr_ratio}]}
+        """
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        protect = ['A', 'Z', 'N', 'SPIN', 'PARITY', 'NUCLEUS']
+        cols_to_check = [c for c in numeric_cols if c not in protect]
+
+        # Compute IQR bounds per column
+        col_bounds = {}
+        for col in cols_to_check:
+            q1 = df[col].quantile(0.25)
+            q3 = df[col].quantile(0.75)
+            iqr = q3 - q1
+            if iqr == 0:
+                continue
+            col_bounds[col] = {
+                'q1': float(q1), 'q3': float(q3), 'iqr': float(iqr),
+                'lower': float(q1 - 3.0 * iqr),
+                'upper': float(q3 + 3.0 * iqr),
+            }
+
+        # Build overall keep mask
+        mask = pd.Series([True] * len(df), index=df.index)
+        for col, bounds in col_bounds.items():
+            mask = mask & df[col].between(bounds['lower'], bounds['upper'])
+
+        clean_df = df[mask].reset_index(drop=True)
+
+        # Build anomaly explanation records for removed rows
+        removed_df = df[~mask]
+        anomaly_records = []
+        for _, row in removed_df.iterrows():
+            triggered = []
+            for col, bounds in col_bounds.items():
+                val = float(row[col]) if not pd.isna(row[col]) else None
+                if val is not None and (val < bounds['lower'] or val > bounds['upper']):
+                    iqr_ratio = abs(val - (bounds['q1'] if val < bounds['lower'] else bounds['q3'])) / bounds['iqr']
+                    triggered.append({
+                        'column': col,
+                        'value': round(val, 6),
+                        'lower_bound': round(bounds['lower'], 6),
+                        'upper_bound': round(bounds['upper'], 6),
+                        'iqr': round(bounds['iqr'], 6),
+                        'iqr_ratio': round(float(iqr_ratio), 4),
+                        'direction': 'above' if val > bounds['upper'] else 'below',
+                    })
+            # Sort by worst violation first
+            triggered.sort(key=lambda x: x['iqr_ratio'], reverse=True)
+            nucleus_id = str(row.get('NUCLEUS', f"Z{int(row.get('Z',0))}_N{int(row.get('N',0))}"))
+            record = {
+                'NUCLEUS': nucleus_id,
+                'A': int(row['A']) if 'A' in row and not pd.isna(row['A']) else None,
+                'Z': int(row['Z']) if 'Z' in row and not pd.isna(row['Z']) else None,
+                'N': int(row['N']) if 'N' in row and not pd.isna(row['N']) else None,
+                'SPIN': float(row['SPIN']) if 'SPIN' in row and not pd.isna(row['SPIN']) else None,
+                'PARITY': int(row['PARITY']) if 'PARITY' in row and not pd.isna(row['PARITY']) else None,
+                'n_violations': len(triggered),
+                'worst_column': triggered[0]['column'] if triggered else '',
+                'worst_iqr_ratio': triggered[0]['iqr_ratio'] if triggered else 0.0,
+                'triggered_columns': triggered,
+            }
+            anomaly_records.append(record)
+
+        return clean_df, anomaly_records
+
+    def _compute_distribution(self, df: pd.DataFrame) -> Dict:
+        """Spin/parite/kutle bolgesi dagilim istatistikleri."""
+        stats = {}
+
+        # Spin dagilimi
+        if 'SPIN' in df.columns:
+            spin_counts = df['SPIN'].value_counts().to_dict()
+            stats['spin_distribution'] = {str(k): int(v) for k, v in spin_counts.items()}
+
+        # Parite dagilimi
+        if 'PARITY' in df.columns:
+            par_counts = df['PARITY'].value_counts().to_dict()
+            stats['parity_distribution'] = {str(k): int(v) for k, v in par_counts.items()}
+
+        # Kutle bolgesi dagilimi (light/medium/heavy)
+        if 'A' in df.columns:
+            light = int((df['A'] < 40).sum())
+            medium = int(((df['A'] >= 40) & (df['A'] < 100)).sum())
+            heavy = int((df['A'] >= 100).sum())
+            stats['mass_region'] = {'light_A<40': light, 'medium_40-100': medium, 'heavy_A>100': heavy}
+
+        return stats
+
+    # Küçük dataset boyutları için kısıtlar
+    # 75 ve 100 çekirdek: yalnızca S70 senaryosu + temel feature setleri
+    SMALL_NUCLEUS_THRESHOLD: int = 100   # <= bu değer "küçük" sayılır
+    SMALL_NUCLEUS_SCENARIO: str  = 'S70' # küçük için tek senaryo
+    # Küçük dataset'lerde yalnızca bu feature setleri üretilir
+    SMALL_NUCLEUS_FEATURE_SETS: list = ['Basic', 'Standard']
+
     def _generate_all_datasets(self):
         """
-        Tüm dataset kombinasyonlarını oluştur
+        Tum dataset kombinasyonlarini olustur.
 
-        [FAZ 1 UPDATE]: target × nucleus_count × feature_set kombinasyonları
+        - Target-specific SHAP-based feature setleri kullanir
+        - 200 boyut: min(200, n_available) kullanir (artik skip yok)
+        - 150/200/ALL icin NoAnomaly varyantlari da uretir
+        - 75/100 cekirdek: tek senaryo (S70) + temel feature setleri (kisa sure)
         """
         logger.info("Generating all dataset combinations...")
-
-        # [FAZ 1 UPDATE]: Üçlü kombinasyon
-        total_combinations = len(self.targets) * len(self.nucleus_counts) * len(self.feature_sets)
-        logger.info(f"Total combinations: {len(self.targets)} targets × {len(self.nucleus_counts)} sizes × {len(self.feature_sets)} feature sets = {total_combinations}")
+        logger.info(f"Scenarios: {self.scenarios}")
+        logger.info(f"Small dataset threshold: <= {self.SMALL_NUCLEUS_THRESHOLD} -> "
+                    f"single scenario '{self.SMALL_NUCLEUS_SCENARIO}', "
+                    f"feature sets: {self.SMALL_NUCLEUS_FEATURE_SETS}")
 
         generated_count = 0
 
-        # [FAZ 1 UPDATE]: Üçlü döngü
+        # Per-target anomaly explanation cache (computed once per target)
+        _anomaly_cache = {}
+
         for target in self.targets:
             if target not in self.filtered_data:
                 logger.warning(f"[WARNING] No filtered data for {target}, skipping")
                 continue
 
             target_df = self.filtered_data[target]
+            n_available = len(target_df)
 
-            logger.info(f"\n-> Target: {target} (Available nuclei: {len(target_df)})")
+            # Compute anomaly explanation once per target
+            clean_df_full, anomaly_records = self._remove_outliers_explained(target_df)
+            _anomaly_cache[target] = {'clean_df': clean_df_full, 'records': anomaly_records}
 
-            for n_nuclei in self.nucleus_counts:
-                # Handle 'ALL' case
-                if n_nuclei == 'ALL':
-                    actual_n = len(target_df)
-                    size_label = f"ALL_{actual_n}"
-                elif n_nuclei > len(target_df):
-                    logger.warning(f"  [WARNING] Requested {n_nuclei} nuclei but only {len(target_df)} available, skipping")
-                    continue
-                else:
-                    size_label = str(n_nuclei)
+            # Target-specific feature sets
+            if self.feature_sets is not None:
+                feature_set_list = self.feature_sets
+            else:
+                feature_set_list = self.feature_manager.get_target_feature_sets(target)
 
-                # [FAZ 1 NEW]: Feature set döngüsü
-                for feature_set_name in self.feature_sets:
-                    try:
-                        # Sample dataset with specific feature set
-                        dataset = self._create_single_dataset_with_features(
-                            target_df, target, n_nuclei, feature_set_name
-                        )
+            n_clean = len(clean_df_full)
+            logger.info(f"\n-> Target: {target} (Total: {n_available}, Clean: {n_clean}, Anomalies: {len(anomaly_records)})")
+            logger.info(f"   Feature sets ({len(feature_set_list)}): {feature_set_list}")
+            logger.info(f"   Estimated datasets: {len(feature_set_list)} sets x {len(self.nucleus_counts)} sizes x {len(self.scenarios)} scenarios")
 
-                        if dataset is not None:
-                            self.generated_datasets.append(dataset)
-                            generated_count += 1
-
-                            logger.info(f"  [OK] {dataset['dataset_name']} | {dataset['n_features']} features | {len(dataset['data'])} nuclei")
-
-                    except Exception as e:
-                        logger.error(f"  ✗ Error generating {target}_{size_label}_{feature_set_name}: {e}")
+            for current_scenario in self.scenarios:
+                logger.info(f"  [Scenario: {current_scenario}]")
+                for n_nuclei in self.nucleus_counts:
+                    # --- Küçük dataset kısıtı ---
+                    # 75/100 çekirdek: yalnızca S70 senaryosunda üret, diğerini atla
+                    effective_count = n_nuclei if n_nuclei != 'ALL' else 9999
+                    if (isinstance(effective_count, int) and
+                            effective_count <= self.SMALL_NUCLEUS_THRESHOLD and
+                            current_scenario != self.SMALL_NUCLEUS_SCENARIO):
+                        logger.info(f"    [SKIP] {n_nuclei} nuclei + {current_scenario}: "
+                                    f"küçük dataset sadece {self.SMALL_NUCLEUS_SCENARIO}'de üretilir")
                         continue
+                    # Boyut hesabi
+                    if n_nuclei == 'ALL':
+                        effective_n = n_available
+                        size_label = f"ALL_{n_available}"
+                        forced_size_label = 'ALL'
+                    elif n_nuclei > n_available:
+                        effective_n = n_available
+                        size_label = str(n_nuclei)
+                        forced_size_label = str(n_nuclei)
+                        logger.info(f"    [INFO] Requested {n_nuclei}, using all {n_available} available")
+                    else:
+                        effective_n = n_nuclei
+                        size_label = str(n_nuclei)
+                        forced_size_label = str(n_nuclei)
 
-        logger.info(f"\n[SUCCESS] Total datasets generated: {generated_count}/{total_combinations}")
+                    # Küçük dataset: feature set listesini kısıtla
+                    if (isinstance(effective_count, int) and
+                            effective_count <= self.SMALL_NUCLEUS_THRESHOLD):
+                        active_feature_sets = [f for f in feature_set_list
+                                               if f in self.SMALL_NUCLEUS_FEATURE_SETS]
+                        if not active_feature_sets:
+                            active_feature_sets = feature_set_list[:2]  # en az 2 set
+                        logger.info(f"    [SMALL] Feature sets kısıtlandı: {active_feature_sets}")
+                    else:
+                        active_feature_sets = feature_set_list
+
+                    for feature_set_name in active_feature_sets:
+                        # --- Standart dataset (anomali dahil) ---
+                        try:
+                            dataset = self._create_single_dataset_with_features(
+                                target_df, target, effective_n, feature_set_name,
+                                forced_size_label=forced_size_label,
+                                current_scenario=current_scenario
+                            )
+                            if dataset is not None:
+                                self.generated_datasets.append(dataset)
+                                generated_count += 1
+                                logger.info(f"    [OK] {dataset['dataset_name']} | "
+                                            f"{dataset['n_features']}f | "
+                                            f"{len(dataset['data'])}n")
+                        except Exception as e:
+                            logger.error(f"    [ERROR] {target}_{size_label}_{feature_set_name}: {e}")
+                            continue
+
+                        # --- NoAnomaly varyanti (sadece 150/200/ALL) ---
+                        req_size = n_nuclei if n_nuclei != 'ALL' else 'ALL'
+                        if req_size in self.NOANOMALY_SIZES:
+                            try:
+                                clean_df = _anomaly_cache[target]['clean_df']
+                                clean_n = len(clean_df)
+                                dataset_na = self._create_single_dataset_with_features(
+                                    clean_df, target, min(effective_n, clean_n), feature_set_name,
+                                    forced_size_label=forced_size_label,
+                                    name_suffix='_NoAnomaly',
+                                    current_scenario=current_scenario
+                                )
+                                if dataset_na is not None:
+                                    self.generated_datasets.append(dataset_na)
+                                    generated_count += 1
+                                    logger.info(f"    [OK] {dataset_na['dataset_name']} (NoAnomaly)")
+                            except Exception as e:
+                                logger.error(f"    [ERROR] NoAnomaly {target}_{size_label}_{feature_set_name}: {e}")
+
+        logger.info(f"\n[SUCCESS] Total datasets generated: {generated_count}")
+
+        by_target = {}
+        by_feature_set = {}
+        for ds in self.generated_datasets:
+            t = ds['target']
+            fs = ds['feature_set']
+            by_target[t] = by_target.get(t, 0) + 1
+            by_feature_set[fs] = by_feature_set.get(fs, 0) + 1
 
         self.generation_report['dataset_generation'] = {
-            'total_requested': total_combinations,
             'total_generated': generated_count,
-            'success_rate': generated_count / total_combinations if total_combinations > 0 else 0,
-            'by_target': {},
-            'by_feature_set': {}
+            'by_target': by_target,
+            'by_feature_set': by_feature_set,
         }
 
-        # Collect stats
-        for dataset in self.generated_datasets:
-            target = dataset['target']
-            feature_set = dataset['feature_set']
+        # Save anomaly explanation report (one JSON per target + combined)
+        try:
+            anomaly_report_data = {}
+            for target, cache in _anomaly_cache.items():
+                records = cache['records']
+                anomaly_report_data[target] = {
+                    'n_total': len(self.filtered_data.get(target, [])),
+                    'n_anomalies': len(records),
+                    'anomaly_rate_pct': round(len(records) / max(1, len(self.filtered_data.get(target, []))) * 100, 2),
+                    'nuclei': records,
+                }
+                logger.info(f"  Anomaly summary {target}: {len(records)} anomalous nuclei")
 
-            if target not in self.generation_report['dataset_generation']['by_target']:
-                self.generation_report['dataset_generation']['by_target'][target] = 0
-            self.generation_report['dataset_generation']['by_target'][target] += 1
-
-            if feature_set not in self.generation_report['dataset_generation']['by_feature_set']:
-                self.generation_report['dataset_generation']['by_feature_set'][feature_set] = 0
-            self.generation_report['dataset_generation']['by_feature_set'][feature_set] += 1
+            anomaly_report_path = self.output_base_dir / 'anomaly_explanation_report.json'
+            import json as _json
+            with open(anomaly_report_path, 'w') as f:
+                _json.dump(anomaly_report_data, f, indent=2)
+            logger.info(f"[OK] Anomaly explanation report: {anomaly_report_path}")
+            self.generation_report['anomaly_report_path'] = str(anomaly_report_path)
+        except Exception as e:
+            logger.warning(f"[WARNING] Could not save anomaly explanation report: {e}")
     
     def _get_actual_column_names(self, target: str, df: pd.DataFrame) -> List[str]:
         """
@@ -590,7 +818,10 @@ class DatasetGenerationPipelineV2:
                                              source_df: pd.DataFrame,
                                              target: str,
                                              n_nuclei: int,
-                                             feature_set_name: str) -> Optional[Dict]:
+                                             feature_set_name: str,
+                                             forced_size_label: str = None,
+                                             name_suffix: str = '',
+                                             current_scenario: str = None) -> Optional[Dict]:
         """
         [FAZ 3 UPDATE] Belirli bir feature set ile dataset oluştur
 
@@ -603,23 +834,21 @@ class DatasetGenerationPipelineV2:
         Returns:
             Dataset metadata dictionary
         """
-        # [FAZ 3 NEW]: Sampling with SamplingManager
+        # Sampling
         if n_nuclei == 'ALL':
             sampled_df = source_df.copy()
             actual_n = len(sampled_df)
-            size_label = f"ALL_{actual_n}"
+            size_label = forced_size_label if forced_size_label else f"ALL_{actual_n}"
         else:
-            # Use SamplingManager for sampling
-            seed = hash(f"{target}_{n_nuclei}_{feature_set_name}") % (2**32)
+            n_to_sample = min(n_nuclei, len(source_df))
+            seed = hash(f"{target}_{n_nuclei}_{feature_set_name}{name_suffix}") % (2**32)
             sampling_manager = SamplingManager(method=self.sampling, random_seed=seed)
-            sampled_df = sampling_manager.sample(source_df, n_nuclei, group_col='A')
-            actual_n = n_nuclei
-            size_label = str(n_nuclei)
+            sampled_df = sampling_manager.sample(source_df, n_to_sample, group_col='A')
+            actual_n = n_to_sample
+            size_label = forced_size_label if forced_size_label else str(n_nuclei)
 
-        # [FAZ 1]: Feature set selection
+        # Feature set selection
         target_cols = self._get_actual_column_names(target, sampled_df)
-
-        # Get features for this specific feature set
         try:
             feature_cols = self.feature_manager.get_feature_set(
                 feature_set_name,
@@ -630,7 +859,7 @@ class DatasetGenerationPipelineV2:
             logger.error(f"Error getting feature set '{feature_set_name}': {e}")
             return None
 
-        # [FAZ 2 NEW]: Detect I/O configuration
+        # Detect I/O configuration (metadata only, not in name)
         n_features = len(feature_cols)
         io_config_name = self.io_config_manager.get_config_for_feature_set(
             feature_set_name,
@@ -638,19 +867,18 @@ class DatasetGenerationPipelineV2:
             target
         )
 
-        # [FAZ 2 NEW]: Enhanced naming convention (7-part format)
-        # Format: {TARGET}_{SIZE}_{SCENARIO}_{IO_CONFIG}_{FEATURE_SET}_{SCALING}_{SAMPLING}
-        # Example: MM_75_S70_3In1Out_Basic_NoScaling_Random
-        dataset_name = f"{target}_{size_label}_{self.scenario}_{io_config_name}_{feature_set_name}_{self.scaling}_{self.sampling}"
+        # Aktif senaryo
+        active_scenario = current_scenario if current_scenario else self.scenario
 
-        # FIXED: Each dataset gets its own directory for PFAZ2/3 discovery
-        # Old (WRONG): output_base_dir / target / feature_set_name -> outputs/generated_datasets/MM/Basic/
-        # New (CORRECT): output_base_dir / dataset_name -> outputs/generated_datasets/MM_75_S70_3In1Out_Basic_NoScaling_Random/
+        # Naming: {TARGET}_{SIZE}_{SCENARIO}_{FEATURE_SET}_{SCALING}_{SAMPLING}[_NoAnomaly]
+        # Example: MM_75_S70_AZS_NoScaling_Random
+        dataset_name = f"{target}_{size_label}_{active_scenario}_{feature_set_name}_{self.scaling}_{self.sampling}{name_suffix}"
+
         dataset_dir = self.output_base_dir / dataset_name
         dataset_dir.mkdir(parents=True, exist_ok=True)
 
-        # [FAZ 2 UPDATE]: Split using scenario ratios instead of hardcoded values
-        train_ratio, val_ratio, test_ratio = self.scenario_manager.get_split_ratios(self.scenario)
+        # Split using scenario ratios
+        train_ratio, val_ratio, test_ratio = self.scenario_manager.get_split_ratios(active_scenario)
         n_total = len(sampled_df)
         n_train = int(train_ratio * n_total)
         n_val = int(val_ratio * n_total)
@@ -687,40 +915,57 @@ class DatasetGenerationPipelineV2:
         split_files = {}
 
         for split_name, split_df in [('train', train_df), ('val', val_df), ('test', test_df)]:
-            # Select only the relevant columns (features + targets)
-            cols_to_save = ['NUCLEUS'] + feature_cols + target_cols if 'NUCLEUS' in split_df.columns else feature_cols + target_cols
-            split_data = split_df[cols_to_save]
+            # --- Sütun setleri ---
+            # CSV: SADECE sayısal sütunlar (feature + target). Baslik YOK — sadece sayilar.
+            #      NUCLEUS, A, Z, N gibi kimlik sütunları YOK — modeller bu sütunu görmesin.
+            csv_cols = feature_cols + target_cols
 
-            # CSV format - FIXED: Simplified naming (dataset name is already in directory name)
-            # Old: MM_75_S70_3In1Out_Basic_NoScaling_Random/MM_75_S70_3In1Out_Basic_NoScaling_Random_train.csv
-            # New: MM_75_S70_3In1Out_Basic_NoScaling_Random/train.csv
+            # Excel: insan doğrulaması için NUCLEUS + A + Z + N + feature + target
+            # ÖNEMLİ: A, Z, N hem id_cols hem de feature_cols içinde olabilir →
+            #         tekrarlamamak için feature_cols'dan id sütunlarını çıkar.
+            id_cols       = [c for c in ['NUCLEUS', 'A', 'Z', 'N'] if c in split_df.columns]
+            id_cols_set   = set(id_cols)
+            unique_feat   = [c for c in feature_cols if c not in id_cols_set]
+            xlsx_cols     = id_cols + unique_feat + target_cols
+
+            # Hedef değeri NaN olan satırları at
+            # (bu çekirdekler egitimde zaten NaN olurdu; kaydedilmesin)
+            csv_data  = split_df[csv_cols].dropna(subset=target_cols).reset_index(drop=True)
+            xlsx_data = split_df[xlsx_cols].dropna(subset=target_cols).reset_index(drop=True)
+
+            n_dropped = len(split_df) - len(csv_data)
+            if n_dropped > 0:
+                logger.info(f"  [{split_name}] {n_dropped} satir hedef NaN oldugu icin atildi")
+
+            # CSV format — baslik YOK, sadece sayisal degerler
+            # Sutun sirasi: [feature_1, ..., feature_N, target_1, ...]
+            # Bilgi metadata.json'da saklanır (feature_names, target_names)
             csv_file = dataset_dir / f"{split_name}.csv"
-            split_data.to_csv(csv_file, index=False, encoding='utf-8')
+            csv_data.to_csv(csv_file, index=False, header=False, encoding='utf-8')
 
-            # MAT format (for ANFIS/MATLAB) - with enhanced metadata
-            mat_file = dataset_dir / f"{split_name}.mat"
-            self._save_as_mat(
-                split_data, mat_file, feature_cols, target_cols,
-                scaling_metadata=scaling_metadata,
-                dataset_name=dataset_name,
-                target=target,
-                split_name=split_name
-            )
+            # Excel format — çekirdek kimlikleri + özellikler + hedef (referans için)
+            xlsx_file = dataset_dir / f"{split_name}.xlsx"
+            try:
+                xlsx_data.to_excel(xlsx_file, index=False, engine='openpyxl')
+            except Exception as e_xlsx:
+                logger.warning(f"  [WARNING] xlsx save failed ({split_name}): {e_xlsx}")
+                xlsx_file = None
 
             split_files[split_name] = {
-                'csv': csv_file,
-                'mat': mat_file
+                'csv':  csv_file,
+                'xlsx': xlsx_file,
             }
 
-        # [FAZ 3 UPDATE]: Enhanced metadata with scaling and sampling
+        # Enhanced metadata
         metadata = {
             'dataset_name': dataset_name,
             'target': target,
             'feature_set': feature_set_name,
-            'io_config': io_config_name,  # [FAZ 2]
-            'scenario': self.scenario,  # [FAZ 2]
-            'scaling': self.scaling,  # [FAZ 2/3]
-            'sampling': self.sampling,  # [FAZ 2/3]
+            'io_config': io_config_name,
+            'scenario': active_scenario,
+            'scaling': self.scaling,
+            'sampling': self.sampling,
+            'is_noanomaly': name_suffix == '_NoAnomaly',
             'n_nuclei_requested': n_nuclei,
             'n_nuclei_total': actual_n,
             'n_nuclei_train': len(train_df),
@@ -729,13 +974,12 @@ class DatasetGenerationPipelineV2:
             'n_features': len(feature_cols),
             'feature_names': feature_cols,
             'target_names': target_cols,
-            'split_ratio': [train_ratio, val_ratio, test_ratio],  # [FAZ 2]
+            'split_ratio': [train_ratio, val_ratio, test_ratio],
             'generation_timestamp': datetime.now().isoformat(),
             'folder_structure': str(dataset_dir.relative_to(self.output_base_dir)),
-            # [FAZ 2]: I/O config details
             'io_config_details': self.io_config_manager.get_config_info(io_config_name),
-            # [FAZ 3 NEW]: Scaling metadata
             'scaling_metadata': scaling_metadata if self.scaling != 'NoScaling' else {},
+            'distribution': self._compute_distribution(sampled_df),
             # [FAZ 3 NEW]: Sampling statistics
             'sampling_info': {
                 'method': self.sampling,
@@ -756,8 +1000,7 @@ class DatasetGenerationPipelineV2:
             'n_features': len(feature_cols),
             'dataset_dir': dataset_dir,
             'split_files': split_files,
-            'data_file_csv': split_files['train']['csv'],  # Keep for backward compatibility
-            'data_file_mat': split_files['train']['mat'],  # Keep for backward compatibility
+            'data_file_csv': split_files['train']['csv'],
             'metadata_file': metadata_file,
             'metadata': metadata,
             'data': shuffled_df  # Full shuffled data
@@ -805,31 +1048,44 @@ class DatasetGenerationPipelineV2:
 
         logger.info(f"  Split: Train={len(train_df)}, Val={len(val_df)}, Test={len(test_df)}")
 
-        # Save train/val/test splits in MULTIPLE FORMATS: CSV, Excel (.xlsx), MAT
-        # Excel requested for easier viewing/editing in Excel
+        # Save train/val/test splits: CSV (headerless numbers) + Excel (human review)
         split_files = {}
 
         for split_name, split_df in [('train', train_df), ('val', val_df), ('test', test_df)]:
-            # CSV format
+            # Sütun setleri
+            csv_cols = feature_cols + target_cols
+            id_cols       = [c for c in ['NUCLEUS', 'A', 'Z', 'N'] if c in split_df.columns]
+            id_cols_set   = set(id_cols)
+            unique_feat   = [c for c in feature_cols if c not in id_cols_set]
+            xlsx_cols     = id_cols + unique_feat + target_cols
+
+            # Hedef değeri NaN olan satırları at
+            csv_data  = split_df[csv_cols].dropna(subset=target_cols).reset_index(drop=True)
+            xlsx_data = split_df[xlsx_cols].dropna(subset=target_cols).reset_index(drop=True)
+
+            n_dropped = len(split_df) - len(csv_data)
+            if n_dropped > 0:
+                logger.info(f"  [{split_name}] {n_dropped} satir hedef NaN oldugu icin atildi")
+
+            # CSV — baslik YOK, sadece sayisal degerler (sutun bilgisi metadata.json'da)
             csv_file = dataset_dir / f"{split_name}.csv"
-            split_df.to_csv(csv_file, index=False, encoding='utf-8')
+            csv_data.to_csv(csv_file, index=False, header=False, encoding='utf-8')
 
-            # Excel format (.xlsx)
+            # Excel — kimlik + ozellikler + hedef (insan incelemesi icin)
             xlsx_file = dataset_dir / f"{split_name}.xlsx"
-            split_df.to_excel(xlsx_file, index=False, engine='openpyxl')
-
-            # MATLAB format (.mat)
-            mat_file = dataset_dir / f"{split_name}.mat"
-            self._save_as_mat(split_df, mat_file, feature_cols, target_cols)
+            try:
+                xlsx_data.to_excel(xlsx_file, index=False, engine='openpyxl')
+            except Exception as e_xlsx:
+                logger.warning(f"  [WARNING] xlsx save failed ({split_name}): {e_xlsx}")
+                xlsx_file = None
 
             split_files[split_name] = {
-                'csv': csv_file,
-                'xlsx': xlsx_file,
-                'mat': mat_file,
-                'n_samples': len(split_df)
+                'csv':      csv_file,
+                'xlsx':     xlsx_file,
+                'n_samples': len(csv_data)
             }
 
-        logger.info(f"  [SUCCESS] Saved train/val/test in CSV, Excel, and MAT formats")
+        logger.info(f"  [SUCCESS] Saved train/val/test in CSV (headerless) and Excel formats")
 
         # Create metadata with split information
         metadata = {
@@ -844,21 +1100,18 @@ class DatasetGenerationPipelineV2:
                 'split_ratio': '70/15/15',
                 'train': {
                     'n_samples': split_files['train']['n_samples'],
-                    'csv': str(split_files['train']['csv']),
+                    'csv':  str(split_files['train']['csv']),
                     'xlsx': str(split_files['train']['xlsx']),
-                    'mat': str(split_files['train']['mat'])
                 },
                 'val': {
                     'n_samples': split_files['val']['n_samples'],
-                    'csv': str(split_files['val']['csv']),
+                    'csv':  str(split_files['val']['csv']),
                     'xlsx': str(split_files['val']['xlsx']),
-                    'mat': str(split_files['val']['mat'])
                 },
                 'test': {
                     'n_samples': split_files['test']['n_samples'],
-                    'csv': str(split_files['test']['csv']),
+                    'csv':  str(split_files['test']['csv']),
                     'xlsx': str(split_files['test']['xlsx']),
-                    'mat': str(split_files['test']['mat'])
                 }
             },
             'statistics': {
@@ -901,88 +1154,12 @@ class DatasetGenerationPipelineV2:
             'dataset_name': dataset_name,
             'dataset_dir': dataset_dir,
             'split_files': split_files,
-            'data_file_csv': split_files['train']['csv'],  # Keep for backward compatibility
-            'data_file_mat': split_files['train']['mat'],  # Keep for backward compatibility
+            'data_file_csv': split_files['train']['csv'],
             'metadata_file': metadata_file,
             'metadata': metadata,
             'data': shuffled_df  # Full shuffled data
         }
-    
-    def _save_as_mat(self,
-                     df: pd.DataFrame,
-                     filepath: Path,
-                     feature_cols: List[str],
-                     target_cols: List[str],
-                     scaling_metadata: Dict = None,
-                     dataset_name: str = '',
-                     target: str = '',
-                     split_name: str = ''):
-        """
-        [FAZ 3 UPDATE] Save dataset as MATLAB .mat file with enhanced metadata
 
-        Args:
-            df: DataFrame to save
-            filepath: Output .mat file path
-            feature_cols: Feature column names
-            target_cols: Target column names
-            scaling_metadata: Scaling metadata (mean, std, etc.)
-            dataset_name: Dataset name
-            target: Target variable name
-            split_name: Split name (train/val/test)
-        """
-        try:
-            from scipy.io import savemat
-
-            # Prepare enhanced data dictionary for MATLAB/ANFIS
-            mat_dict = {
-                # Data arrays
-                'features': df[feature_cols].values,
-                'targets': df[target_cols].values,
-                'nucleus_names': df['NUCLEUS'].values if 'NUCLEUS' in df.columns else [],
-
-                # Feature information
-                'feature_names': feature_cols,
-                'target_names': target_cols,
-                'n_features': len(feature_cols),
-                'n_targets': len(target_cols),
-                'n_samples': len(df),
-
-                # Dataset metadata
-                'dataset_name': dataset_name,
-                'target': target,
-                'split': split_name,
-
-                # [FAZ 3 NEW]: Scaling metadata
-                'scaling_applied': scaling_metadata is not None and len(scaling_metadata) > 0,
-            }
-
-            # Add scaling parameters if available
-            if scaling_metadata and len(scaling_metadata) > 0:
-                mat_dict['scaling_method'] = scaling_metadata.get('method', 'NoScaling')
-                mat_dict['features_scaled'] = scaling_metadata.get('features_scaled', [])
-                mat_dict['features_excluded'] = scaling_metadata.get('features_excluded', [])
-
-                # Add scaler parameters (mean, std, median, IQR)
-                scaler_params = scaling_metadata.get('scaler_params', {})
-                if 'mean' in scaler_params:
-                    mat_dict['scaler_mean'] = np.array(scaler_params['mean'])
-                    mat_dict['scaler_std'] = np.array(scaler_params['std'])
-                if 'median' in scaler_params:
-                    mat_dict['scaler_median'] = np.array(scaler_params['median'])
-                    mat_dict['scaler_iqr'] = np.array(scaler_params['iqr'])
-            else:
-                mat_dict['scaling_method'] = 'NoScaling'
-                mat_dict['features_scaled'] = []
-
-            # Save to .mat file
-            savemat(filepath, mat_dict)
-            # logger.info(f"  [SUCCESS] MAT file saved: {filepath.name}")
-
-        except ImportError:
-            logger.warning("  [WARNING] scipy not available, skipping MAT file export")
-        except Exception as e:
-            logger.error(f"  [ERROR] Error saving MAT file: {e}")
-    
     def _create_metadata_and_reports(self):
         """Master metadata ve raporlar oluştur"""
         logger.info("Creating master metadata and reports...")
@@ -1146,7 +1323,7 @@ def main():
     SOURCE_DATA = "/mnt/user-data/uploads/your_source_data.csv"  # Kullanıcı source data yolunu girecek
     OUTPUT_DIR = "generated_datasets"
     NUCLEUS_COUNTS = [75, 100, 150, 200, 'ALL']  # [UPDATED] per requirements
-    TARGETS = ['MM', 'QM', 'MM_QM', 'Beta_2']
+    TARGETS = ['MM', 'QM']
     
     # Check if source data exists (demo mode if not)
     if not Path(SOURCE_DATA).exists():

@@ -1,3 +1,10 @@
+import os
+
+
+def _inner_n_jobs() -> int:
+    """Return 1 if outer parallel pool is active, else -1."""
+    return 1 if os.environ.get("_PFAZ_PARALLEL_ACTIVE") == "1" else -1
+
 # -*- coding: utf-8 -*-
 """
 AUTOML FEATURE ENGINEERING
@@ -551,7 +558,7 @@ class AutoMLFeatureEngineer:
                         feature_names: List[str]) -> List[str]:
         """Recursive Feature Elimination"""
         
-        estimator = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+        estimator = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=_inner_n_jobs())
         selector = RFE(estimator, n_features_to_select=self.target_n_features, step=1)
         selector.fit(X, y)
         
@@ -568,7 +575,7 @@ class AutoMLFeatureEngineer:
         X_scaled = self.scaler.fit_transform(X)
         
         # LASSO with cross-validation
-        lasso = LassoCV(cv=5, random_state=42, n_jobs=-1)
+        lasso = LassoCV(cv=5, random_state=42, n_jobs=_inner_n_jobs())
         lasso.fit(X_scaled, y)
         
         # Select features with non-zero coefficients
@@ -595,7 +602,7 @@ class AutoMLFeatureEngineer:
         """SHAP-based selection"""
         
         # Train quick model
-        model = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=-1)
+        model = RandomForestRegressor(n_estimators=50, random_state=42, n_jobs=_inner_n_jobs())
         model.fit(X, y)
         
         # SHAP values (sample for speed)

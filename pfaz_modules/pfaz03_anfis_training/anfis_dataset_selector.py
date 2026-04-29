@@ -192,16 +192,33 @@ class ANFISDatasetSelector:
     def _parse_dataset_metadata(self, df):
         """Dataset isimlerinden metadata çıkar"""
         
-        # Example format: MM_100_S70_Anomaly_StandardScaler_Random
-        
+        # New format: {TARGET}_{SIZE}_{SCENARIO}_{FEATURE_CODE}_{SCALING}_{SAMPLING}[_NoAnomaly]
+        # Examples: MM_75_S70_AZS_NoScaling_Random
+        #           Beta_2_150_S80_MCZMNM_NoScaling_Random_NoAnomaly
+
         def parse_name(name):
             parts = name.split('_')
+            # TARGET may be 'Beta_2' (2 parts) or single word (MM, QM, MM_QM)
+            if name.startswith('Beta_2_'):
+                offset = 2  # parts[0]='Beta', parts[1]='2'
+            elif name.startswith('MM_QM_'):
+                offset = 2  # parts[0]='MM', parts[1]='QM'
+            else:
+                offset = 1  # parts[0] = target
+            # parts[offset] = SIZE, parts[offset+1] = SCENARIO, parts[offset+2] = FEATURE_CODE
+            # parts[offset+3] = SCALING, parts[offset+4] = SAMPLING
+            nucleus_count = parts[offset]     if len(parts) > offset     else 'Unknown'
+            scenario      = parts[offset + 1] if len(parts) > offset + 1 else 'Unknown'
+            scaling       = parts[offset + 3] if len(parts) > offset + 3 else 'NoScaling'
+            sampling      = parts[offset + 4] if len(parts) > offset + 4 else 'Random'
+            # NoAnomaly suffix detection: check for explicit 'NoAnomaly' token
+            anomaly_mode  = 'NoAnomaly' if 'NoAnomaly' in parts else 'WithAnomaly'
             return {
-                'nucleus_count': parts[1] if len(parts) > 1 else 'Unknown',
-                'scenario': parts[2] if len(parts) > 2 else 'Unknown',
-                'anomaly_mode': 'WithAnomaly' if 'Anomaly' in name else 'NoAnomaly',
-                'scaling': 'Standard' if 'Standard' in name else ('Robust' if 'Robust' in name else 'None'),
-                'sampling': 'Random' if 'Random' in name else 'Stratified'
+                'nucleus_count': nucleus_count,
+                'scenario': scenario,
+                'anomaly_mode': anomaly_mode,
+                'scaling': scaling,
+                'sampling': sampling,
             }
         
         metadata = df['Dataset_Name'].apply(parse_name)
@@ -542,20 +559,22 @@ def test_anfis_dataset_selector():
     
     targets = ['MM', 'QM', 'MM_QM', 'Beta_2']
     scenarios = ['S70', 'S80']
-    anomaly_modes = ['Anomaly', 'NoAnomaly']
-    scalings = ['StandardScaler', 'RobustScaler', 'None']
+    feature_codes = ['AZS', 'AZSMC', 'AZB2EMC', 'MCZMNM', 'NNPMC']
+    scalings = ['NoScaling']
     samplings = ['Random', 'Stratified']
-    
+    no_anomaly_flags = ['', '_NoAnomaly']
+
     dummy_results = []
-    
+
     for i in range(n_results):
         target = np.random.choice(targets)
         scenario = np.random.choice(scenarios)
-        anomaly = np.random.choice(anomaly_modes)
+        feature_code = np.random.choice(feature_codes)
         scaling = np.random.choice(scalings)
         sampling = np.random.choice(samplings)
-        
-        dataset_name = f"{target}_100_{scenario}_{anomaly}_{scaling}_{sampling}"
+        no_anomaly = np.random.choice(no_anomaly_flags)
+
+        dataset_name = f"{target}_100_{scenario}_{feature_code}_{scaling}_{sampling}{no_anomaly}"
         
         # Random R² (biased towards higher values)
         r2 = np.random.beta(5, 2)  # Beta distribution

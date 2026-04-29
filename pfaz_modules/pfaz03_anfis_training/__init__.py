@@ -4,20 +4,13 @@
 # Main pipeline (ACTIVE)
 from .anfis_parallel_trainer_v2 import ANFISParallelTrainerV2
 
-#  ACTIVATED MODULES: ANFIS Components (9 modüller aktif edildi)
+#  ACTIVATED MODULES: ANFIS Components (9 modï¿½ller aktif edildi)
 try:
     from .anfis_adaptive_strategy import ANFISAdaptiveStrategy
     ANFIS_ADAPTIVE_STRATEGY_AVAILABLE = True
 except ImportError:
     ANFISAdaptiveStrategy = None
     ANFIS_ADAPTIVE_STRATEGY_AVAILABLE = False
-
-try:
-    from .anfis_all_nuclei_predictor import ANFISAllNucleiPredictor
-    ANFIS_ALL_NUCLEI_PREDICTOR_AVAILABLE = True
-except ImportError:
-    ANFISAllNucleiPredictor = None
-    ANFIS_ALL_NUCLEI_PREDICTOR_AVAILABLE = False
 
 try:
     from .anfis_config_manager import ANFISConfigManager
@@ -62,21 +55,24 @@ except ImportError:
     ANFIS_VISUALIZER_AVAILABLE = False
 
 try:
-    from .matlab_anfis_trainer import MatlabANFISTrainer
+    from .matlab_anfis_trainer import MATLABAnfisTrainer
+    MatlabANFISTrainer = MATLABAnfisTrainer  # backward compat alias
     MATLAB_ANFIS_TRAINER_AVAILABLE = True
-except ImportError:
+except ImportError as _e:
+    import logging as _logging
+    _logging.warning(f"MATLAB ANFIS trainer not available: {_e}")
+    MATLABAnfisTrainer = None
     MatlabANFISTrainer = None
     MATLAB_ANFIS_TRAINER_AVAILABLE = False
 
 __all__ = [
     'ANFISParallelTrainerV2',
     'ANFISAdaptiveStrategy', 'ANFIS_ADAPTIVE_STRATEGY_AVAILABLE',
-    'ANFISAllNucleiPredictor', 'ANFIS_ALL_NUCLEI_PREDICTOR_AVAILABLE',
     'ANFISConfigManager', 'ANFIS_CONFIG_MANAGER_AVAILABLE',
     'ANFISDatasetSelector', 'ANFIS_DATASET_SELECTOR_AVAILABLE',
     'ANFISModelSaver', 'ANFIS_MODEL_SAVER_AVAILABLE',
     'ANFISPerformanceAnalyzer', 'ANFIS_PERFORMANCE_ANALYZER_AVAILABLE',
     'ANFISRobustnessTester', 'ANFIS_ROBUSTNESS_TESTER_AVAILABLE',
     'ANFISVisualizer', 'ANFIS_VISUALIZER_AVAILABLE',
-    'MatlabANFISTrainer', 'MATLAB_ANFIS_TRAINER_AVAILABLE',
+    'MATLABAnfisTrainer', 'MatlabANFISTrainer', 'MATLAB_ANFIS_TRAINER_AVAILABLE',
 ]

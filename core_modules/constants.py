@@ -529,7 +529,7 @@ def get_deformation_type(beta_2):
         try:
             if beta_2 != beta_2:  # NaN check without numpy
                 return 'unknown'
-        except:
+        except Exception as e:
             return 'unknown'
 
     for def_type, (min_beta, max_beta) in DEFORMATION_REGIONS.items():

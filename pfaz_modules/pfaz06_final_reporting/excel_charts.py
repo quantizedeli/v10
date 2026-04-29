@@ -15,9 +15,67 @@ logger = logging.getLogger(__name__)
 
 class ExcelChartGenerator:
     """Excel içinde grafikler oluştur"""
-    
-    def __init__(self):
+
+    def __init__(self, output_dir=None):
+        self.output_dir = Path(output_dir) if output_dir else Path('reports')
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         logger.info("Excel Chart Generator başlatıldı")
+
+    def generate_all_charts(self, all_results):
+        """Tum sonuclar icin chart'lar olustur ve kaydet"""
+        import pandas as pd
+        charts = []
+        try:
+            # AI models chart — yeni yapi: ai_rows listesi
+            ai_rows = all_results.get('ai_rows', [])
+            if not ai_rows:
+                # Geriye donuk uyumluluk: eski ai_models dict yapisi
+                for model_name, row in all_results.get('ai_models', {}).items():
+                    if isinstance(row, dict) and 'Val_R2' in row:
+                        ai_rows.append(row)
+
+            if ai_rows:
+                df = pd.DataFrame(ai_rows)
+                # Remove diverged/extreme R2 rows before charting
+                for _col in ['Val_R2', 'Test_R2', 'Train_R2']:
+                    if _col in df.columns:
+                        df = df[pd.to_numeric(df[_col], errors='coerce').fillna(0) >= -10]
+                chart_file = self.output_dir / 'ai_models_chart.xlsx'
+                with pd.ExcelWriter(chart_file, engine='openpyxl') as writer:
+                    # Buyuk veri: sadece ozet (en iyi 2000 kayit Val_R2'ye gore)
+                    top_df = df.nlargest(2000, 'Val_R2') if 'Val_R2' in df.columns else df.head(2000)
+                    top_df.to_excel(writer, sheet_name='AI_Top2000', index=False)
+                    # Model-tipi bazli ozetler
+                    if 'Model_Type' in df.columns:
+                        for mtype in df['Model_Type'].unique():
+                            sub = df[df['Model_Type'] == mtype].sort_values('Val_R2', ascending=False)
+                            sub.head(200).to_excel(writer, sheet_name=f'{mtype}_Top200'[:31], index=False)
+                    # Dataset ozet
+                    if 'Dataset' in df.columns and 'Val_R2' in df.columns:
+                        ds_summary = df.groupby('Dataset').agg(
+                            Best_Val_R2=('Val_R2','max'),
+                            Mean_Val_R2=('Val_R2','mean'),
+                            N_Configs=('Config_ID','count')
+                        ).reset_index().sort_values('Best_Val_R2', ascending=False)
+                        ds_summary.to_excel(writer, sheet_name='Dataset_Summary', index=False)
+                charts.append(str(chart_file))
+                logger.info(f"[OK] AI models chart: {chart_file}")
+
+            # ANFIS models chart — yeni yapi: anfis_results listesi
+            anfis_rows = all_results.get('anfis_results', [])
+            if anfis_rows:
+                df = pd.DataFrame(anfis_rows)
+                df_disp = df.drop(columns=['Workspace_MAT', 'FIS_MAT'], errors='ignore')
+                chart_file = self.output_dir / 'anfis_models_chart.xlsx'
+                with pd.ExcelWriter(chart_file, engine='openpyxl') as writer:
+                    df_disp.to_excel(writer, sheet_name='ANFIS_Models', index=False)
+                charts.append(str(chart_file))
+                logger.info(f"[OK] ANFIS models chart: {chart_file}")
+
+        except Exception as e:
+            logger.warning(f"[WARNING] Chart generation partial failure: {e}")
+
+        return charts
     
     def create_excel_with_charts(self, data_df, output_file, chart_configs):
         """

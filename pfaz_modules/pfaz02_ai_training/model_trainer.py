@@ -11,6 +11,12 @@ Tüm ML Model Trainerları
 - Adaptive learning integration
 """
 
+import warnings
+warnings.filterwarnings('ignore')
+warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
+warnings.filterwarnings('ignore', message='.*sklearn.utils.parallel.*')
+
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -20,6 +26,11 @@ import logging
 from datetime import datetime
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+
+def _inner_n_jobs() -> int:
+    """Return 1 if outer parallel pool is active, else -1."""
+    return 1 if os.environ.get('_PFAZ_PARALLEL_ACTIVE') == '1' else -1
 
 # Sklearn
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
@@ -159,7 +170,7 @@ class RandomForestTrainer(BaseModelTrainer):
             min_samples_leaf=2,
             max_features='sqrt',
             random_state=42,
-            n_jobs=-1,
+            n_jobs=_inner_n_jobs(),
             verbose=0
         )
         
@@ -340,7 +351,7 @@ class XGBoostTrainer(BaseModelTrainer):
             subsample=0.8,
             colsample_bytree=0.8,
             random_state=42,
-            n_jobs=-1,
+            n_jobs=_inner_n_jobs(),
             verbosity=0
         )
         

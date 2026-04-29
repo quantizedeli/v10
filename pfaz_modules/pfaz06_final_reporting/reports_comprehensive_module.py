@@ -907,7 +907,7 @@ def main():
     n_samples = 50
     test_results = pd.DataFrame({
         'model': np.random.choice(['RF', 'DNN', 'ANFIS'], n_samples),
-        'target': np.random.choice(['MM', 'QM', 'Beta_2'], n_samples),
+        'target': np.random.choice(['MM', 'QM'], n_samples),
         'r2': np.random.uniform(0.6, 0.98, n_samples),
         'mae': np.random.uniform(0.01, 0.1, n_samples),
         'rmse': np.random.uniform(0.02, 0.15, n_samples),

@@ -18,6 +18,7 @@ Desteklenen modeller:
 Yazar: Nükleer Fizik AI Projesi
 """
 
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -26,6 +27,11 @@ import logging
 from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
+
+
+def _inner_n_jobs() -> int:
+    """Return 1 if outer parallel pool is active, else -1."""
+    return 1 if os.environ.get('_PFAZ_PARALLEL_ACTIVE') == '1' else -1
 
 # Optuna
 try:
@@ -257,7 +263,7 @@ class RandomForestTuner(HyperparameterTuner):
                 model, X_train, y_train,
                 cv=cv_folds,
                 scoring='r2',
-                n_jobs=-1
+                n_jobs=_inner_n_jobs()
             )
             score = scores.mean()
         
@@ -299,7 +305,7 @@ class GradientBoostingTuner(HyperparameterTuner):
                 model, X_train, y_train,
                 cv=cv_folds,
                 scoring='r2',
-                n_jobs=-1
+                n_jobs=_inner_n_jobs()
             )
             score = scores.mean()
         
@@ -346,7 +352,7 @@ class XGBoostTuner(HyperparameterTuner):
                 model, X_train, y_train,
                 cv=cv_folds,
                 scoring='r2',
-                n_jobs=-1
+                n_jobs=_inner_n_jobs()
             )
             score = scores.mean()
         

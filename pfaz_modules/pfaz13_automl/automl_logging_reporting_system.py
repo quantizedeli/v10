@@ -80,18 +80,19 @@ class AutoMLTrialRecord:
     val_r2: float
     val_rmse: float
     val_mae: float
-    test_r2: Optional[float] = None
-    test_rmse: Optional[float] = None
-    test_mae: Optional[float] = None
-    
+
     # Training info
     training_time: float
     n_samples_train: int
     n_samples_val: int
     n_features: int
-    
+
     # Status
     status: str  # 'COMPLETE', 'PRUNED', 'FAILED'
+
+    test_r2: Optional[float] = None
+    test_rmse: Optional[float] = None
+    test_mae: Optional[float] = None
     pruning_reason: Optional[str] = None
     error_message: Optional[str] = None
     
@@ -128,17 +129,18 @@ class AutoMLOptimizationSummary:
     # Optimization stats
     total_time: float
     avg_trial_time: float
-    convergence_trial: Optional[int] = None  # At which trial did it converge?
-    
+
     # Parameter insights
     most_important_param: str
     least_important_param: str
     parameter_correlations: Dict
-    
+
     # Recommendations
     recommended_config: Dict
     confidence_score: float
     improvement_potential: str
+
+    convergence_trial: Optional[int] = None  # At which trial did it converge?
 
 
 # ============================================================================
@@ -361,7 +363,7 @@ class AutoMLTrialLogger:
                         'correlation': float(abs(corr)),  # absolute correlation
                         'p_value': float(p_value)
                     }
-                except:
+                except Exception as e:
                     pass
         
         if not correlations:
