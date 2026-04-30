@@ -4,6 +4,67 @@
 
 ---
 
+## 2026-04-30 — main.py Orchestrator: 5 Mantik + 1 Siralama Hatasi Duzeltildi (Bug #34-#39)
+
+**Yapan:** Claude Code
+**Scope:** `main.py` — orkestrator ve pipeline yurütme mantigi
+**Commit'ler:** `442ec8b` (main.py 5 mantik hatasi), `96aee07` (siralama hatasi)
+
+### Duzeltilen Hatalar
+
+#### Bug #34 — KRITIK: `str(data_path, encoding='utf-8')` — TypeError
+- **Yer:** `run_all_pfaz_with_custom_data()` line 1872
+- **Sorun:** `open(str(data_path, encoding='utf-8'))` — `str()` iki argümanla cagrildiginda
+  bytes decode eder; `Path` nesnesi bytes degil → `TypeError` her CSV sayiminda fırlatilir.
+- **Düzeltme:** `open(str(data_path), encoding='utf-8')`
+
+#### Bug #35 — YUKSEK: Custom Run `output_dir` Key Eksik
+- **Yer:** `run_all_pfaz_with_custom_data()` lines 1901-1906
+- **Sorun:** Yeni orchestrator config'ine `output_base_dir`, `ai_output_dir` vb. set ediliyordu
+  ama `NuclearPhysicsAIOrchestrator.__init__` bunlari okumaz; sadece `output_dir` okur.
+  Sonuç: yeni orchestrator yine default `outputs/` klasörüne yaziyordu, `custom_out`'a degil.
+- **Düzeltme:** `base_cfg['output_dir'] = str(custom_out)` — tek dogru key; diger gereksiz keyler kaldirildi.
+
+#### Bug #36 — ORTA: PFAZ6 `aaa2_txt_path` Config Key Uyumsuzlugu
+- **Yer:** `run_pfaz_06()` line 781
+- **Sorun:** `self.config.get('source_data_path') or self.config.get('aaa2_txt_path')` —
+  bu iki key `_default_config()`'da yok; her zaman `None` döner.
+  Sonuç: `reporter.aaa2_txt_path` hic set edilmez → izotop zinciri analizi veri bulamaz.
+- **Düzeltme:** `data_file` key kullanilir (diger tüm fazlarla tutarli), absolute path'e cevirilir.
+
+#### Bug #37 — ORTA: PFAZ2 Resume Modu Eksik
+- **Yer:** `run_pfaz_02()` — `mode='resume'` dali yok
+- **Sorun:** `run_pfaz_02(mode='resume')` direkt cagrildiginda re-run basliyordu.
+  (PFAZ3-13'te bu dal mevcuttu; PFAZ2'de yoktu.)
+- **Düzeltme:** PFAZ3-13 pattern'i eklendi: mevcut `metrics_*.json` varsa skip.
+
+#### Bug #38 — DUSUK: `training_configs_50.json` Relative Path
+- **Yer:** `run_pfaz_02()` line 550
+- **Sorun:** `'pfaz_modules/pfaz02_ai_training/training_configs_50.json'` — CWD-relative;
+  proje kökü disinda çalistirinca `FileNotFoundError`.
+- **Düzeltme:** `str(self.project_root / 'pfaz_modules' / ...)` — absolute path.
+
+#### Bug #39 — YUKSEK: PFAZ Yürütme Sirasi Bagimliliklari Ihlal Ediyordu
+- **Yer:** `run_all_pfaz()` — `pfaz_list` numarasal sirayla üretiliyordu
+- **Sorun (iki ayrı ihlal):**
+  1. PFAZ6 (Final Report) PFAZ9 ve PFAZ13'ten ÖNCE çalısıyordu:
+     - PFAZ6 `reporter.pfaz9_output_dir` ve `reporter.pfaz13_output_dir` set eder;
+       Monte Carlo ozeti (PFAZ9) ve AutoML iyilestirme verisi (PFAZ13) Excel'e eklenir.
+     - Eski sırada bu dizinler bos oldugundan Excel eksik üretiliyordu.
+  2. PFAZ10 (Thesis) PFAZ12 ve PFAZ13'ten ÖNCE çalısıyordu:
+     - Tez PFAZ12 istatistiksel test bulgularını ve PFAZ13 AutoML iceriğini toplar.
+     - Eski sırada bu veriler henüz üretilmemis oluyordu.
+- **Düzeltme:** `PIPELINE_EXECUTION_ORDER = [1,2,3,4,5,7,9,12,13,6,8,10,11]` class sabitı eklendi.
+  `run_all_pfaz()` artık bu siraya gore çalışır.
+  Dogru sira: `1→2→3→4→5→7→9→12→13→6→8→10` + PFAZ8-Supplemental son.
+
+### Dogrulama
+- Smoke test: 8/8 PASS (her iki commit sonrasi)
+- `PIPELINE_EXECUTION_ORDER` kısıt kontrolü: PFAZ9<PFAZ6 ✓, PFAZ13<PFAZ6 ✓,
+  PFAZ6<PFAZ8 ✓, PFAZ12<PFAZ10 ✓, PFAZ13<PFAZ10 ✓
+
+---
+
 ## 2026-04-30 — QA Branch Fix: Rules 3/9/17/18 Dogrudan Branch'e Uygulandi
 
 **Yapan:** Claude Code (dogrudan dev-updates branch)

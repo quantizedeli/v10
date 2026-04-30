@@ -1,11 +1,11 @@
 # QA PROJECT STATUS REPORT
 ## Nuclear Physics AI Project - Quality Assurance Review
 
-**Date:** 2026-04-30 (son guncelleme: QA agent branch fix)
+**Date:** 2026-04-30 (son guncelleme: main.py mantik + siralama hatalari)
 **Onceki tarih:** 2025-12-02
 **QA Engineer:** Claude Code AI
-**Review Type:** Comprehensive Project Assessment + HPC Readiness Audit + Full 22-Rule QA Pass
-**Status:** HPC READY — tum 33 bug duzeltildi, 107 dosya degistirildi
+**Review Type:** Comprehensive Project Assessment + HPC Readiness Audit + Full 22-Rule QA Pass + Orchestrator Logic Review
+**Status:** HPC READY — tum 39 bug duzeltildi
 
 ---
 
@@ -54,6 +54,19 @@ V10_QA_BUG_REPORT.md + V10_QA_REREVIEW_REPORT.md bulgularinin tamami uygulanmist
 | 31 | open() encoding='utf-8' eksik (Rule 3) — 39 dosya, 85 satir | ORTA | DUZELTILDI |
 | 32 | main.py input() isatty guard eksik (Rule 5) — 1 yer, HPC donma riski | YUKSEK | DUZELTILDI |
 | 33 | Test dosyalari open() encoding eksik (Rule 19) — 3 yer | ORTA | DUZELTILDI |
+| 34 | main.py custom run: `str(data_path, encoding=...)` TypeError | KRITIK | DUZELTILDI |
+| 35 | main.py custom run: `output_dir` key set edilmiyordu — ciktilar yanlis dizine yaziliyordu | YUKSEK | DUZELTILDI |
+| 36 | main.py PFAZ6: aaa2_txt_path config key uyumsuzlugu — izotop zinciri analizi veri bulamiyordu | ORTA | DUZELTILDI |
+| 37 | main.py PFAZ2: resume modu eksikti — direkt cagirida yeniden egitim baslatiyordu | ORTA | DUZELTILDI |
+| 38 | main.py PFAZ2: training_configs_50.json relative path — CWD disinda FileNotFoundError | DUSUK | DUZELTILDI |
+| 39 | main.py run_all_pfaz: yanlis yürütme sirasi — PFAZ6 PFAZ9/13'ten, PFAZ10 PFAZ12/13'ten once calisiyor | YUKSEK | DUZELTILDI |
+
+### Dogrulama Sonuclari (main.py Mantik + Siralama Incelemesi - 2026-04-30)
+- Bug #34-38: 2 commit, main.py — smoke test 8/8 PASS
+- Bug #39: PIPELINE_EXECUTION_ORDER kısıt testi tum kosullar sagliyor
+- Yeni dogru siralama: `1->2->3->4->5->7->9->12->13->6->8->10->8-Supplemental`
+
+---
 
 ### Dogrulama Sonuclari (Automated 22-Rule QA Pass - 2026-04-30, branch'e uygulanmistir)
 - Bare except remaining: 0

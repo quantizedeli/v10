@@ -1105,3 +1105,59 @@ Toplam degistirilen:     107 dosya
 ```
 
 *Ek 3 tamamlandi: 2026-04-30*
+
+---
+
+## Ek 4 — main.py Orkestrator Mantik ve Siralama Incelemesi (2026-04-30)
+
+Tum fazlarin cagirma yapisi, veri akisi ve yürütme sirasi incelendi.
+
+### Bulunan ve Duzeltilen Hatalar (Bug #34-#39)
+
+| # | Seviye | Konum | Sorun | Düzeltme |
+|---|--------|-------|-------|---------|
+| 34 | KRITIK | main.py:1872 | `str(data_path, encoding='utf-8')` — TypeError; CSV satir sayiminda crash | `open(str(data_path), encoding='utf-8')` |
+| 35 | YUKSEK | main.py:1901 | Custom run `output_dir` key eksik — yeni orchestrator default `outputs/` kullaniyordu | `base_cfg['output_dir'] = str(custom_out)` |
+| 36 | ORTA | main.py:781 | PFAZ6 aaa2 yolu: `'source_data_path'`/`'aaa2_txt_path'` key'leri config'de yok — izotop zinciri analizi veri bulamiyor | `data_file` key kullanildi, absolute path |
+| 37 | ORTA | main.py:530 | PFAZ2 resume modu yok — direkt `run_pfaz_02(mode='resume')` cagirisi yeniden egitim baslatiyordu | PFAZ3-13 pattern eklendi |
+| 38 | DUSUK | main.py:550 | `training_configs_50.json` CWD-relative path | `self.project_root / ...` absolute path |
+| 39 | YUKSEK | run_all_pfaz() | **Yanlis yürütme sirasi:** PFAZ6 PFAZ9/13'ten once, PFAZ10 PFAZ12/13'ten once calisiyor | `PIPELINE_EXECUTION_ORDER` class sabitı, bagimliliga gore sira |
+
+### Siralama Sorunun Etkisi (Bug #39)
+
+**PFAZ6 (Final Report) PFAZ9 ve PFAZ13'ten once calisti:**
+- `reporter.pfaz9_output_dir` Monte Carlo ozet verisi (AAA2_Complete_MC_Summary.xlsx) okur
+- `reporter.pfaz13_output_dir` AutoML iyilestirme verisi (automl_improvement_report.xlsx) okur
+- Onceki sirada bu dosyalar yok → Excel raporda bu sayfalar bos/eksik
+
+**PFAZ10 (Thesis) PFAZ12 ve PFAZ13'ten once calisti:**
+- Tez PFAZ12 istatistiksel test bulgularini (`statistical_tests/` dizini) toplar
+- Tez PFAZ13 AutoML iceriğini tez bolumlerine dahil eder
+- Onceki sirada bu veriler henüz üretilmemis → tez eksik derlendi
+
+### Dogru Yürütme Sirasi
+
+```
+Eski (yanlis): 1->2->3->4->5->6->7->8->9->10->11->12->13
+Yeni (dogru) : 1->2->3->4->5->7->9->12->13->6->8->10  + 8-Supplemental (son)
+```
+
+Neden bu sira:
+- PFAZ9, PFAZ12, PFAZ13 → tamamlanan analiz fazlari (birbirinden bagimsiz, PFAZ2/3 gerekir)
+- PFAZ6 → bu analiz sonuclari dahil edilmis eksiksiz rapor üretir
+- PFAZ8 → PFAZ6 Excel'ini okur (PFAZ6'dan sonra olmali)
+- PFAZ10 → tum fazlarin ciktilarini toplayarak tez derleme (en sonda)
+
+### Dogrulama
+
+```
+Smoke test (her iki commit sonrasi): 8/8 PASS
+PIPELINE_EXECUTION_ORDER kisilama testi:
+  PFAZ9  < PFAZ6:  PASS
+  PFAZ13 < PFAZ6:  PASS
+  PFAZ6  < PFAZ8:  PASS
+  PFAZ12 < PFAZ10: PASS
+  PFAZ13 < PFAZ10: PASS
+```
+
+*Ek 4 tamamlandi: 2026-04-30 — 6 bug, 2 commit (442ec8b, 96aee07)*

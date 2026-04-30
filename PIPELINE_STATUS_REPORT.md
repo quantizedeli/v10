@@ -1,7 +1,26 @@
 # Pipeline Durum Raporu
-**Tarih:** 2026-04-30 (son guncelleme — Re-Review sonrasi)
+**Tarih:** 2026-04-30 (son guncelleme — main.py mantik + siralama hatalari)
 **Onceki rapor:** 2026-04-21  
 **Proje:** Nuclear Moments AI Pipeline (PFAZ 0-13)
+
+## 2026-04-30 Guncelleme — main.py Orchestrator Hatalari (Bug #34-#39)
+
+Faz siralaması ve cagirma yapısındaki mantık hatalari duzeltildi.
+
+| Kategori | Sorun | Duzeltme |
+|----------|-------|---------|
+| Custom run TypeError | `str(Path, encoding=...)` → crash | `open(str(path), encoding='utf-8')` |
+| Custom run output yolu | output_dir key eksikti → default outputs/ | `base_cfg['output_dir'] = str(custom_out)` |
+| PFAZ6 aaa2 yolu | yanlis config key → None | `data_file` key kullanildi |
+| PFAZ2 resume eksik | direkt cagirida re-run | `metrics_*.json` varsa skip |
+| Relative path | CWD-dependent → FileNotFoundError | `self.project_root / ...` |
+| **Yanlis siralama** | PFAZ6 PFAZ9/13'ten once; PFAZ10 PFAZ12/13'ten once | `PIPELINE_EXECUTION_ORDER = [1,2,3,4,5,7,9,12,13,6,8,10,11]` |
+
+**Yeni dogru yürütme sirasi:** `1->2->3->4->5->7->9->12->13->6->8->10` + 8-Supp
+
+**Etki:** Onceki sirada PFAZ6 Final Report Excel'i Monte Carlo ve AutoML verisiz üretiliyordu; tez PFAZ12/13 bulguları olmadan derleniyor.
+
+---
 
 ## 2026-04-30 Guncelleme — Re-Review Bug Fixes
 
