@@ -61,6 +61,7 @@ try:
     from xgboost import XGBRegressor
     XGBOOST_AVAILABLE = True
 except ImportError:
+    XGBRegressor = None
     XGBOOST_AVAILABLE = False
     logging.warning("XGBoost not available")
 
@@ -69,6 +70,7 @@ try:
     from lightgbm import LGBMRegressor
     LIGHTGBM_AVAILABLE = True
 except ImportError:
+    LGBMRegressor = None
     LIGHTGBM_AVAILABLE = False
     logging.warning("LightGBM not available — install: pip install lightgbm")
 
@@ -77,6 +79,7 @@ try:
     from catboost import CatBoostRegressor
     CATBOOST_AVAILABLE = True
 except ImportError:
+    CatBoostRegressor = None
     CATBOOST_AVAILABLE = False
     logging.warning("CatBoost not available — install: pip install catboost")
 
@@ -88,6 +91,10 @@ try:
     TF_AVAILABLE = True
 except ImportError:
     TF_AVAILABLE = False
+    tf = None
+    keras = None
+    layers = None
+    callbacks = None
     logging.warning("TensorFlow not available")
 
 logging.basicConfig(
@@ -104,6 +111,7 @@ try:
     from .seed_tracker import SeedTracker
     SEED_TRACKER_AVAILABLE = True
 except ImportError:
+    SeedTracker = None
     SEED_TRACKER_AVAILABLE = False
     logger.warning("SeedTracker not available")
 
@@ -691,7 +699,7 @@ class LightGBMTrainer(BaseAITrainer):
             num_leaves=num_leaves,
             random_state=random_seed,
             device=lgbm_device,
-            n_jobs=(-1 if lgbm_device == 'cpu' else 1),
+            n_jobs=(_inner_n_jobs() if lgbm_device == 'cpu' else 1),
             verbose=-1
         )
         self.model = MultiOutputRegressor(base_model, n_jobs=1) if is_multi else base_model
@@ -909,7 +917,7 @@ class DNNTrainer(BaseAITrainer):
         y_val_scaled = self.y_scaler.transform(y_val_2d)
 
         logger.info(f"Features and targets scaled using StandardScaler (mean=0, std=1)")
-        logger.info(f"Target stats — mean: {self.y_scaler.mean_}, std: {self.y_scaler.scale_}")
+        logger.info(f"Target stats -- mean: {self.y_scaler.mean_}, std: {self.y_scaler.scale_}")
 
         # Build model
         input_dim = X_train.shape[1]
@@ -1103,6 +1111,7 @@ class ParallelAITrainer:
             except ImportError as e:
                 logger.warning(f"[SKIP] Hyperparameter Tuner not available: {e}")
                 self.use_hyperparameter_tuning = False
+                HyperparameterTuner = None
 
         if self.use_advanced_models:
             try:
@@ -1111,6 +1120,8 @@ class ParallelAITrainer:
             except ImportError as e:
                 logger.warning(f"[SKIP] Advanced Models not available: {e}")
                 self.use_advanced_models = False
+                BayesianNeuralNetwork = None
+                PINN = None
 
         logger.info("=" * 80)
         logger.info("PARALLEL AI TRAINER INITIALIZED")
@@ -1128,7 +1139,7 @@ class ParallelAITrainer:
     def load_training_configs(self, config_file: Path) -> List[Dict]:
         """Load 50 training configurations"""
         
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             configs = json.load(f)
         
         logger.info(f"Loaded {len(configs)} training configurations")
@@ -1300,7 +1311,7 @@ class ParallelAITrainer:
                     f"Model NOT saved. Marked as failed in summary."
                 )
                 metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
-                with open(metrics_file, 'w') as f:
+                with open(metrics_file, 'w', encoding='utf-8') as f:
                     json.dump(metrics, f, indent=2)
                 return TrainingResult(
                     job_id=job.job_id,
@@ -1322,7 +1333,7 @@ class ParallelAITrainer:
                     f"(Poor/Failed category). Model NOT saved."
                 )
                 metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
-                with open(metrics_file, 'w') as f:
+                with open(metrics_file, 'w', encoding='utf-8') as f:
                     json.dump(metrics, f, indent=2)
                 return TrainingResult(
                     job_id=job.job_id,
@@ -1342,7 +1353,7 @@ class ParallelAITrainer:
 
             # Save metrics
             metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
-            with open(metrics_file, 'w') as f:
+            with open(metrics_file, 'w', encoding='utf-8') as f:
                 json.dump(metrics, f, indent=2)
 
             # SEED TRACKING: Record seed used for this model
@@ -1382,7 +1393,7 @@ class ParallelAITrainer:
 
                     if cv_results.get('status') == 'completed':
                         cv_file = job.output_dir / f"cv_results_{job.config['id']}.json"
-                        with open(cv_file, 'w') as f:
+                        with open(cv_file, 'w', encoding='utf-8') as f:
                             json.dump(cv_results, f, indent=2)
                         logger.info(f"  [CV] Saved cross-validation results")
                 except Exception as e:
@@ -1401,7 +1412,7 @@ class ParallelAITrainer:
 
                 if overfitting_results:
                     overfitting_file = job.output_dir / f"overfitting_analysis_{job.config['id']}.json"
-                    with open(overfitting_file, 'w') as f:
+                    with open(overfitting_file, 'w', encoding='utf-8') as f:
                         json.dump(overfitting_results, f, indent=2)
                     logger.info(f"  [OVERFITTING] Analysis saved - Severity: {overfitting_results.get('severity', 'N/A')}")
             except Exception as e:
@@ -1595,7 +1606,7 @@ class ParallelAITrainer:
 
             summary['results'].append(result_dict)
 
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
 
         logger.info(f"Summary report saved: {report_file}")
@@ -1774,11 +1785,11 @@ class ParallelAITrainer:
 
         # Step 5: Train all models
         if self.use_parallel_training and self.n_workers > 1:
-            logger.info(f"\n🚀 Starting PARALLEL training with {self.n_workers} workers...")
+            logger.info(f"\n[START] Starting PARALLEL training with {self.n_workers} workers...")
             results = self.train_all_parallel(jobs)
         else:
             # Sequential training
-            logger.info("\n🐢 Starting SEQUENTIAL training (one job at a time)...")
+            logger.info("\n[START] Starting SEQUENTIAL training (one job at a time)...")
             results = []
             for i, job in enumerate(jobs):
                 logger.info(f"Training job {i+1}/{len(jobs)}: {job.job_id}")
@@ -1987,6 +1998,7 @@ class ParallelAITrainer:
         except ImportError as e:
             logger.warning(f"[HYPERPARAMETER TUNING] Optuna not available: {e}")
             return {'status': 'skipped', 'reason': 'optuna_not_available'}
+            HyperparameterTuner = None
         except Exception as e:
             logger.error(f"[HYPERPARAMETER TUNING] Error: {e}")
             return {'status': 'failed', 'error': str(e)}
@@ -2029,6 +2041,7 @@ class ParallelAITrainer:
         except ImportError as e:
             logger.warning(f"[MODEL VALIDATION] Validator not available: {e}")
             return {'status': 'skipped', 'reason': 'validator_not_available'}
+            CrossValidationAnalyzer = None
         except Exception as e:
             logger.error(f"[MODEL VALIDATION] Error: {e}")
             return {'status': 'failed', 'error': str(e)}

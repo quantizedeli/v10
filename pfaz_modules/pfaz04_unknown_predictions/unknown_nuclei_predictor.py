@@ -32,6 +32,7 @@ try:
     import joblib
     JOBLIB_AVAILABLE = True
 except ImportError:
+    joblib = None
     JOBLIB_AVAILABLE = False
 
 try:
@@ -40,6 +41,13 @@ try:
     from openpyxl.utils import get_column_letter
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
+    Border = None
+    Side = None
+    get_column_letter = None
     OPENPYXL_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -132,7 +140,7 @@ class UnknownNucleiPredictor:
             train_r2 = None
             if metrics_file.exists():
                 try:
-                    with open(metrics_file) as f:
+                    with open(metrics_file, encoding='utf-8') as f:
                         m = json.load(f)
                     val_r2 = m.get('val', {}).get('r2')
                     train_r2 = m.get('train', {}).get('r2')
@@ -171,7 +179,7 @@ class UnknownNucleiPredictor:
             train_r2 = None
             if metrics_file.exists():
                 try:
-                    with open(metrics_file) as f:
+                    with open(metrics_file, encoding='utf-8') as f:
                         m = json.load(f)
                     val_r2 = m.get('val', {}).get('r2')
                     train_r2 = m.get('train', {}).get('r2')
@@ -804,7 +812,7 @@ class UnknownNucleiPredictor:
             wb.save(excel_path)
             logger.info(f"[OK] AAA2 Comparison Excel saved: {excel_path}")
         else:
-            logger.warning("[AAA2 Comparison] openpyxl not available — CSV files saved instead")
+            logger.warning("[AAA2 Comparison] openpyxl not available -- CSV files saved instead")
 
 
 def main():

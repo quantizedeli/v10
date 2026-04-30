@@ -88,7 +88,7 @@ class EnsembleEvaluator:
         
         logger.info(f"[OK] Added ensemble: {ensemble_name}")
         logger.info(f"  Method: {result['method']}")
-        logger.info(f"  R²: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
+        logger.info(f"  R^2: {r2:.4f}, RMSE: {rmse:.4f}, MAE: {mae:.4f}")
     
     def compare_all_ensembles(self) -> pd.DataFrame:
         """
@@ -171,7 +171,7 @@ class EnsembleEvaluator:
         
         logger.info(f"\n[SUCCESS] BEST ENSEMBLE: {best_result['name']}")
         logger.info(f"  Method: {best_result['method']}")
-        logger.info(f"  R²: {best_result['r2']:.4f}")
+        logger.info(f"  R^2: {best_result['r2']:.4f}")
         logger.info(f"  RMSE: {best_result['rmse']:.4f}")
         logger.info(f"  MAE: {best_result['mae']:.4f}")
         
@@ -366,7 +366,7 @@ class EnsembleEvaluator:
         
         # Save JSON
         report_path = self.output_dir / 'ensemble_evaluation_report.json'
-        with open(report_path, 'w') as f:
+        with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
         
         logger.info(f"\n[OK] Final report saved: {report_path}")
@@ -375,7 +375,7 @@ class EnsembleEvaluator:
         logger.info(f"ENSEMBLE EVALUATION COMPLETED!")
         logger.info(f"{'='*60}")
         logger.info(f"[SUCCESS] Best Ensemble: {best_ensemble['name']}")
-        logger.info(f"   R² = {best_ensemble['r2']:.4f}")
+        logger.info(f"   R^2 = {best_ensemble['r2']:.4f}")
         logger.info(f"   RMSE = {best_ensemble['rmse']:.4f}")
         logger.info(f"   MAE = {best_ensemble['mae']:.4f}")
         logger.info(f"{'='*60}")

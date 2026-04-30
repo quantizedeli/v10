@@ -200,7 +200,7 @@ class SeedTracker:
             'timestamp': datetime.now().isoformat()
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(output_data, f, indent=2)
 
         logger.info(f"[OK] Seed tracking JSON saved: {output_path}")
@@ -231,12 +231,14 @@ def set_global_seed(seed: int, tracker: Optional[SeedTracker] = None):
         random.seed(seed)
     except ImportError:
         pass
+        random = None
 
     try:
         import tensorflow as tf
         tf.random.set_seed(seed)
     except ImportError:
         pass
+        tf = None
 
     try:
         import torch
@@ -245,6 +247,7 @@ def set_global_seed(seed: int, tracker: Optional[SeedTracker] = None):
             torch.cuda.manual_seed_all(seed)
     except ImportError:
         pass
+        torch = None
 
     # Record in tracker
     if tracker:

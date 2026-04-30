@@ -194,6 +194,13 @@ def _format_worksheet_inline(ws, n_data_rows: int = 0, skip_cells: bool = False)
         from openpyxl.utils import get_column_letter
     except ImportError:
         return
+        Font = None
+        PatternFill = None
+        Alignment = None
+        Border = None
+        Side = None
+        ColorScaleRule = None
+        get_column_letter = None
 
     header_fill  = PatternFill('solid', fgColor=CLR_HEADER)
     header_font  = Font(bold=True, color=CLR_WHITE, size=11)
@@ -1152,7 +1159,7 @@ class FinalReportingPipeline:
 
         for report_file in unique_files:
             try:
-                with open(report_file, 'r') as f:
+                with open(report_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 for target, tdata in data.items():
                     for rec in tdata.get('nuclei', []):
@@ -1252,8 +1259,13 @@ class FinalReportingPipeline:
                 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
                 from pfaz_modules.pfaz05_cross_model.isotope_chain_analyzer import IsotopeChainAnalyzer
             except ImportError:
-                logger.warning("  [INFO] IsotopeChainAnalyzer import edilemedi — IsoChain_SuddenChanges atlandı")
+                logger.warning("  [INFO] IsotopeChainAnalyzer import edilemedi -- IsoChain_SuddenChanges atlandı")
                 return
+            IsotopeChainAnalyzer = None
+            sys = None
+            IsotopeChainAnalyzer = None
+                sys = None
+                IsotopeChainAnalyzer = None
 
         # Find aaa2.txt
         aaa2_path = self.aaa2_txt_path
@@ -1265,7 +1277,7 @@ class FinalReportingPipeline:
                     break
 
         if aaa2_path is None or not Path(aaa2_path).exists():
-            logger.info("  [INFO] aaa2.txt bulunamadi — IsoChain_SuddenChanges atlandı")
+            logger.info("  [INFO] aaa2.txt bulunamadi -- IsoChain_SuddenChanges atlandı")
             return
 
         try:
@@ -1352,7 +1364,7 @@ class FinalReportingPipeline:
                 except Exception as e:
                     logger.warning(f"  [WARNING] MC read error {target}: {e}")
         else:
-            logger.info("  [INFO] PFAZ9 output dir bulunamadi — MC özeti atlandı")
+            logger.info("  [INFO] PFAZ9 output dir bulunamadi -- MC özeti atlandı")
 
         # ---- Robustness from CV results in ai_df ------------------------------
         cv_col = 'CV_R2' if 'CV_R2' in ai_df.columns else None
@@ -1390,15 +1402,15 @@ class FinalReportingPipeline:
         # Write sheets
         if rows_mc:
             pd.DataFrame(rows_mc).to_excel(writer, sheet_name='MC_Robustness_Summary', index=False)
-            logger.info(f"  [OK] MC_Robustness_Summary — MC: {len(rows_mc)} targets")
+            logger.info(f"  [OK] MC_Robustness_Summary -- MC: {len(rows_mc)} targets")
         elif rows_rob:
             pd.DataFrame(rows_rob).to_excel(writer, sheet_name='MC_Robustness_Summary', index=False)
-            logger.info(f"  [OK] MC_Robustness_Summary — Rob: {len(rows_rob)} targets")
+            logger.info(f"  [OK] MC_Robustness_Summary -- Rob: {len(rows_rob)} targets")
         else:
             # Write empty placeholder
             pd.DataFrame([{'Info': 'PFAZ9 MC verisi henüz mevcut değil. PFAZ9 tamamlandıktan sonra yeniden çalıştırın.'}]).to_excel(
                 writer, sheet_name='MC_Robustness_Summary', index=False)
-            logger.info("  [INFO] MC_Robustness_Summary: veri bulunamadi — placeholder yazıldı")
+            logger.info("  [INFO] MC_Robustness_Summary: veri bulunamadi -- placeholder yazıldı")
 
         # Also write robustness detail if available
         if rows_rob:
@@ -1439,7 +1451,7 @@ class FinalReportingPipeline:
             log_json = Path(pfaz13_dir) / 'automl_retraining_log.json'
             if log_json.exists():
                 try:
-                    with open(log_json) as f:
+                    with open(log_json, encoding='utf-8') as f:
                         records = json.load(f)
                 except Exception as e:
                     logger.warning(f"  [WARN] automl_retraining_log.json okuma hatası: {e}")
@@ -1469,7 +1481,7 @@ class FinalReportingPipeline:
             })
         pd.DataFrame(summary_rows).to_excel(
             writer, sheet_name='AutoML_Improvements', index=False)
-        logger.info(f"  [OK] AutoML_Improvements — Summary ({len(summary_rows)} satır)")
+        logger.info(f"  [OK] AutoML_Improvements -- Summary ({len(summary_rows)} satır)")
 
         # ---- Best Params (long) -------------------------------------------
         param_rows = []
@@ -1572,7 +1584,7 @@ class FinalReportingPipeline:
         for search_root in [base, base.parent]:
             candidates += list(search_root.rglob('nuclear_band_analysis.xlsx'))
         if not candidates:
-            logger.info("  [INFO] Band_Analizi: nuclear_band_analysis.xlsx bulunamadi — sheet atlandi")
+            logger.info("  [INFO] Band_Analizi: nuclear_band_analysis.xlsx bulunamadi -- sheet atlandi")
             pd.DataFrame([{'Durum': 'PFAZ12 band analizi henuz calistirilmadi'}]).to_excel(
                 writer, sheet_name='Band_Analizi', index=False)
             return
@@ -1790,7 +1802,7 @@ class FinalReportingPipeline:
                         _ci_save = {k: float(v) if hasattr(v, 'item') else v
                                     for k, v in bootstrap_result.items()
                                     if k != 'bootstrap_distribution'}
-                        with open(_ci_path, 'w') as _f_ci:
+                        with open(_ci_path, 'w', encoding='utf-8') as _f_ci:
                             _json_bs.dump(_ci_save, _f_ci, indent=2)
         except Exception as _e:
             logger.warning(f"[WARNING] BootstrapConfidenceIntervals basarisiz (devam): {_e}")
@@ -1826,7 +1838,7 @@ class FinalReportingPipeline:
                         _ci_a_save = {k: float(v) if hasattr(v, 'item') else v
                                       for k, v in bootstrap_anfis_result.items()
                                       if k != 'bootstrap_distribution'}
-                        with open(_ci_a_path, 'w') as _f_cia:
+                        with open(_ci_a_path, 'w', encoding='utf-8') as _f_cia:
                             _json_bsa.dump(_ci_a_save, _f_cia, indent=2)
         except Exception as _e_bsa:
             logger.warning(f"[WARNING] BootstrapCI (ANFIS) basarisiz (devam): {_e_bsa}")
@@ -1861,7 +1873,7 @@ class FinalReportingPipeline:
                     _mf_sa = _pkl_sa.parent / f'metrics_{_pkl_sa.parent.name}.json'
                     if not _mf_sa.exists():
                         continue
-                    with open(_mf_sa) as _mff_sa:
+                    with open(_mf_sa, encoding='utf-8') as _mff_sa:
                         _met_sa = _jsn_sa.load(_mff_sa)
                     _vr2_sa = _met_sa.get('val', {}).get('r2', -999.0)
                     if _vr2_sa > _best_r2_sa:
@@ -1876,7 +1888,7 @@ class FinalReportingPipeline:
                         _meta_f_sa = _ds_dir_sa / 'metadata.json'
                         _col_n_sa = None
                         if _meta_f_sa.exists():
-                            with open(_meta_f_sa) as _mf3:
+                            with open(_meta_f_sa, encoding='utf-8') as _mf3:
                                 _meta_sa = _jsn_sa.load(_mf3)
                             _fc_sa = _meta_sa.get('feature_names') or _meta_sa.get('feature_columns', [])
                             _tc_sa = _meta_sa.get('target_names')  or _meta_sa.get('target_columns',  [])
@@ -1909,7 +1921,7 @@ class FinalReportingPipeline:
                 _sa.export_to_excel('sensitivity_analysis.xlsx')
                 logger.info(f"[OK] AdvancedSensitivityAnalysis: tornado diyagramı + Excel -> sensitivity_analysis/")
             else:
-                logger.info("  [INFO] AdvancedSensitivityAnalysis: uygun model bulunamadı — atlanıyor")
+                logger.info("  [INFO] AdvancedSensitivityAnalysis: uygun model bulunamadı -- atlanıyor")
         except Exception as _e:
             logger.warning(f"[WARNING] AdvancedSensitivityAnalysis basarisiz (devam): {_e}")
 

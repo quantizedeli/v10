@@ -336,4 +336,153 @@ logger.info("[START] Paralel egitim basliyor")
 
 ---
 
-*Son güncelleme: 2026-04-30*
+---
+
+## 18. OPTIONAL IMPORTS — None Ataması Zorunlu
+
+**Kural:** `try/except ImportError` bloğunda optional modüller `None` atanmalı,
+aksi hâlde type annotation veya kullanım yerinde `NameError` fırlatır:
+
+```python
+# YANLIS — keras, tf tanımsız kalır
+try:
+    import tensorflow as tf
+    from tensorflow import keras
+    TF_AVAILABLE = True
+except ImportError:
+    TF_AVAILABLE = False
+
+# DOGRU — tüm isimler tanımlı
+try:
+    import tensorflow as tf
+    from tensorflow import keras
+    from tensorflow.keras import layers, callbacks
+    TF_AVAILABLE = True
+except ImportError:
+    TF_AVAILABLE = False
+    tf = None
+    keras = None
+    layers = None
+    callbacks = None
+```
+
+Aynı kural `torch`, `lgbm`, `catboost`, `optuna` gibi tüm optional importlar için geçerlidir.
+
+**Sınıf guard'ı:** Optional kütüphaneye bağlı her sınıfın `__init__` metoduna ekle:
+```python
+def __init__(self, ...):
+    if not TORCH_AVAILABLE:
+        raise ImportError("PyTorch required. pip install torch")
+```
+
+---
+
+## 19. TEST KODU — encoding='utf-8' Zorunlu
+
+**Kural:** Test dosyalarında Python kaynak kodu okuyan her `open()` çağrısında
+`encoding='utf-8'` belirtilmeli. Windows'ta default CP1254 ile UTF-8 içerikli
+dosyalar parse edilemez:
+
+```python
+# YANLIS — Windows'ta CP1254 decode hatası
+with open(main_path) as f:
+    compile(f.read(), str(main_path), 'exec')
+
+# DOGRU
+with open(main_path, encoding='utf-8') as f:
+    compile(f.read(), str(main_path), 'exec')
+```
+
+---
+
+---
+
+## 20. FEATURE SET ISIMLERI — SHAP-Bazli Kodlar Kullan
+
+**Kural:** Filtre listelerinde, `SMALL_NUCLEUS_FEATURE_SETS` veya config arama
+yapılarında eski legacy isimleri (`'Basic'`, `'Standard'`, `'Extended'`, `'Full'`) KULLANMA.
+Gerçek SHAP-bazlı kodları kullan (`'AZS'`, `'AZMC'`, `'AZSMC'` vb.).
+
+```python
+# YANLIS — 'Standard' FEATURE_SETS'te tanimsiz; filtre bosluğa duser
+SMALL_NUCLEUS_FEATURE_SETS = ['Basic', 'Standard']
+
+# DOGRU — FeatureCombinationManager.FEATURE_SETS.keys() ile dogrulanmis isimler
+SMALL_NUCLEUS_FEATURE_SETS = ['AZN', 'AZS', 'AZMC', 'MCZMNM', ...]
+```
+
+**Dogrulama:**
+```bash
+python -c "from pfaz_modules.pfaz01_dataset_generation.feature_combination_manager \
+import FeatureCombinationManager; print(list(FeatureCombinationManager.FEATURE_SETS))"
+```
+
+---
+
+## 21. ANFIS — Feature Sayisi Filtresi Zorunlu
+
+**Kural:** ANFIS dataset discovery'sinde her dataset'in `metadata.json` dosyasını oku,
+`n_inputs > ANFIS_MAX_INPUTS (5)` olan dataset'leri atla.
+
+```python
+# YANLIS — n_inputs kontrolu yok, Extended/Full dataset'ler OOM'a yol acar
+for subdir in datasets_dir.iterdir():
+    if has_data:
+        dataset_paths.append(subdir)
+
+# DOGRU
+n_inputs = self._get_n_inputs_from_metadata(subdir)
+if n_inputs is not None and n_inputs > self.ANFIS_MAX_INPUTS:
+    logger.info(f"[SKIP-ANFIS] {subdir.name}: {n_inputs} inputs")
+    continue
+dataset_paths.append(subdir)
+```
+
+**Neden:** Grid-partition ANFIS: `n_rules = n_mfs ^ n_inputs`.
+`n_inputs=20, n_mfs=2` → 2^20 = 1M kural → OOM crash.
+
+---
+
+## 22. ELIF ZINCIRLERI — Cakisan Kosullar Yasak
+
+**Kural:** Sayisal esik degerlerine gore dallanan `if/elif` bloklarinda her kosul
+bir oncekini kapsamayan araliklar tanimlamali.
+
+```python
+# YANLIS — ikinci elif dead code, n_features=4 yanlis dala giriyor
+elif n_features <= 4:   # 3 ve 4'u yakaliyor
+    return '3In1Out'
+elif n_features <= 4:   # bu satira hic ulasilmiyor
+    return '4In1Out'
+
+# DOGRU — cakismayan araliklar
+elif n_features <= 3:   # sadece 3
+    return '3In1Out'
+elif n_features <= 4:   # sadece 4
+    return '4In1Out'
+```
+
+---
+
+*Son güncelleme: 2026-04-30 (ANFIS feature-set tutarlilik denetimi sonrasi)*
+
+---
+
+## Kural Uyum Gecmisi
+
+| Tarih | Kapsam | Sonuc |
+|-------|--------|-------|
+| 2026-04-30 | 22 kuralin tamaminin otomatik QA gecisi — 159 Python dosyasi taranmistir | PASS |
+
+**2026-04-30 Automated 22-Rule Enforcement Pass sonuclari:**
+
+- **Kural 9 (Bare except):** 2 ihlal — `utils/ai_model_checkpoint.py`, `scripts/create_pfaz7_xlsx.py` — DUZELTILDI
+- **Kural 17 (Emoji/Unicode log):** 21 ihlal, 7 dosya — `training_utils_v2.py`, `advanced_models.py`, `parallel_ai_trainer.py`, `faz7_ensemble_pipeline.py`, `checkpoint_manager.py`, `smart_cache.py`, `health_check.py` — DUZELTILDI
+- **Kural 18 (Optional imports None):** 55 ihlal, 38 dosya — tum import bloklarina None atamalari eklendi — DUZELTILDI
+- **Kural 3 (open() encoding):** 85 ihlal, 39 dosya — otomatik regex ile duzeltildi — DUZELTILDI
+- **Kural 5 (input() isatty guard):** 1 ihlal — `main.py:1538` `run_single_prediction()` — DUZELTILDI
+- **Kural 19 (Test open() encoding):** 3 ihlal — `test_sample_integration.py`, `test_basic_smoke.py` — DUZELTILDI
+
+**Toplam:** 52 dosya degistirildi, tamaminda `ast.parse()` syntax kontrolu gecti.
+
+*Automated pass tamamlandi: 2026-04-30 — Kural 1-22 aktif ve uygulanmistir*

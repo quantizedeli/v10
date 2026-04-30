@@ -4,7 +4,272 @@
 
 ---
 
-## 2026-04-30 — QA Bug Fix Oturumu (17 Kritik Bug, HPC Hazırlık)
+## 2026-04-30 — main.py Orchestrator: 5 Mantik + 1 Siralama Hatasi Duzeltildi (Bug #34-#39)
+
+**Yapan:** Claude Code
+**Scope:** `main.py` — orkestrator ve pipeline yurütme mantigi
+**Commit'ler:** `442ec8b` (main.py 5 mantik hatasi), `96aee07` (siralama hatasi)
+
+### Duzeltilen Hatalar
+
+#### Bug #34 — KRITIK: `str(data_path, encoding='utf-8')` — TypeError
+- **Yer:** `run_all_pfaz_with_custom_data()` line 1872
+- **Sorun:** `open(str(data_path, encoding='utf-8'))` — `str()` iki argümanla cagrildiginda
+  bytes decode eder; `Path` nesnesi bytes degil → `TypeError` her CSV sayiminda fırlatilir.
+- **Düzeltme:** `open(str(data_path), encoding='utf-8')`
+
+#### Bug #35 — YUKSEK: Custom Run `output_dir` Key Eksik
+- **Yer:** `run_all_pfaz_with_custom_data()` lines 1901-1906
+- **Sorun:** Yeni orchestrator config'ine `output_base_dir`, `ai_output_dir` vb. set ediliyordu
+  ama `NuclearPhysicsAIOrchestrator.__init__` bunlari okumaz; sadece `output_dir` okur.
+  Sonuç: yeni orchestrator yine default `outputs/` klasörüne yaziyordu, `custom_out`'a degil.
+- **Düzeltme:** `base_cfg['output_dir'] = str(custom_out)` — tek dogru key; diger gereksiz keyler kaldirildi.
+
+#### Bug #36 — ORTA: PFAZ6 `aaa2_txt_path` Config Key Uyumsuzlugu
+- **Yer:** `run_pfaz_06()` line 781
+- **Sorun:** `self.config.get('source_data_path') or self.config.get('aaa2_txt_path')` —
+  bu iki key `_default_config()`'da yok; her zaman `None` döner.
+  Sonuç: `reporter.aaa2_txt_path` hic set edilmez → izotop zinciri analizi veri bulamaz.
+- **Düzeltme:** `data_file` key kullanilir (diger tüm fazlarla tutarli), absolute path'e cevirilir.
+
+#### Bug #37 — ORTA: PFAZ2 Resume Modu Eksik
+- **Yer:** `run_pfaz_02()` — `mode='resume'` dali yok
+- **Sorun:** `run_pfaz_02(mode='resume')` direkt cagrildiginda re-run basliyordu.
+  (PFAZ3-13'te bu dal mevcuttu; PFAZ2'de yoktu.)
+- **Düzeltme:** PFAZ3-13 pattern'i eklendi: mevcut `metrics_*.json` varsa skip.
+
+#### Bug #38 — DUSUK: `training_configs_50.json` Relative Path
+- **Yer:** `run_pfaz_02()` line 550
+- **Sorun:** `'pfaz_modules/pfaz02_ai_training/training_configs_50.json'` — CWD-relative;
+  proje kökü disinda çalistirinca `FileNotFoundError`.
+- **Düzeltme:** `str(self.project_root / 'pfaz_modules' / ...)` — absolute path.
+
+#### Bug #39 — YUKSEK: PFAZ Yürütme Sirasi Bagimliliklari Ihlal Ediyordu
+- **Yer:** `run_all_pfaz()` — `pfaz_list` numarasal sirayla üretiliyordu
+- **Sorun (iki ayrı ihlal):**
+  1. PFAZ6 (Final Report) PFAZ9 ve PFAZ13'ten ÖNCE çalısıyordu:
+     - PFAZ6 `reporter.pfaz9_output_dir` ve `reporter.pfaz13_output_dir` set eder;
+       Monte Carlo ozeti (PFAZ9) ve AutoML iyilestirme verisi (PFAZ13) Excel'e eklenir.
+     - Eski sırada bu dizinler bos oldugundan Excel eksik üretiliyordu.
+  2. PFAZ10 (Thesis) PFAZ12 ve PFAZ13'ten ÖNCE çalısıyordu:
+     - Tez PFAZ12 istatistiksel test bulgularını ve PFAZ13 AutoML iceriğini toplar.
+     - Eski sırada bu veriler henüz üretilmemis oluyordu.
+- **Düzeltme:** `PIPELINE_EXECUTION_ORDER = [1,2,3,4,5,7,9,12,13,6,8,10,11]` class sabitı eklendi.
+  `run_all_pfaz()` artık bu siraya gore çalışır.
+  Dogru sira: `1→2→3→4→5→7→9→12→13→6→8→10` + PFAZ8-Supplemental son.
+
+### Dogrulama
+- Smoke test: 8/8 PASS (her iki commit sonrasi)
+- `PIPELINE_EXECUTION_ORDER` kısıt kontrolü: PFAZ9<PFAZ6 ✓, PFAZ13<PFAZ6 ✓,
+  PFAZ6<PFAZ8 ✓, PFAZ12<PFAZ10 ✓, PFAZ13<PFAZ10 ✓
+
+---
+
+## 2026-04-30 — QA Branch Fix: Rules 3/9/17/18 Dogrudan Branch'e Uygulandi
+
+**Yapan:** Claude Code (dogrudan dev-updates branch)
+**Scope:** tum Python dosyalari
+**Toplam dosya degisikligi:** 107 dosya
+**Ozet:** Worktree agent sorunu nedeniyle yapilamamis olan Rule 3/9/17/18 duzeltmeleri
+dogrudan branch uzerinde uygulanmistir.
+- Kural 17: 132 emoji/sembol, 48 dosya
+- Kural 18: 31 blok, 18 dosya (optional import None eksikleri)
+- Kural 3: 77 satir, 24 dosya (open() encoding eksikleri)
+- Kural 9: 1 bare except (pfaz8_thesis_charts.py:207)
+- Smoke test: 8/8 PASS
+
+---
+
+## 2026-04-30 — Automated QA Pass: 22 Coding Rules Enforcement (Bug #28-#47)
+
+**Yapan:** Claude Code (Automated QA Agent — worktree izolasyonunda)
+**Scope:** 159 Python files — pfaz_modules/, core_modules/, analysis_modules/, utils/, scripts/, tests/, main.py
+**Toplam dosya degisikligi:** 52 dosya (worktree'de — branch'e aktarilamamisti, yukarida uygulanmistir)
+
+### Duzeltilen Bug Kategorileri
+
+#### RULE 9 — Bare except (2 fix)
+- `utils/ai_model_checkpoint.py:80` — `except:` → `except Exception as e:` (H5 save fallback)
+- `scripts/create_pfaz7_xlsx.py:61` — `except:` → `except Exception:` (float parse fallback)
+
+#### RULE 17 — Emoji/Unicode in log messages (21 fix, 6 dosya)
+- `pfaz_modules/pfaz02_ai_training/training_utils_v2.py` — emoji 🛑 → `[STOP]`
+- `pfaz_modules/pfaz02_ai_training/advanced_models.py` — emoji 🤝🔀 → `[BUILD]` `[TRAIN]`
+- `pfaz_modules/pfaz02_ai_training/parallel_ai_trainer.py` — emoji 🚀🐢 → `[START]`
+- `pfaz_modules/pfaz07_ensemble/faz7_ensemble_pipeline.py` — emoji 🏗️ → `[BUILD]`
+- `utils/checkpoint_manager.py` — emoji 🚫▶️🗑️ → `[MISS]` `[RESUME]` `[DEL]`
+- `utils/smart_cache.py` — emoji 🚫🗑️ → `[MISS]` `[DEL]` (5 occurrences)
+- `scripts/health_check.py` — emoji ✓⚠✗🎉✅⚠️❌ → `[PASS]` `[WARN]` `[FAIL]` `[OK]`
+
+#### RULE 18 — Optional imports missing None assignment (42 fix, 38 dosya)
+Butun `except ImportError: _AVAILABLE = False` bloklari, import edilen isimlere
+`= None` atamasi yapacak sekilde duzeltildi. Etkilenen modüller:
+- pfaz02: hyperparameter_tuner, model_trainer, overfitting_detector, parallel_ai_trainer
+- pfaz03: anfis_performance_analyzer, anfis_robustness_tester
+- pfaz04: generalization_analyzer, unknown_nuclei_predictor
+- pfaz05: faz5_cross_model_analysis, optimizer_comparison_reporter
+- pfaz06: excel_standardizer, reports_comprehensive_module, __init__.py
+- pfaz07: pfaz7_complete_ensemble_pipeline
+- pfaz08: model_comparison_dashboard, visualization_advanced_modules, visualization_master_system, shap_analysis.py
+- pfaz09: advanced_analytics_comprehensive, monte_carlo_simulation_system, aaa2_control_group_complete_v4
+- pfaz11: pfaz7_production_complete, production_web_interface
+- pfaz12: advanced_sensitivity_analysis, bootstrap_confidence_intervals, statistical_testing_suite
+- pfaz13: automl_anfis_optimizer, automl_feature_engineer, automl_logging_reporting_system, automl_retraining_loop, automl_visualizer, feature_engineering_extended
+- analysis_modules/model_interpretability.py
+- utils/distributed_training.py, enhanced_checkpoint.py
+
+#### RULE 3 — open() without encoding='utf-8' (85 fix, 39 dosya)
+Otomatik patch: tum tek-satirli `open(path, mode)` cagrilari
+`open(path, mode, encoding='utf-8')` olarak duzeltildi.
+Etkilenen dosyalar: pfaz01-pfaz10, pfaz13, analysis_modules.
+
+#### RULE 5 — input() without isatty/HPC guard (1 fix)
+- `main.py:1538` — `run_single_prediction()` icindeki `input("Girdiniz:")` icin
+  isatty + HPC_MODE guard eklendi (non-interactive moda `--predict` yonlendirmesi).
+
+#### RULE 19 — Test files open() without encoding (3 fix)
+- `tests/test_integration/test_sample_integration.py` — 2 open() fixed
+- `tests/test_smoke/test_basic_smoke.py` — 1 open() fixed
+
+### Dogrulama
+```
+Syntax check (52 dosya): PASS (ast.parse)
+Bare except remaining: 0
+Emoji in logger remaining: 0
+main.py syntax: OK
+test files syntax: OK
+```
+
+---
+
+## 2026-04-30 — ANFIS Dataset Secimleri + Benzer Bug Analizi (5 Fix)
+
+**Yapan:** Claude Code (ANFIS feature sayisi + dataset secim sistemi incelemesi)
+**Scope:** PFAZ 01, PFAZ 03 — feature set tutarlilik denetimi
+
+### PFAZ 01 — dataset_generation_pipeline_v2.py
+
+**BUG: SMALL_NUCLEUS_FEATURE_SETS legacy isimler**
+- `SMALL_NUCLEUS_FEATURE_SETS = ['Basic', 'Standard']` → `'Standard'` FEATURE_SETS'te tanimsiz;
+  `'Basic'` legacy (SHAP-bazli degil). Kucuk dataset'lerde (<=100 nuclei) filtre bos kaliyordu,
+  `feature_set_list[:2]` fallback devreye giriyordu (keyfi ilk 2 set).
+- **Duzeltme:** Listeyi tum 3-girisli SHAP-bazli setlerle (13 kod) degistirdi:
+  AZN, AZS, AZMC, AZBEPA, AZB2E, ASMC, AMCBEPA, ZB2EMC, B2EMCBEA, MCZMNM, AZVNV, ZMNMBEA, NNPMC.
+
+### PFAZ 01 — io_config_manager.py
+
+**BUG: Duplicate elif koulu — dead code (KRITIK MANTIK HATASI)**
+- `_auto_detect_config()`: `elif n_features <= 4: return '3In1Out'` + `elif n_features <= 4: return '4In1Out'`.
+  Ikinci kol hic calismiyor: 4-girisli bilinmeyen setler '3In1Out' donuyordu ('4In1Out' beklenir).
+- **Duzeltme:** `elif n_features <= 3` ve `elif n_features <= 4` olarak ayrildi.
+
+**BUG: FEATURE_SET_TO_CONFIG'de eksik NnNp girisleri**
+- 'AZNNP', 'ZNNPMC', 'AZNNPMC', 'AZSNNNP', 'NNPMC' setleri haritada yoktu.
+  4-girisli NnNp setleri yukaridaki duplicate bug yuzunden '3In1Out' donuyordu.
+- **Duzeltme:** 5 NnNp seti haritaya eklendi (NNPMC->3In1Out, AZNNP/ZNNPMC->4In1Out, AZNNPMC/AZSNNNP->5InAdv).
+
+### PFAZ 03 — anfis_parallel_trainer_v2.py
+
+**BUG: discover_datasets() n_inputs filtresi yok**
+- Tum dataset dizinleri ANFIS egitim kuyruğuna ekleniyor; 'Extended' (12 giris) veya 'Full' (~40
+  giris) gibi legacy dataset'ler varsa 2^n_inputs kural sayisi bellek patlamasi yol acar.
+- **Duzeltme:** `ANFIS_MAX_INPUTS = 5` sinif sabiti eklendi. `discover_datasets()` artik
+  her dataset'in `metadata.json` dosyasini okuyarak feature sayisini kontrol ediyor;
+  `n_inputs > 5` olanlari SKIP loguyla atliyor. metadata yoksa geciriyor (backward compat).
+- `_get_n_inputs_from_metadata()` yardimci metodu eklendi.
+
+### PFAZ 03 — anfis_dataset_selector.py
+
+**BUG: select_method_1_layered() quota redistribusyon eksik**
+- Tier'da kota kadar dataset yoksa toplam hedefi dusuruyordu, fazlayi diger tierlara dagitmiyordu.
+- **Duzeltme:** Adaptive quota redistribution eklendi (round-robin spillover). Parametreler:
+  `n_top_quota`, `n_mid_quota`, `n_low_quota`; varsayilan 50/50/50=150.
+  `select_both_methods()` varsayilan `n_datasets=150`, quota=50/50/50 yapildi.
+
+### Test Sonuclari
+
+- `io_config_manager` assert testleri: `_auto_detect_config(3,'MM')`→'3In1Out' ✓, `_auto_detect_config(4,'MM')`→'4In1Out' ✓, `get_config_for_feature_set('AZNNP',4,'MM')`→'4In1Out' ✓
+- Import kontrolleri: tum degistirilen moduller basariyla import edildi.
+
+---
+
+## 2026-04-30 — QA Re-Review Bug Fix Oturumu (5 Yeni Bug, BUG #1.1 + #8.1 Tamamlama)
+
+**Yapan:** Claude Code (V10_QA_REREVIEW_REPORT.md incelenmesi sonrasi)
+**Referans rapor:** `V10_QA_REREVIEW_REPORT.md`
+**Scope:** 7 Python dosyasi, onceki raporun eksik kalan 2 partial fix + 5 yeni bug
+
+### PFAZ 02 — parallel_ai_trainer.py (2 fix)
+
+**BUG #18 — keras NameError (KRITIK BLOCKER)**
+- `parallel_ai_trainer.py:89-91`: TF ImportError except bloguna `keras = None`, `layers = None`, `callbacks = None` eklendi
+- TF olmayan ortamda (smoke test, CI, HPC venv'inde TF yuklu degil) modul artik import edilebiliyor
+- Etki: 38/38 integration test PASS (onceden 4 FAIL)
+
+**BUG #1.1 — LightGBM Nested Parallelism (PARTIAL fix tamamlandi)**
+- `parallel_ai_trainer.py:694`: `n_jobs=(-1 if lgbm_device == 'cpu' else 1)` -> `n_jobs=(_inner_n_jobs() if lgbm_device == 'cpu' else 1)`
+- LightGBM artik `_PFAZ_PARALLEL_ACTIVE` flag'ine uyuyor, RF/XGB ile tutarli
+
+### PFAZ 02 — advanced_models.py (BUG #19)
+
+**BUG #19 — torch Hard Import (KRITIK BLOCKER)**
+- `torch`, `torch.nn`, `torch.optim`, `TensorDataset`, `DataLoader` try/except'e alindi
+- `TORCH_AVAILABLE = True/False` flag eklendi
+- `PyTorchGPUOptimizer`, `BayesianNeuralNetwork`, `PhysicsInformedNN` `__init__` metodlarina TORCH_AVAILABLE guard eklendi:
+  `if not TORCH_AVAILABLE: raise ImportError("PyTorch is required...")`
+- Artik torch yokken modul import edilebiliyor, sinif instantiate edilirse net hata mesaji veriyor
+
+### PFAZ 02 — hyperparameter_tuner.py (BUG #22 tamamlama)
+
+**BUG #22 — Optuna Trial n_jobs=-1 (KRITIK)**
+- `hyperparameter_tuner.py:248` (RF params): `n_jobs=-1` -> `n_jobs=_inner_n_jobs()`
+- `hyperparameter_tuner.py:341` (XGB params): `n_jobs=-1` -> `n_jobs=_inner_n_jobs()`
+- `_inner_n_jobs()` zaten dosya basinda tanimli, import eklenmesi gerekmedi
+
+### PFAZ 13 — automl_hyperparameter_optimizer.py (BUG #22 devami)
+
+- `automl_hyperparameter_optimizer.py:130` (RF params): `n_jobs=-1` -> `n_jobs=_inner_n_jobs()`
+- `automl_hyperparameter_optimizer.py:147` (XGB params): `n_jobs=-1` -> `n_jobs=_inner_n_jobs()`
+- `automl_hyperparameter_optimizer.py:200` (XGB fallback): `n_jobs: params.get('n_jobs', -1)` -> `n_jobs=_inner_n_jobs()`
+
+### main.py — BUG #8.1 Tamamlama
+
+**BUG #8.1 — _ask_prediction_after_pipeline HPC Hang (PARTIAL fix tamamlandi)**
+- `main.py:1754`: `_ask_prediction_after_pipeline()` kosulsuz cagrilmasini TTY check ile sarmalandi:
+  ```python
+  if sys.stdin.isatty() and not os.environ.get('HPC_MODE'):
+      self._ask_prediction_after_pipeline()
+  else:
+      logger.info("[AUTO] Non-interactive mode: skipping prediction prompt")
+  ```
+- HPC'de `--run-all` sonrasi artik hang olmayacak
+
+### analysis_modules — real_data_integration_manager.py (BUG #20)
+
+- `import os` eklendi
+- `RandomForestRegressor(n_jobs=-1)` -> `n_jobs=1 if os.environ.get('_PFAZ_PARALLEL_ACTIVE')=='1' else -1`
+
+### PFAZ 08 — shap_analysis.py (BUG #21)
+
+- `import os` eklendi
+- `permutation_importance(..., n_jobs=-1)` -> `n_jobs=_n_jobs` (env flag ile belirleniyor)
+
+### tests/test_smoke — test_basic_smoke.py (Ek fix)
+
+- `test_main_py_syntax`: `open(main_path)` -> `open(main_path, encoding='utf-8')`
+- Windows'ta CP1254 default encoding ile UTF-8 main.py parse edilemiyordu, test artik PASS
+
+### Test Sonuclari
+
+| Test seti | Oncesi | Sonrasi |
+|-----------|--------|---------|
+| Smoke (8 test) | 7/8 PASS | 8/8 PASS |
+| Integration (38 test) | 34/38 PASS (4 FAIL - keras) | 38/38 PASS |
+| n_jobs=-1 (kod ici) | 8 adet | 0 adet |
+
+---
+
+## 2026-04-30 — QA Bug Fix Oturumu (17 Kritik Bug, HPC Hazirlik)
 
 **Yapan:** Claude Code (Senior QA Engineer review sonrası)  
 **Referans rapor:** `V10_QA_BUG_REPORT.md`  

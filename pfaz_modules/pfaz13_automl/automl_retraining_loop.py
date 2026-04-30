@@ -38,11 +38,15 @@ except ImportError:
     except ImportError:
         AutoMLOptimizer = None
         OPTUNA_AVAILABLE = False
+    OPTUNA_AVAILABLE = None
+    OPTUNA_AVAILABLE = None
+        OPTUNA_AVAILABLE = None
 
 try:
     import openpyxl
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    openpyxl = None
     OPENPYXL_AVAILABLE = False
 
 
@@ -55,7 +59,7 @@ def _load_metrics_files(models_dir: Path) -> List[Dict]:
     records = []
     for mf in models_dir.rglob('metrics_*.json'):
         try:
-            with open(mf, 'r') as f:
+            with open(mf, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             # Flat list veya tek obje olabilir
             if isinstance(data, list):
@@ -314,7 +318,7 @@ class AutoMLRetrainingLoop:
                 logger.info(f"[AutoMLRetrain] aaa2_txt_path otomatik bulundu: {fallback}")
                 return str(fallback)
 
-        logger.info("[AutoMLRetrain] aaa2_txt_path bulunamadi — deneysel karsilastirma atlanacak")
+        logger.info("[AutoMLRetrain] aaa2_txt_path bulunamadi -- deneysel karsilastirma atlanacak")
         return None
 
     # ------------------------------------------------------------------
@@ -411,7 +415,7 @@ class AutoMLRetrainingLoop:
         Test seti tahminleri de uretilir (deneysel karsilastirma icin).
         """
         if not OPTUNA_AVAILABLE or AutoMLOptimizer is None:
-            logger.warning("[AutoMLRetrain] Optuna/AutoMLOptimizer mevcut degil — atlaniyor")
+            logger.warning("[AutoMLRetrain] Optuna/AutoMLOptimizer mevcut degil -- atlaniyor")
             return None
 
         target     = cand['target']
@@ -428,7 +432,7 @@ class AutoMLRetrainingLoop:
             # Fallback: sadece train+val
             split = _load_split_data(self.datasets_dir, dataset, target)
             if split is None:
-                logger.warning(f"[AutoMLRetrain] Veri bulunamadı: {dataset}/{target} — atlaniyor")
+                logger.warning(f"[AutoMLRetrain] Veri bulunamadı: {dataset}/{target} -- atlaniyor")
                 return None
             X_train, y_train, X_val, y_val = split
             X_test, y_test, nucleus_ids = None, None, []
@@ -531,8 +535,11 @@ class AutoMLRetrainingLoop:
             try:
                 from automl_anfis_optimizer import AutoMLANFISOptimizer
             except ImportError:
-                logger.warning("[AutoMLANFIS] AutoMLANFISOptimizer import edilemedi — atlaniyor")
+                logger.warning("[AutoMLANFIS] AutoMLANFISOptimizer import edilemedi -- atlaniyor")
                 return []
+            AutoMLANFISOptimizer = None
+            AutoMLANFISOptimizer = None
+                AutoMLANFISOptimizer = None
 
         anfis_dir = self.output_dir / 'anfis_optimization' / category
         anfis_dir.mkdir(parents=True, exist_ok=True)
@@ -714,6 +721,7 @@ class AutoMLRetrainingLoop:
                 logger.info("[OK] AutoMLVisualizer -> automl_visualizations/")
         except ImportError:
             pass
+            AutoMLVisualizer = None
         except Exception as _av_e:
             logger.warning(f"[WARNING] AutoMLVisualizer basarisiz: {_av_e}")
 
@@ -741,7 +749,7 @@ class AutoMLRetrainingLoop:
                 'ai_records':    self._improvement_records,
                 'anfis_records': self._anfis_records,
             }
-            with open(log_path, 'w') as f:
+            with open(log_path, 'w', encoding='utf-8') as f:
                 json.dump(combined, f, indent=2)
             logger.info(f"[AutoMLRetrain] JSON log: {log_path}")
         except Exception as e:
@@ -751,7 +759,7 @@ class AutoMLRetrainingLoop:
         """Aday yoksa boş rapor yaz."""
         log_path = self.output_dir / 'automl_retraining_log.json'
         try:
-            with open(log_path, 'w') as f:
+            with open(log_path, 'w', encoding='utf-8') as f:
                 json.dump([], f)
         except Exception:
             pass
@@ -767,7 +775,7 @@ class AutoMLRetrainingLoop:
           6. Overview          : Ozet istatistikler
         """
         if not OPENPYXL_AVAILABLE:
-            logger.warning("[AutoMLRetrain] openpyxl yok — Excel raporu atlandi")
+            logger.warning("[AutoMLRetrain] openpyxl yok -- Excel raporu atlandi")
             return None
         if not self._improvement_records and not self._anfis_records:
             return None

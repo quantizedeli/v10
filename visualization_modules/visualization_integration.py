@@ -121,7 +121,7 @@ class VisualizationIntegrationManager:
     def _load_config(self, config_file: str) -> Dict:
         """Konfigürasyon dosyasından yükle"""
         try:
-            with open(config_file, 'r') as f:
+            with open(config_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Could not load config: {e}, using defaults")
@@ -456,7 +456,7 @@ class VisualizationIntegrationManager:
         
         # Save HTML
         html_file = self.output_base_dir / 'visualization_report.html'
-        with open(html_file, 'w') as f:
+        with open(html_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
         logger.info(f"[OK] HTML report saved: {html_file}")
@@ -491,7 +491,7 @@ class VisualizationIntegrationManager:
         
         # Save summary
         summary_file = self.output_base_dir / 'summary_statistics.json'
-        with open(summary_file, 'w') as f:
+        with open(summary_file, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         
         logger.info(f"[OK] Summary statistics saved: {summary_file}")
@@ -499,7 +499,7 @@ class VisualizationIntegrationManager:
     def save_config(self):
         """Konfigürasyonu kaydet"""
         config_file = self.output_base_dir / 'visualization_config.json'
-        with open(config_file, 'w') as f:
+        with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(self.config, f, indent=2)
         logger.info(f"[OK] Config saved: {config_file}")
 

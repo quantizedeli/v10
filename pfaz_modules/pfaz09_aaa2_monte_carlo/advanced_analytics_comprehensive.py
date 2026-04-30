@@ -61,6 +61,7 @@ try:
     import shap
     SHAP_AVAILABLE = True
 except ImportError:
+    shap = None
     SHAP_AVAILABLE = False
     logging.warning("SHAP not available - install: pip install shap")
 
@@ -71,6 +72,9 @@ try:
     from plotly.subplots import make_subplots
     PLOTLY_AVAILABLE = True
 except ImportError:
+    go = None
+    px = None
+    make_subplots = None
     PLOTLY_AVAILABLE = False
     logging.warning("Plotly not available - interactive dashboards disabled")
 
@@ -81,6 +85,11 @@ try:
     from openpyxl.styles import PatternFill, Font, Alignment
     EXCEL_AVAILABLE = True
 except ImportError:
+    xlsxwriter = None
+    load_workbook = None
+    PatternFill = None
+    Font = None
+    Alignment = None
     EXCEL_AVAILABLE = False
     logging.warning("Excel libraries not available")
 

@@ -117,7 +117,7 @@ class EnsemblePipeline:
             'predictions': df_ensemble
         }
         
-        logger.info(f"\n  R² = {r2:.4f}")
+        logger.info(f"\n  R^2 = {r2:.4f}")
         logger.info(f"  RMSE = {rmse:.4f}")
         logger.info(f"  MAE = {mae:.4f}")
         
@@ -184,7 +184,7 @@ class EnsemblePipeline:
             'predictions': df_ensemble
         }
         
-        logger.info(f"\n  R² = {r2:.4f}")
+        logger.info(f"\n  R^2 = {r2:.4f}")
         logger.info(f"  RMSE = {rmse:.4f}")
         logger.info(f"  MAE = {mae:.4f}")
         

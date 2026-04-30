@@ -77,7 +77,7 @@ class AIModelCheckpoint:
                 model.save(model_file)
                 saved_files['model'] = str(model_file)
                 logger.info(f"  [OK] Model kaydedildi (H5): {model_file.name}")
-            except:
+            except Exception as e:
                 # H5 başarısız olursa pickle dene
                 model_file = output_dir / f'{checkpoint_name}_model.pkl'
                 with open(model_file, 'wb') as f:
@@ -99,7 +99,7 @@ class AIModelCheckpoint:
         config_info['model_type'] = model_type
         config_info['timestamp'] = timestamp
         config_file = output_dir / f'{checkpoint_name}_config.json'
-        with open(config_file, 'w') as f:
+        with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(config_info, f, indent=2)
         saved_files['config'] = str(config_file)
         logger.info(f"  [OK] Config kaydedildi: {config_file.name}")
@@ -108,7 +108,7 @@ class AIModelCheckpoint:
         metrics['model_type'] = model_type
         metrics['timestamp'] = timestamp
         metrics_file = output_dir / f'{checkpoint_name}_metrics.json'
-        with open(metrics_file, 'w') as f:
+        with open(metrics_file, 'w', encoding='utf-8') as f:
             json.dump(metrics, f, indent=2)
         saved_files['metrics'] = str(metrics_file)
         logger.info(f"  [OK] Metrics kaydedildi: {metrics_file.name}")
@@ -124,7 +124,7 @@ class AIModelCheckpoint:
         }
         
         summary_file = output_dir / f'{checkpoint_name}_summary.json'
-        with open(summary_file, 'w') as f:
+        with open(summary_file, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         saved_files['summary'] = str(summary_file)
         
@@ -203,7 +203,7 @@ class AIModelCheckpoint:
             logger.info(f"  [OK] Config bulundu: {config_files[0].name}")
             
             try:
-                with open(config_files[0], 'r') as f:
+                with open(config_files[0], 'r', encoding='utf-8') as f:
                     config = json.load(f)
                     logger.info(f"    [OK] Config içeriği doğru")
             except Exception as e:
@@ -220,9 +220,9 @@ class AIModelCheckpoint:
             logger.info(f"  [OK] Metrics bulundu: {metrics_files[0].name}")
             
             try:
-                with open(metrics_files[0], 'r') as f:
+                with open(metrics_files[0], 'r', encoding='utf-8') as f:
                     metrics = json.load(f)
-                    logger.info(f"    [OK] Metrics içeriği doğru (R²={metrics.get('R2', 'N/A')})")
+                    logger.info(f"    [OK] Metrics içeriği doğru (R^2={metrics.get('R2', 'N/A')})")
             except Exception as e:
                 verification['errors'].append(f"Metrics yüklenemedi: {str(e)}")
         else:
@@ -277,11 +277,11 @@ class AIModelCheckpoint:
             model = tf.keras.models.load_model(model_file)
         
         # Config'i yükle
-        with open(verification['config_file'], 'r') as f:
+        with open(verification['config_file'], 'r', encoding='utf-8') as f:
             config = json.load(f)
         
         # Metrics'i yükle
-        with open(verification['metrics_file'], 'r') as f:
+        with open(verification['metrics_file'], 'r', encoding='utf-8') as f:
             metrics = json.load(f)
         
         logger.info(f"[OK] Checkpoint başarıyla yüklendi: {verification['checkpoint_name']}")
@@ -300,14 +300,14 @@ class AIModelRegistry:
     def _load_registry(self):
         """Kayıt defterini yükle"""
         if self.registry_file.exists():
-            with open(self.registry_file, 'r') as f:
+            with open(self.registry_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return {'checkpoints': [], 'last_updated': None}
     
     def _save_registry(self):
         """Kayıt defterini kaydet"""
         self.registry['last_updated'] = datetime.now().isoformat()
-        with open(self.registry_file, 'w') as f:
+        with open(self.registry_file, 'w', encoding='utf-8') as f:
             json.dump(self.registry, f, indent=2)
     
     def register_checkpoint(self, checkpoint_info):

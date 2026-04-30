@@ -372,13 +372,13 @@ class SystemHealthChecker:
 
         if status == 'PASS':
             self.results['passed'] += 1
-            logger.info(f"  ✓ PASS: {message}")
+            logger.info(f"  [PASS] {message}")
         elif status == 'FAIL':
             self.results['failed'] += 1
-            logger.error(f"  ✗ FAIL: {message}")
+            logger.error(f"  [FAIL] {message}")
         elif status == 'WARN':
             self.results['warnings'] += 1
-            logger.warning(f"  ⚠ WARN: {message}")
+            logger.warning(f"  [WARN] {message}")
 
     def _print_summary(self):
         """Özet yazdır"""
@@ -388,21 +388,21 @@ class SystemHealthChecker:
 
         total_checks = len(self.results['checks'])
         logger.info(f"Total Checks: {total_checks}")
-        logger.info(f"✓ Passed: {self.results['passed']}")
-        logger.info(f"⚠ Warnings: {self.results['warnings']}")
-        logger.info(f"✗ Failed: {self.results['failed']}")
+        logger.info(f"[OK] Passed: {self.results['passed']}")
+        logger.info(f"[WARN] Warnings: {self.results['warnings']}")
+        logger.info(f"[FAIL] Failed: {self.results['failed']}")
 
         health_percentage = (self.results['passed'] / total_checks * 100) if total_checks > 0 else 0
         logger.info(f"\nSystem Health: {health_percentage:.1f}%")
 
         if self.results['failed'] == 0 and self.results['warnings'] == 0:
-            logger.info("\n🎉 SYSTEM STATUS: EXCELLENT - All checks passed!")
+            logger.info("\n[OK] SYSTEM STATUS: EXCELLENT - All checks passed!")
         elif self.results['failed'] == 0:
-            logger.info("\n✅ SYSTEM STATUS: GOOD - All critical checks passed")
+            logger.info("\n[OK] SYSTEM STATUS: GOOD - All critical checks passed")
         elif self.results['failed'] < 3:
-            logger.info("\n⚠️  SYSTEM STATUS: FAIR - Some issues detected")
+            logger.info("\n[WARN] SYSTEM STATUS: FAIR - Some issues detected")
         else:
-            logger.info("\n❌ SYSTEM STATUS: POOR - Multiple issues detected")
+            logger.info("\n[FAIL] SYSTEM STATUS: POOR - Multiple issues detected")
 
         logger.info("=" * 80)
 

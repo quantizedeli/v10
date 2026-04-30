@@ -40,6 +40,9 @@ try:
     from optuna.samplers import TPESampler
     OPTUNA_AVAILABLE = True
 except ImportError:
+    optuna = None
+    MedianPruner = None
+    TPESampler = None
     OPTUNA_AVAILABLE = False
     logging.warning("Optuna not available! pip install optuna")
 
@@ -53,6 +56,7 @@ try:
     from xgboost import XGBRegressor
     XGBOOST_AVAILABLE = True
 except ImportError:
+    XGBRegressor = None
     XGBOOST_AVAILABLE = False
 
 # TensorFlow
@@ -62,6 +66,10 @@ try:
     from tensorflow.keras import layers, callbacks
     TF_AVAILABLE = True
 except ImportError:
+    tf = None
+    keras = None
+    layers = None
+    callbacks = None
     TF_AVAILABLE = False
 
 # Local imports
@@ -149,7 +157,7 @@ class HyperparameterTuner:
         self.best_params = self.study.best_params
         
         logger.info(f"\n[OK] Tuning tamamlandı!")
-        logger.info(f"Best R² Score: {self.study.best_value:.4f}")
+        logger.info(f"Best R^2 Score: {self.study.best_value:.4f}")
         logger.info(f"Best Parameters: {self.best_params}")
         
         # Save results
@@ -165,7 +173,7 @@ class HyperparameterTuner:
         """Save tuning results"""
         
         # Best parameters
-        with open(self.output_dir / 'best_params.json', 'w') as f:
+        with open(self.output_dir / 'best_params.json', 'w', encoding='utf-8') as f:
             json.dump(self.best_params, f, indent=2)
         
         # Trials dataframe
@@ -182,7 +190,7 @@ class HyperparameterTuner:
             'datetime': datetime.now().isoformat()
         }
         
-        with open(self.output_dir / 'summary.json', 'w') as f:
+        with open(self.output_dir / 'summary.json', 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         
         logger.info(f"[OK] Sonuçlar kaydedildi: {self.output_dir}")
@@ -245,9 +253,9 @@ class RandomForestTuner(HyperparameterTuner):
             'max_features': trial.suggest_categorical('max_features', ['sqrt', 'log2', None]),
             'bootstrap': trial.suggest_categorical('bootstrap', [True, False]),
             'random_state': 42,
-            'n_jobs': -1
+            'n_jobs': _inner_n_jobs()
         }
-        
+
         # Create model
         model = RandomForestRegressor(**params)
         
@@ -338,9 +346,9 @@ class XGBoostTuner(HyperparameterTuner):
             'reg_alpha': trial.suggest_float('reg_alpha', 0, 1),
             'reg_lambda': trial.suggest_float('reg_lambda', 0, 1),
             'random_state': 42,
-            'n_jobs': -1
+            'n_jobs': _inner_n_jobs()
         }
-        
+
         model = XGBRegressor(**params)
         
         if X_val is not None and y_val is not None:
@@ -517,7 +525,7 @@ class UnifiedTuner:
                 results[model_name] = {'error': str(e)}
         
         # Save combined results
-        with open(self.output_dir / 'all_models_best_params.json', 'w') as f:
+        with open(self.output_dir / 'all_models_best_params.json', 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2)
         
         logger.info(f"\n[OK] Tüm tuning işlemleri tamamlandı!")

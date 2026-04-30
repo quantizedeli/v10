@@ -284,7 +284,7 @@ class NuclearMomentBandAnalyzer:
             pivot_rows, ext_corr_rows
         )
 
-        logger.info(f"\n[OK] BandAnalyzer tamamlandi → {excel_path}")
+        logger.info(f"\n[OK] BandAnalyzer tamamlandi -> {excel_path}")
         return {
             "results":    self._results,
             "excel_path": str(excel_path) if excel_path else None,
@@ -844,7 +844,7 @@ class NuclearMomentBandAnalyzer:
             excel_candidates += list(root.rglob("AAA2_Original_vs_Predictions.xlsx"))
 
         if not excel_candidates:
-            logger.info("[BandAnalyzer] PFAZ4 AAA2 karsilastirma Excel bulunamadi — tahmin dogrulugu atlandı")
+            logger.info("[BandAnalyzer] PFAZ4 AAA2 karsilastirma Excel bulunamadi -- tahmin dogrulugu atlandı")
             return rows
 
         pfaz4_excel = excel_candidates[0]

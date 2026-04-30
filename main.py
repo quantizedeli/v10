@@ -217,7 +217,7 @@ class PFAZStatusManager:
     def _load_status(self) -> Dict:
         """Durum dosyasını yükle"""
         if self.status_file.exists():
-            with open(self.status_file, 'r') as f:
+            with open(self.status_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return self._create_default_status()
     
@@ -241,7 +241,7 @@ class PFAZStatusManager:
     
     def save_status(self):
         """Durumu kaydet"""
-        with open(self.status_file, 'w') as f:
+        with open(self.status_file, 'w', encoding='utf-8') as f:
             json.dump(self.status, f, indent=2)
     
     def update_pfaz(self, pfaz_id: str, status: str, progress: int):
@@ -334,7 +334,7 @@ class NuclearPhysicsAIOrchestrator:
         default_config = self._default_config()
 
         if Path(self.config_path).exists():
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 loaded_config = json.load(f)
 
             # Merge with defaults to ensure all required keys exist
@@ -527,6 +527,13 @@ class NuclearPhysicsAIOrchestrator:
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
             return {'status': 'skipped'}
 
+        if mode == 'resume':
+            _existing = list(self.pfaz_outputs[2].rglob('metrics_*.json'))
+            if _existing:
+                logger.info(f"[RESUME] PFAZ 2 ciktisi mevcut ({len(_existing)} metrics), atlaniyor.")
+                self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
+                return {'status': 'resumed_from_existing'}
+
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 10)
 
@@ -547,7 +554,7 @@ class NuclearPhysicsAIOrchestrator:
             trainer = ParallelAITrainer(
                 datasets_dir=str(self.pfaz_outputs[1]),
                 models_dir=str(self.pfaz_outputs[2]),
-                training_config_path='pfaz_modules/pfaz02_ai_training/training_configs_50.json',
+                training_config_path=str(self.project_root / 'pfaz_modules' / 'pfaz02_ai_training' / 'training_configs_50.json'),
                 gpu_enabled=_gpu_available,
                 n_workers=_n_workers,
                 use_hyperparameter_tuning=config.get('use_hyperparameter_tuning', False),
@@ -778,9 +785,11 @@ class NuclearPhysicsAIOrchestrator:
                 use_latex_generator=config.get('use_latex_generator', True)
             )
             # Pass aaa2.txt path for isotope chain analysis
-            aaa2_path = self.config.get('source_data_path') or self.config.get('aaa2_txt_path')
-            if aaa2_path:
-                reporter.aaa2_txt_path = str(aaa2_path)
+            _aaa2_f = self.config.get('data_file', 'aaa2.txt')
+            _aaa2_p = Path(_aaa2_f) if Path(_aaa2_f).is_absolute() else self.project_root / _aaa2_f
+            if not _aaa2_p.exists():
+                _aaa2_p = self.project_root / 'data' / 'aaa2.txt'
+            reporter.aaa2_txt_path = str(_aaa2_p)
             # Pass PFAZ9 output dir for Monte Carlo summary
             reporter.pfaz9_output_dir = str(self.pfaz_outputs[9])
             # Pass PFAZ13 output dir for AutoML improvements sheet
@@ -1046,7 +1055,7 @@ class NuclearPhysicsAIOrchestrator:
             if ai_models_dir.exists():
                 for metrics_file in ai_models_dir.rglob('metrics_*.json'):
                     try:
-                        with open(metrics_file) as f:
+                        with open(metrics_file, encoding='utf-8') as f:
                             m = json.load(f)
                         val_r2 = m.get('val', {}).get('r2', None)
                         if val_r2 is None or np.isnan(val_r2) or val_r2 < -10:
@@ -1218,7 +1227,7 @@ class NuclearPhysicsAIOrchestrator:
             logger.info(f"[GPU] PFAZ13 gpu={_gpu13}")
 
             from pfaz_modules.pfaz13_automl.automl_optimizer import (
-                AutoMLOptimizer, OPTUNA_AVAILABLE, optimize_all_targets
+                AutoMLOptimizer, OPTUNA_AVAILABLE
             )
             import json, numpy as np, pandas as pd
             from pathlib import Path
@@ -1227,7 +1236,7 @@ class NuclearPhysicsAIOrchestrator:
             output_dir.mkdir(parents=True, exist_ok=True)
 
             if not OPTUNA_AVAILABLE:
-                logger.warning("[PFAZ 13] optuna kurulu değil → 'pip install optuna'")
+                logger.warning("[PFAZ 13] optuna kurulu değil -> 'pip install optuna'")
                 self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
                 return {'status': 'skipped', 'reason': 'optuna not installed'}
 
@@ -1238,7 +1247,7 @@ class NuclearPhysicsAIOrchestrator:
             if ai_models_dir.exists():
                 for metrics_file in ai_models_dir.rglob('metrics_*.json'):
                     try:
-                        with open(metrics_file) as f:
+                        with open(metrics_file, encoding='utf-8') as f:
                             m = json.load(f)
                         val_r2 = m.get('val', {}).get('r2', -999)
                         if val_r2 < -2 or np.isnan(val_r2):
@@ -1376,7 +1385,7 @@ class NuclearPhysicsAIOrchestrator:
 
             # ---- Save summary -----------------------------------------------
             summary_path = output_dir / 'automl_summary.json'
-            with open(summary_path, 'w') as f:
+            with open(summary_path, 'w', encoding='utf-8') as f:
                 json.dump(automl_results, f, indent=2)
             logger.info(f"[PFAZ13] Summary: {summary_path}")
 
@@ -1435,14 +1444,14 @@ class NuclearPhysicsAIOrchestrator:
             return {'deleted': [], 'kept': [], 'total_freed_mb': 0.0}
 
         logger.info(f"\n[CLEANUP] Başarısız dataset taraması başlıyor...")
-        logger.info(f"  Val R² eşiği: {val_r2_threshold}")
+        logger.info(f"  Val R^2 eşiği: {val_r2_threshold}")
         logger.info(f"  Mod: {'Simülasyon (dry_run)' if dry_run else 'GERÇEK SİLME'}")
 
         # Her dataset için en iyi Val R² bul
         dataset_best: Dict[str, float] = {}
         for metrics_file in models_dir.rglob('metrics_*.json'):
             try:
-                with open(metrics_file) as f:
+                with open(metrics_file, encoding='utf-8') as f:
                     m = json.load(f)
                 val_r2 = m.get('val', {}).get('r2')
                 if val_r2 is None:
@@ -1529,6 +1538,9 @@ class NuclearPhysicsAIOrchestrator:
 
             # ---- interaktif giris ----
             if nucleus_input is None:
+                if not sys.stdin.isatty() or os.environ.get('HPC_MODE'):
+                    logger.warning("[SKIP] Non-interactive mode: nucleus_input required via --predict")
+                    return
                 print()
                 print("[INPUT] Cekirdek bilgilerini girin:")
                 print("  Ornek (tek cekirdek) : Z=26 N=30 SPIN=0.0 PARITY=1")
@@ -1622,6 +1634,17 @@ class NuclearPhysicsAIOrchestrator:
     # MAIN EXECUTION
     # ========================================================================
 
+    # Dependency-correct execution order for the full pipeline.
+    # Rationale:
+    #   PFAZ6 (Final Report) must run AFTER PFAZ9 and PFAZ13 — it reads Monte Carlo
+    #     summaries (PFAZ9) and AutoML improvement data (PFAZ13) into the Excel report.
+    #   PFAZ8 (Visualization pass-1) must run AFTER PFAZ6 — it reads
+    #     THESIS_COMPLETE_RESULTS.xlsx from PFAZ6 for chart generation.
+    #   PFAZ10 (Thesis) must run LAST — it aggregates outputs from all active phases
+    #     including PFAZ12 (statistical tests) and PFAZ13 (AutoML content).
+    #   PFAZ11 is permanently deferred (always skipped).
+    PIPELINE_EXECUTION_ORDER = [1, 2, 3, 4, 5, 7, 9, 12, 13, 6, 8, 10, 11]
+
     def run_all_pfaz(self, start_from=1, end_at=13, modes=None):
         """
         Tüm PFAZ fazlarını çalıştır
@@ -1634,6 +1657,9 @@ class NuclearPhysicsAIOrchestrator:
         Note:
             PFAZ 11 (Production Deployment) kullanıcı talebi doğrultusunda ertelenmiştir.
             Otomatik olarak atlanacaktır.
+
+            Yürütme sırası PIPELINE_EXECUTION_ORDER ile belirlenir (numarasal sıra değil).
+            Bu, PFAZ6'nın PFAZ9/13'ten, PFAZ10'un PFAZ12/13'ten sonra çalışmasını sağlar.
         """
         if modes is None:
             modes = {i: 'run' for i in range(start_from, end_at + 1)}
@@ -1645,9 +1671,15 @@ class NuclearPhysicsAIOrchestrator:
 
         import time as _time
 
-        pfaz_list = [i for i in range(start_from, end_at + 1)]
+        # Build execution list using PIPELINE_EXECUTION_ORDER to respect data dependencies.
+        # Only include phases in the [start_from, end_at] range, in dependency order.
+        requested = set(range(start_from, end_at + 1))
+        pfaz_list = [p for p in self.PIPELINE_EXECUTION_ORDER if p in requested]
         n_total   = len(pfaz_list)
         pipeline_start = _time.time()
+
+        logger.info(f"[ORDER] Bagimsizlik sirasi: {pfaz_list}")
+        logger.info(f"[ORDER] Not: PFAZ6 PFAZ9/13'ten, PFAZ10 PFAZ12/13'ten sonra calisir")
 
         def _eta_str(elapsed: float, done: int, total: int) -> str:
             if done == 0:
@@ -1665,9 +1697,11 @@ class NuclearPhysicsAIOrchestrator:
         logger.info("\n" + "="*80)
         logger.info("[START] TUM PFAZ FAZLARI BASLATILIYOR")
         logger.info("="*80)
-        logger.info(f"Aralık  : PFAZ {start_from} → PFAZ {end_at}  ({n_total} faz)")
-        logger.info(f"Başlangıç: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        logger.info("[NOTE] PFAZ 11 otomatik olarak atlanacaktır (deferred)")
+        logger.info(f"Aralik  : PFAZ {start_from} -> PFAZ {end_at}  ({n_total} faz)")
+        logger.info(f"Yurütme sirasi: {pfaz_list}")
+        logger.info(f"Baslangic: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info("[NOTE] PFAZ 11 otomatik olarak atlanacaktir (deferred)")
+        logger.info("[NOTE] PFAZ 6/10 bagimli fazlardan sonra calisacaktir (veri bütünlügü)")
 
         results    = {}
         done_count = 0
@@ -1707,7 +1741,7 @@ class NuclearPhysicsAIOrchestrator:
                     self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
 
                 pfaz_elapsed = _time.time() - pfaz_start
-                logger.info(f"[PFAZ {pfaz_id}] Tamamlandı — süre: {_elapsed_str(pfaz_elapsed)}")
+                logger.info(f"[PFAZ {pfaz_id}] Tamamlandı -- süre: {_elapsed_str(pfaz_elapsed)}")
 
             except Exception as e:
                 pfaz_elapsed = _time.time() - pfaz_start
@@ -1724,8 +1758,11 @@ class NuclearPhysicsAIOrchestrator:
 
             done_count += 1
 
-        # PFAZ 8 Supplemental — PFAZ9/12/13 bittikten sonra ek grafik geçişi
-        if end_at >= 13:
+        # PFAZ 8 Supplemental — PFAZ9/12/13 ve PFAZ6 bittikten sonra ek grafik gecisi.
+        # Tetikleme: istenen aralikta 9, 12, 13 varsa yeterli; zaten en sona alinan PFAZ8
+        # main pass'i de tamamlanmis olmali (PIPELINE_EXECUTION_ORDER'da 8, 13'ten sonra).
+        _supp_deps = {9, 12, 13}
+        if _supp_deps & requested:
             logger.info("\n[PFAZ 8-SUPPLEMENTAL] PFAZ13 sonrası ek grafik geçişi başlatılıyor...")
             try:
                 results['8_supplemental'] = self.run_pfaz_08_supplemental()
@@ -1750,8 +1787,11 @@ class NuclearPhysicsAIOrchestrator:
         self.status_manager.print_status()
 
         # ---- Tahmin sistemi sorusu ----
-        if end_at >= 4:   # PFAZ4 tamamlandiysa modeller hazir
-            self._ask_prediction_after_pipeline()
+        if 4 in requested:   # PFAZ4 tamamlandiysa modeller hazir
+            if sys.stdin.isatty() and not os.environ.get('HPC_MODE'):
+                self._ask_prediction_after_pipeline()
+            else:
+                logger.info("[AUTO] Non-interactive mode: skipping prediction prompt")
 
         return results
 
@@ -1863,7 +1903,7 @@ class NuclearPhysicsAIOrchestrator:
         # Satir sayisini kontrol et
         try:
             if data_path.suffix.lower() == '.csv':
-                row_count = sum(1 for _ in open(str(data_path))) - 1
+                row_count = sum(1 for _ in open(str(data_path), encoding='utf-8')) - 1
             elif data_path.suffix.lower() in ('.xlsx', '.xls'):
                 import openpyxl
                 wb = openpyxl.load_workbook(str(data_path), read_only=True)
@@ -1879,7 +1919,7 @@ class NuclearPhysicsAIOrchestrator:
         logger.info(f"[CUSTOM-RUN] Dosya: {data_path.name}, tahmin edilen satir: {row_count}")
 
         if row_count == 1:
-            logger.info("[CUSTOM-RUN] Tek satir — tam pipeline yerine tek cekirdek tahmini yapiliyor")
+            logger.info("[CUSTOM-RUN] Tek satir -- tam pipeline yerine tek cekirdek tahmini yapiliyor")
             self.run_single_prediction(nucleus_input=str(data_path))
             return
 
@@ -1893,11 +1933,8 @@ class NuclearPhysicsAIOrchestrator:
         # Gecici config olustur
         tmp_config_path = custom_out / 'config.json'
         base_cfg = dict(self.config)
-        base_cfg['data_file']        = str(data_path)
-        base_cfg['output_base_dir']  = str(custom_out / 'generated_datasets')
-        base_cfg['ai_output_dir']    = str(custom_out / 'ai_models')
-        base_cfg['anfis_output_dir'] = str(custom_out / 'anfis_models')
-        base_cfg['reports_dir']      = str(custom_out / 'reports')
+        base_cfg['data_file']  = str(data_path)
+        base_cfg['output_dir'] = str(custom_out)  # orchestrator uses this key to build all pfaz_outputs
 
         with open(tmp_config_path, 'w', encoding='utf-8') as f:
             json.dump(base_cfg, f, indent=2, ensure_ascii=False)

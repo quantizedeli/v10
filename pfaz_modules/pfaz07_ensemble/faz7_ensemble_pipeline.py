@@ -122,7 +122,7 @@ def faz7_ensemble_pipeline():
     voting_builder.save_ensemble(result_simple, 'SimpleVoting')
     
     # 1.2. Weighted Voting (R²)
-    logger.info("\n-> Creating Weighted Voting Ensemble (R² optimization)...")
+    logger.info("\n-> Creating Weighted Voting Ensemble (R^2 optimization)...")
     result_weighted_r2 = voting_builder.create_weighted_voting(
         model_ids=list(base_models.keys()),
         X_test=X_test,
@@ -156,7 +156,7 @@ def faz7_ensemble_pipeline():
     # =========================================================================
     # STEP 2: Stacking Ensembles
     # =========================================================================
-    logger.info("\n🏗️ STEP 2: STACKING ENSEMBLES")
+    logger.info("\n[BUILD] STEP 2: STACKING ENSEMBLES")
     logger.info("-"*80)
     
     stacking_results = []
@@ -257,14 +257,14 @@ def faz7_ensemble_pipeline():
     logger.info(f"\n[SUCCESS] BEST ENSEMBLE:")
     logger.info(f"   Name: {best_ensemble['name']}")
     logger.info(f"   Method: {best_ensemble['method']}")
-    logger.info(f"   R² = {best_ensemble['r2']:.4f}")
+    logger.info(f"   R^2 = {best_ensemble['r2']:.4f}")
     logger.info(f"   RMSE = {best_ensemble['rmse']:.4f}")
     logger.info(f"   MAE = {best_ensemble['mae']:.4f}")
     
     logger.info(f"\n[REPORT] TOP 3 ENSEMBLES:")
     top3 = sorted(final_report['all_results'], key=lambda x: x['r2'], reverse=True)[:3]
     for i, result in enumerate(top3):
-        logger.info(f"   {i+1}. {result['name']}: R²={result['r2']:.4f}, RMSE={result['rmse']:.4f}")
+        logger.info(f"   {i+1}. {result['name']}: R^2={result['r2']:.4f}, RMSE={result['rmse']:.4f}")
     
     logger.info(f"\n[TIP] RECOMMENDATIONS:")
     if best_ensemble['method'] == 'stacking':

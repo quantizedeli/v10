@@ -176,7 +176,7 @@ class ReportsVisualizationIntegrationManager:
         
         # Model metrics
         metrics_file = self.data_dir / 'model_metrics.json'
-        with open(metrics_file, 'w') as f:
+        with open(metrics_file, 'w', encoding='utf-8') as f:
             # Convert numpy types
             metrics_clean = {}
             for k, v in model_metrics.items():
@@ -269,7 +269,7 @@ class ReportsVisualizationIntegrationManager:
         }
         
         meta_file = section_dir / 'methodology.json'
-        with open(meta_file, 'w') as f:
+        with open(meta_file, 'w', encoding='utf-8') as f:
             json.dump(methodology, f, indent=2)
         
         logger.info(f"    [OK] Methodology metadata: {meta_file.name}")
@@ -294,7 +294,7 @@ class ReportsVisualizationIntegrationManager:
         }
         
         meta_file = section_dir / 'results.json'
-        with open(meta_file, 'w') as f:
+        with open(meta_file, 'w', encoding='utf-8') as f:
             # Clean numpy types
             results_clean = self._clean_numpy_types(results)
             json.dump(results_clean, f, indent=2)
@@ -324,7 +324,7 @@ class ReportsVisualizationIntegrationManager:
         }
         
         meta_file = section_dir / 'analysis.json'
-        with open(meta_file, 'w') as f:
+        with open(meta_file, 'w', encoding='utf-8') as f:
             json.dump(analysis, f, indent=2)
         
         logger.info(f"    [OK] Analysis metadata: {meta_file.name}")
@@ -348,7 +348,7 @@ class ReportsVisualizationIntegrationManager:
         }
         
         meta_file = self.output_dir / 'GENERATION_METADATA.json'
-        with open(meta_file, 'w') as f:
+        with open(meta_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2)
         
         self.generated_outputs['metadata'] = metadata
@@ -502,7 +502,7 @@ All data and visualizations are linked and cross-referenced for consistency.
 **Version**: 2.0.0
 """
         
-        with open(readme_file, 'w') as f:
+        with open(readme_file, 'w', encoding='utf-8') as f:
             f.write(readme_content)
         
         logger.info(f"[OK] README created: {readme_file.name}")

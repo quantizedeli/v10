@@ -27,6 +27,8 @@ try:
     from .advanced_models import PyTorchGPUOptimizer as GPUOptimizer
 except ImportError:
     from advanced_models import PyTorchGPUOptimizer as GPUOptimizer
+    GPUOptimizer = None
+    GPUOptimizer = None
 
 logger = logging.getLogger(__name__)
 

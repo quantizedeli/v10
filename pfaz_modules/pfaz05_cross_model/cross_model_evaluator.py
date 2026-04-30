@@ -72,6 +72,7 @@ class CrossModelEvaluator:
             except ImportError:
                 logger.warning("Best Model Selector not available")
                 self.use_best_model_selector = False
+                BestModelSelector = None
 
         logger.info("Cross-Model Evaluator initialized")
     

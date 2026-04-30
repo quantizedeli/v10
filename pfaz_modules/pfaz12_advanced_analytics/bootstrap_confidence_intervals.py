@@ -32,6 +32,8 @@ try:
     import seaborn as sns
     PLOTTING_AVAILABLE = True
 except ImportError:
+    plt = None
+    sns = None
     PLOTTING_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)

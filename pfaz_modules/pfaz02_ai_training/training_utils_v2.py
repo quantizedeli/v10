@@ -193,7 +193,7 @@ class EarlyStoppingMonitor:
             logger.info(f"[WAIT] No improvement: {self.counter}/{self.patience}")
         
         if self.counter >= self.patience:
-            logger.info(f"🛑 Early stopping at epoch {epoch}")
+            logger.info(f"[STOP] Early stopping at epoch {epoch}")
             self.should_stop = True
             return True
         
@@ -284,7 +284,7 @@ class TrainingConfigManager:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(configs, f, indent=2)
         
         logger.info(f"[SUCCESS] Saved {len(configs)} configs to {output_path}")
@@ -355,7 +355,7 @@ class TrainingLogger:
         config_id = self.current_log['config']['id']
         log_file = self.log_dir / f"{config_id}_{self.session_id}.json"
         
-        with open(log_file, 'w') as f:
+        with open(log_file, 'w', encoding='utf-8') as f:
             json.dump(self.current_log, f, indent=2)
         
         logger.info(f"[SUCCESS] Training log saved: {log_file}")
@@ -367,7 +367,7 @@ class TrainingLogger:
         """Tüm logları oku"""
         logs = []
         for log_file in self.log_dir.glob("*.json"):
-            with open(log_file) as f:
+            with open(log_file, encoding='utf-8') as f:
                 logs.append(json.load(f))
         return logs
 
@@ -426,7 +426,7 @@ class CheckpointManager:
         if 'val_r2' in metrics and metrics['val_r2'] > self.best_score:
             self.best_score = metrics['val_r2']
             self.best_checkpoint = checkpoint_path
-            logger.info(f"[BEST] New best checkpoint: R²={self.best_score:.6f}")
+            logger.info(f"[BEST] New best checkpoint: R^2={self.best_score:.6f}")
     
     def load_checkpoint(self, checkpoint_path: Path) -> Dict:
         """Checkpoint yükle"""

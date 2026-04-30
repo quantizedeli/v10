@@ -46,12 +46,15 @@ try:
     import seaborn as sns
     PLOTTING_AVAILABLE = True
 except ImportError:
+    plt = None
+    sns = None
     PLOTTING_AVAILABLE = False
 
 try:
     from scipy import stats
     SCIPY_AVAILABLE = True
 except ImportError:
+    stats = None
     SCIPY_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -207,7 +210,7 @@ class AutoMLTrialLogger:
             if self.best_trial is not None:
                 improvement = trial_record.val_r2 - self.best_val_r2
                 trial_record.improvement_over_previous_best = improvement
-                logger.info(f"  [TARGET] NEW BEST! R²={trial_record.val_r2:.4f} (+{improvement:.4f})")
+                logger.info(f"  [TARGET] NEW BEST! R^2={trial_record.val_r2:.4f} (+{improvement:.4f})")
             
             trial_record.is_best_so_far = True
             self.best_trial = trial_record
@@ -298,7 +301,7 @@ class AutoMLTrialLogger:
         logger.info(f"  Failed: {summary.n_trials_failed}")
         logger.info(f"\nBest Result:")
         logger.info(f"  Trial: {summary.best_trial_id}")
-        logger.info(f"  Val R²: {summary.best_val_r2:.4f}")
+        logger.info(f"  Val R^2: {summary.best_val_r2:.4f}")
         logger.info(f"  Val RMSE: {summary.best_val_rmse:.4f}")
         logger.info(f"\nParameter Insights:")
         logger.info(f"  Most important: {summary.most_important_param}")

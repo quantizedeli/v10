@@ -814,7 +814,7 @@ class ANFISParallelTrainerV2:
             outlier_nuclei = []
 
             if n_outliers > 0 and keep_mask.sum() >= max(5, int(0.9 * len(X_train))):
-                logger.info(f"  Outliers detected: {n_outliers} / {len(X_train)} samples — retraining without them")
+                logger.info(f"  Outliers detected: {n_outliers} / {len(X_train)} samples -- retraining without them")
                 outlier_nuclei = [nucleus_names['train'][i] for i in range(len(keep_mask)) if not keep_mask[i]]
                 X_clean = X_train[keep_mask]
                 y_clean = y_train[keep_mask] if y_train.ndim == 1 else y_train[keep_mask, :]
@@ -850,7 +850,7 @@ class ANFISParallelTrainerV2:
             DIVERGENCE_R2_THRESHOLD = -2.0
             val_r2_value = val_metrics.get('r2', 0.0)
             if isinstance(val_r2_value, float) and val_r2_value < DIVERGENCE_R2_THRESHOLD:
-                logger.warning(f"[DIVERGED] {job.job_id} | val_R2={val_r2_value:.4f} < {DIVERGENCE_R2_THRESHOLD} — skipping save")
+                logger.warning(f"[DIVERGED] {job.job_id} | val_R2={val_r2_value:.4f} < {DIVERGENCE_R2_THRESHOLD} -- skipping save")
                 return ANFISTrainingResult(
                     job_id=job.job_id,
                     config_id=job.config['id'],
@@ -911,7 +911,7 @@ class ANFISParallelTrainerV2:
 
             # Save metrics JSON
             metrics_file = job.output_dir / f"metrics_{job.config['id']}.json"
-            with open(metrics_file, 'w') as f:
+            with open(metrics_file, 'w', encoding='utf-8') as f:
                 json.dump(metrics, f, indent=2)
 
             # ---- Workspace + FIS kaydi (ANFISModelSaver) --------------------
@@ -1038,15 +1038,39 @@ class ANFISParallelTrainerV2:
         ]
         return all_configs[:n_configs]
 
+    # Maximum allowed feature count for ANFIS (grid 2MF: 2^5=32 rules, feasible)
+    ANFIS_MAX_INPUTS: int = 5
+
+    def _get_n_inputs_from_metadata(self, dataset_path: Path) -> Optional[int]:
+        """Read feature count from metadata.json. Returns None if unavailable."""
+        meta_file = dataset_path / 'metadata.json'
+        if not meta_file.exists():
+            return None
+        try:
+            import json as _json
+            with open(meta_file, encoding='utf-8') as _f:
+                meta = _json.load(_f)
+            feat = meta.get('feature_names') or meta.get('feature_columns', [])
+            return len(feat) if feat else None
+        except Exception:
+            return None
+
     def discover_datasets(self) -> List[Path]:
-        """Discover dataset directories (excluding reports and metadata)"""
+        """Discover ANFIS-feasible dataset directories.
+
+        Skips directories that are non-dataset folders or whose metadata.json
+        reports more than ANFIS_MAX_INPUTS features (grid ANFIS becomes
+        intractable above 5 inputs: 2^5=32 rules is fine, 2^6=64+ is borderline,
+        2^20 is catastrophic).
+        """
 
         if self.datasets_dir is None or not self.datasets_dir.exists():
             raise ValueError(f"Datasets directory not found: {self.datasets_dir}")
 
         dataset_paths = []
+        skipped_non_dataset = 0
+        skipped_too_many_inputs = 0
 
-        # Directories to exclude (reports, metadata, logs, etc.)
         EXCLUDE_DIRS = {
             'quality_reports',
             'validation_reports',
@@ -1059,22 +1083,39 @@ class ANFISParallelTrainerV2:
         }
 
         for subdir in self.datasets_dir.iterdir():
-            if subdir.is_dir():
-                # Skip excluded directories
-                if subdir.name in EXCLUDE_DIRS:
-                    logger.info(f"  Skipping non-dataset directory: {subdir.name}")
-                    continue
+            if not subdir.is_dir():
+                continue
+            if subdir.name in EXCLUDE_DIRS:
+                skipped_non_dataset += 1
+                continue
 
-                has_data = (
-                    list(subdir.glob('*.csv')) or
-                    list(subdir.glob('*.xlsx')) or
-                    list(subdir.glob('*.tsv'))
+            has_data = (
+                list(subdir.glob('*.csv')) or
+                list(subdir.glob('*.xlsx')) or
+                list(subdir.glob('*.tsv'))
+            )
+            if not has_data:
+                continue
+
+            # Feature count guard: skip datasets with too many inputs for ANFIS
+            n_inputs = self._get_n_inputs_from_metadata(subdir)
+            if n_inputs is not None and n_inputs > self.ANFIS_MAX_INPUTS:
+                logger.info(
+                    f"  [SKIP-ANFIS] {subdir.name}: {n_inputs} inputs > "
+                    f"ANFIS_MAX_INPUTS={self.ANFIS_MAX_INPUTS}"
                 )
+                skipped_too_many_inputs += 1
+                continue
 
-                if has_data:
-                    dataset_paths.append(subdir)
-                    logger.info(f"  Found dataset: {subdir.name}")
+            dataset_paths.append(subdir)
+            logger.info(f"  Found dataset: {subdir.name}"
+                        + (f" ({n_inputs} inputs)" if n_inputs else ""))
 
+        logger.info(
+            f"  Total: {len(dataset_paths)} ANFIS-feasible datasets "
+            f"| skipped non-dataset: {skipped_non_dataset} "
+            f"| skipped too-many-inputs: {skipped_too_many_inputs}"
+        )
         return dataset_paths
 
     def _run_parallel_wave(self, jobs: List[ANFISTrainingJob], start_time: float,
@@ -1293,7 +1334,7 @@ class ANFISParallelTrainerV2:
                         _meta_f = _ds_dir / 'metadata.json'
                         _col_names_r = None
                         if _meta_f.exists():
-                            with open(_meta_f) as _mfr:
+                            with open(_meta_f, encoding='utf-8') as _mfr:
                                 _meta_r = _jsn_r.load(_mfr)
                             _fc = _meta_r.get('feature_names') or _meta_r.get('feature_columns', [])
                             _tc = _meta_r.get('target_names')  or _meta_r.get('target_columns',  [])
@@ -1327,7 +1368,7 @@ class ANFISParallelTrainerV2:
                 _rob_tester.generate_excel_report('ANFIS_Robustness_Report.xlsx')
                 logger.info("[OK] ANFISRobustnessTester: iteratif test raporu -> robustness_analysis/")
             else:
-                logger.info("  [INFO] ANFISRobustnessTester: basarili sonuc yok — atlanıyor")
+                logger.info("  [INFO] ANFISRobustnessTester: basarili sonuc yok -- atlanıyor")
         except Exception as _e:
             logger.warning(f"[WARNING] ANFISRobustnessTester basarisiz (devam): {_e}")
 
@@ -2084,7 +2125,7 @@ class ANFISParallelTrainerV2:
 
             # Save tracker to file
             tracker_file = self.output_dir / 'kernel_usage_tracker.json'
-            with open(tracker_file, 'w') as f:
+            with open(tracker_file, 'w', encoding='utf-8') as f:
                 json.dump(self.kernel_usage_tracker, f, indent=2)
 
         logger.info(f"[KERNEL TRACKER] Updated for {tracking_key}")
@@ -2104,7 +2145,7 @@ class ANFISParallelTrainerV2:
 
         # Save report
         report_file = self.output_dir / 'kernel_usage_report.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
 
         logger.info(f"[KERNEL REPORT] Generated: {report_file}")

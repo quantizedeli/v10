@@ -208,7 +208,7 @@ class AAA2DataQualityChecker:
                 'issue': f'A≠Z+N (A={row["A"]}, Z+N={row["A_calc"]})'
             })
         
-        logger.info(f"   -> A≠Z+N uyuşmazlığı: {len(self.issues['azn_mismatch'])}")
+        logger.info(f"   -> A!=Z+N uyuşmazlığı: {len(self.issues['azn_mismatch'])}")
     
     def _check_mm_zero_odd_a(self, df):
         """Tek-A çekirdekler için MM=0 kontrolü"""

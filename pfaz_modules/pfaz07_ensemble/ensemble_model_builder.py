@@ -82,7 +82,7 @@ class EnsembleModelBuilder:
             rmse = np.sqrt(mean_squared_error(y_val, y_pred))
             logger.info(f"  [OK] Model added: {model_id}")
             logger.info(f"    Type: {metadata['model_type']}")
-            logger.info(f"    Val R²: {r2:.4f}, RMSE: {rmse:.4f}")
+            logger.info(f"    Val R^2: {r2:.4f}, RMSE: {rmse:.4f}")
         else:
             logger.info(f"  [OK] Model added: {model_id} (no validation data)")
     
@@ -176,7 +176,7 @@ class EnsembleModelBuilder:
             
             logger.info(f"\n{'='*60}")
             logger.info(f"SIMPLE VOTING PERFORMANCE:")
-            logger.info(f"  R² = {r2:.4f}")
+            logger.info(f"  R^2 = {r2:.4f}")
             logger.info(f"  RMSE = {rmse:.4f}")
             logger.info(f"  MAE = {mae:.4f}")
             logger.info(f"{'='*60}")
@@ -276,7 +276,7 @@ class EnsembleModelBuilder:
             
             logger.info(f"\n{'='*60}")
             logger.info(f"WEIGHTED VOTING PERFORMANCE:")
-            logger.info(f"  R² = {r2:.4f}")
+            logger.info(f"  R^2 = {r2:.4f}")
             logger.info(f"  RMSE = {rmse:.4f}")
             logger.info(f"  MAE = {mae:.4f}")
             logger.info(f"{'='*60}")
@@ -390,7 +390,7 @@ class EnsembleModelBuilder:
             }
         }
         
-        with open(save_path, 'w') as f:
+        with open(save_path, 'w', encoding='utf-8') as f:
             json.dump(save_data, f, indent=2)
         
         logger.info(f"\n[OK] Ensemble saved: {save_path}")

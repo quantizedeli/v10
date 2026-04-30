@@ -546,6 +546,9 @@ class SingleNucleusPredictor:
         except ImportError:
             logger.warning("[VIS] matplotlib bulunamadi, gorsel uretilmedi")
             return []
+            matplotlib = None
+            plt = None
+            mpatches = None
 
         plot_paths: List[str] = []
         plots_dir = self.output_dir / 'plots'

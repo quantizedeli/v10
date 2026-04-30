@@ -161,7 +161,7 @@ class SmartCache:
         """
 
         if key not in self.metadata:
-            logger.info(f"🚫 Cache MISS: {key}")
+            logger.info(f"[MISS] Cache MISS: {key}")
             return None
 
         cache_file = Path(self.metadata[key]['file'])
@@ -263,7 +263,7 @@ class SmartCache:
         """
 
         if key not in self.metadata:
-            logger.info(f"🚫 Cache MISS: {key}")
+            logger.info(f"[MISS] Cache MISS: {key}")
             return None
 
         cache_file = Path(self.metadata[key]['file'])
@@ -319,7 +319,7 @@ class SmartCache:
         """
 
         if key not in self.metadata:
-            logger.info(f"🚫 Cache MISS: {key}")
+            logger.info(f"[MISS] Cache MISS: {key}")
             return None
 
         cache_file = Path(self.metadata[key]['file'])
@@ -342,13 +342,13 @@ class SmartCache:
     def _load_metadata(self) -> dict:
         """Load cache metadata"""
         if self.metadata_file.exists():
-            with open(self.metadata_file) as f:
+            with open(self.metadata_file, encoding='utf-8') as f:
                 return json.load(f)
         return {}
 
     def _save_metadata(self):
         """Save cache metadata"""
-        with open(self.metadata_file, 'w') as f:
+        with open(self.metadata_file, 'w', encoding='utf-8') as f:
             json.dump(self.metadata, f, indent=2)
 
     def _cleanup_old_caches(self, max_age_days: int = 30):
@@ -377,7 +377,7 @@ class SmartCache:
                 del self.metadata[key]
 
         if removed:
-            logger.info(f"🗑️ Removed {len(removed)} old caches")
+            logger.info(f"[DEL] Removed {len(removed)} old caches")
             self._save_metadata()
 
         # Check total size
@@ -418,7 +418,7 @@ class SmartCache:
             removed += 1
 
         if removed > 0:
-            logger.info(f"🗑️ Evicted {removed} LRU caches")
+            logger.info(f"[DEL] Evicted {removed} LRU caches")
             self._save_metadata()
 
     def clear_all(self):
@@ -432,7 +432,7 @@ class SmartCache:
         self.metadata = {}
         self._save_metadata()
 
-        logger.info("🗑️ All caches cleared")
+        logger.info("[DEL] All caches cleared")
 
     def get_stats(self) -> dict:
         """Get cache statistics"""

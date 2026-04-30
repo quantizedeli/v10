@@ -163,6 +163,7 @@ class AdvancedAnalysisReportingManager:
         except ImportError:
             logger.warning("  [WARNING] SHAP kütüphanesi yüklü değil")
             return {'status': 'shap_not_available'}
+            shap = None
         except Exception as e:
             logger.warning(f"  [WARNING] SHAP hatası: {e}")
             return {'status': 'error', 'message': str(e)}
@@ -409,7 +410,7 @@ class AdvancedAnalysisReportingManager:
         
         # JSON rapor
         report_file = report_dir / f'{model_name}_advanced_analysis.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2)
         
         logger.info(f"\n[OK] İleri analiz raporu kaydedildi: {report_file}")

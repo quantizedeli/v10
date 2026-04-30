@@ -32,6 +32,10 @@ try:
     from openpyxl.styles import Font, PatternFill, Alignment
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
     OPENPYXL_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -76,7 +80,7 @@ class ANFISPerformanceAnalyzer:
         
         for metrics_file in metrics_files:
             try:
-                with open(metrics_file, 'r') as f:
+                with open(metrics_file, 'r', encoding='utf-8') as f:
                     metrics = json.load(f)
                 
                 config_id = metrics_file.stem.replace('metrics_', '')

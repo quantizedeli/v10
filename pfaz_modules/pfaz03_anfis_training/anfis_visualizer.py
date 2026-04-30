@@ -420,7 +420,7 @@ class ANFISBatchVisualizer:
         """Tek bir ANFIS sonucunu görselleştir"""
         
         # Load data
-        with open(result_dir / 'metrics.json') as f:
+        with open(result_dir / 'metrics.json', encoding='utf-8') as f:
             metrics = json.load(f)
         
         history_df = pd.read_csv(result_dir / 'training_history.csv')
@@ -450,7 +450,7 @@ class ANFISBatchVisualizer:
         all_results = []
         
         for metrics_file in self.anfis_results_dir.rglob('metrics.json'):
-            with open(metrics_file) as f:
+            with open(metrics_file, encoding='utf-8') as f:
                 data = json.load(f)
                 data['dataset_name'] = metrics_file.parent.name
                 all_results.append(data)

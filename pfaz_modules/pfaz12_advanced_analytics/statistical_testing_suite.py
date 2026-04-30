@@ -35,6 +35,8 @@ try:
     from statsmodels.stats.multitest import multipletests
     STATSMODELS_AVAILABLE = True
 except ImportError:
+    pairwise_tukeyhsd = None
+    multipletests = None
     STATSMODELS_AVAILABLE = False
     logging.warning("statsmodels not available - some tests disabled")
 
@@ -43,6 +45,8 @@ try:
     import seaborn as sns
     PLOTTING_AVAILABLE = True
 except ImportError:
+    plt = None
+    sns = None
     PLOTTING_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -74,7 +78,7 @@ class StatisticalTestingSuite:
         
         self.results = {}
         
-        logger.info(f"[OK] StatisticalTestingSuite initialized (α={alpha})")
+        logger.info(f"[OK] StatisticalTestingSuite initialized (alpha={alpha})")
     
     # ========================================================================
     # PAIRED TESTS (Two Models)
@@ -223,7 +227,7 @@ class StatisticalTestingSuite:
         }
         
         logger.info(f"  F-statistic: {f_statistic:.4f}, p-value: {p_value:.4f}")
-        logger.info(f"  Significant: {result['significant']}, η²: {eta_squared:.4f}")
+        logger.info(f"  Significant: {result['significant']}, eta^2: {eta_squared:.4f}")
         
         self.results['one_way_anova'] = result
         
@@ -589,6 +593,7 @@ class StatisticalTestingSuite:
         except ImportError:
             logger.error("  xlsxwriter not available")
             return None
+            xlsxwriter = None
         
         filepath = self.output_dir / filename
         

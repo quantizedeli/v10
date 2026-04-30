@@ -57,6 +57,7 @@ class GPUOptimizer:
         except ImportError:
             logger.warning("TensorFlow not installed, GPU detection limited")
             return False
+            tf = None
         except Exception as e:
             logger.warning(f"GPU detection failed: {e}")
             return False
@@ -371,7 +372,7 @@ def train_xgboost_optimized(
     mae = mean_absolute_error(y_val, y_pred)
 
     logger.info(f"[OK] Training complete in {training_time:.1f}s")
-    logger.info(f"  R² = {r2:.4f}, RMSE = {rmse:.4f}, MAE = {mae:.4f}")
+    logger.info(f"  R^2 = {r2:.4f}, RMSE = {rmse:.4f}, MAE = {mae:.4f}")
 
     return model, {
         'r2': r2,
@@ -470,7 +471,7 @@ def train_dnn_optimized(
     mae = mean_absolute_error(y_val, y_pred)
 
     logger.info(f"[OK] Training complete in {training_time:.1f}s")
-    logger.info(f"  R² = {r2:.4f}, RMSE = {rmse:.4f}, MAE = {mae:.4f}")
+    logger.info(f"  R^2 = {r2:.4f}, RMSE = {rmse:.4f}, MAE = {mae:.4f}")
 
     return model, {
         'r2': r2,

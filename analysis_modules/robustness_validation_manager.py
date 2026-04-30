@@ -149,7 +149,7 @@ class RobustnessValidationManager:
         mae = mean_absolute_error(y_test, y_pred)
         mape = np.mean(np.abs((y_test - y_pred) / (y_test + 1e-10))) * 100
         
-        logger.info(f"  R² = {r2:.4f}")
+        logger.info(f"  R^2 = {r2:.4f}")
         logger.info(f"  RMSE = {rmse:.4f}")
         logger.info(f"  MAE = {mae:.4f}")
         logger.info(f"  MAPE = {mape:.2f}%")
@@ -208,7 +208,7 @@ class RobustnessValidationManager:
             }
         }
         
-        logger.info(f"  R² = {results['R2']['mean']:.4f} ± {results['R2']['std']:.4f}")
+        logger.info(f"  R^2 = {results['R2']['mean']:.4f} +/- {results['R2']['std']:.4f}")
         logger.info(f"     CI: [{results['R2']['ci_lower']:.4f}, {results['R2']['ci_upper']:.4f}]")
         
         return results
@@ -241,7 +241,7 @@ class RobustnessValidationManager:
                 'RMSE': float(rmse)
             })
             
-            logger.info(f"  Fold {fold+1}/{k}: R²={r2:.4f}")
+            logger.info(f"  Fold {fold+1}/{k}: R^2={r2:.4f}")
         
         # Özet
         r2_scores = [f['R2'] for f in fold_results]
@@ -255,7 +255,7 @@ class RobustnessValidationManager:
             'R2_max': float(np.max(r2_scores))
         }
         
-        logger.info(f"  CV R² = {results['R2_mean']:.4f} ± {results['R2_std']:.4f}")
+        logger.info(f"  CV R^2 = {results['R2_mean']:.4f} +/- {results['R2_std']:.4f}")
         
         return results
     
@@ -283,7 +283,7 @@ class RobustnessValidationManager:
                 'R2_drop_percent': float((r2_baseline - r2_noisy) / r2_baseline * 100)
             })
             
-            logger.info(f"  Noise {noise_level*100:.0f}%: R²={r2_noisy:.4f} (drop: {performance[-1]['R2_drop_percent']:.1f}%)")
+            logger.info(f"  Noise {noise_level*100:.0f}%: R^2={r2_noisy:.4f} (drop: {performance[-1]['R2_drop_percent']:.1f}%)")
         
         return {
             'baseline_R2': float(r2_baseline),
@@ -352,7 +352,7 @@ class RobustnessValidationManager:
         outlier_percentage = (n_outliers / len(y_train)) * 100
         
         logger.info(f"  Outliers: {n_outliers} ({outlier_percentage:.1f}%)")
-        logger.info(f"  Baseline R²: {r2_baseline:.4f}")
+        logger.info(f"  Baseline R^2: {r2_baseline:.4f}")
         
         return {
             'n_outliers': int(n_outliers),
@@ -414,7 +414,7 @@ class RobustnessValidationManager:
             train_scores.append(float(train_r2))
             val_scores.append(float(train_r2 * 0.95))  # Approximate validation
         
-        logger.info(f"  Train size 100%: R²={train_scores[-1]:.4f}")
+        logger.info(f"  Train size 100%: R^2={train_scores[-1]:.4f}")
         
         return {
             'train_sizes': train_sizes,
@@ -437,7 +437,7 @@ class RobustnessValidationManager:
         
         # JSON rapor
         report_file = report_dir / f'{model_name}_validation_report.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2)
         
         logger.info(f"\n[OK] Validasyon raporu kaydedildi: {report_file}")

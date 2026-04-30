@@ -127,7 +127,7 @@ class AutoMLOptimizer:
             'min_samples_leaf': trial.suggest_int('min_samples_leaf', 1, 10),
             'max_features': trial.suggest_categorical('max_features', ['sqrt', 'log2', None]),
             'random_state': 42,
-            'n_jobs': -1
+            'n_jobs': _inner_n_jobs()
         }
 
     def _suggest_xgb_params(self, trial) -> Dict:
@@ -144,7 +144,7 @@ class AutoMLOptimizer:
             'reg_alpha': trial.suggest_float('reg_alpha', 0.0, 10.0),
             'reg_lambda': trial.suggest_float('reg_lambda', 0.0, 10.0),
             'random_state': 42,
-            'n_jobs': -1
+            'n_jobs': _inner_n_jobs()
         }
 
     def _suggest_gbm_params(self, trial) -> Dict:
@@ -197,11 +197,13 @@ class AutoMLOptimizer:
                 'n_estimators': params['n_estimators'],
                 'max_depth': params['max_depth'],
                 'random_state': params.get('random_state', 42),
-                'n_jobs': params.get('n_jobs', -1)
+                'n_jobs': _inner_n_jobs()
             }
             model = RandomForestRegressor(**rf_params)
             model.fit(self.X_train, self.y_train)
             return model
+            XGBRegressor = None
+            RandomForestRegressor = None
 
         # Check for GPU optimization
         try:
@@ -211,6 +213,7 @@ class AutoMLOptimizer:
                 params = gpu_opt.optimize_xgboost(params)
         except ImportError:
             pass
+            GPUOptimizer = None
 
         model = XGBRegressor(**params)
         model.fit(self.X_train, self.y_train, verbose=False)
@@ -239,6 +242,12 @@ class AutoMLOptimizer:
             model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=_inner_n_jobs())
             model.fit(self.X_train, self.y_train)
             return model
+            tf = None
+            Sequential = None
+            Dense = None
+            Dropout = None
+            EarlyStopping = None
+            RandomForestRegressor = None
 
         # Build model
         model = Sequential()
@@ -329,7 +338,7 @@ class AutoMLOptimizer:
         logger.info(f"\n{'='*70}")
         logger.info(f"OPTIMIZATION COMPLETE")
         logger.info(f"{'='*70}")
-        logger.info(f"Best R²: {study.best_value:.4f}")
+        logger.info(f"Best R^2: {study.best_value:.4f}")
         logger.info(f"Best params:")
         for k, v in study.best_params.items():
             logger.info(f"  {k}: {v}")
@@ -361,7 +370,7 @@ class AutoMLOptimizer:
             })
 
         output_path = Path(output_file)
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2)
 
         logger.info(f"[SAVE] Results saved: {output_path}")
@@ -381,6 +390,7 @@ def visualize_optimization(study: optuna.Study, output_dir='automl_plots'):
     except ImportError:
         logger.warning("Optuna visualization not available")
         return
+        vis = None
 
     from pathlib import Path
 
@@ -516,6 +526,7 @@ def cli_automl():
         logger.error("data_loader module not found")
         logger.info("Please ensure data_loader.py is available or provide custom data loading")
         return
+        load_and_prepare_data = None
 
     # Optimize
     optimizer = AutoMLOptimizer(X_train, y_train, X_val, y_val,

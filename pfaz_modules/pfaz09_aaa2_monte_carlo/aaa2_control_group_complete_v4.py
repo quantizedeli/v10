@@ -47,6 +47,9 @@ try:
     from plotly.subplots import make_subplots
     PLOTLY_AVAILABLE = True
 except ImportError:
+    go = None
+    px = None
+    make_subplots = None
     PLOTLY_AVAILABLE = False
 
 # Excel with pivot tables
@@ -75,6 +78,7 @@ try:
     import tensorflow as tf
     TF_AVAILABLE = True
 except ImportError:
+    tf = None
     TF_AVAILABLE = False
 
 logging.basicConfig(
@@ -958,7 +962,7 @@ class AAA2ControlGroupAnalyzerComplete:
                     _qc.load_and_check(filepath=str(_aaa2_path))
                     logger.info("[OK] AAA2QualityChecker: veri kalitesi raporu -> data_quality/")
                 else:
-                    logger.info("  [INFO] AAA2QualityChecker: aaa2.txt bulunamadı — atlanıyor")
+                    logger.info("  [INFO] AAA2QualityChecker: aaa2.txt bulunamadı -- atlanıyor")
             except Exception as _qce:
                 logger.warning(f"[WARNING] AAA2QualityChecker basarisiz (devam): {_qce}")
 

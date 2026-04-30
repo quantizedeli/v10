@@ -58,7 +58,7 @@ def create_minimal_xlsx():
                     float(str(cell_value).replace(',', ''))
                     # It's a number
                     xml += f'\n      <c r="{cell_ref}"><v>{cell_value}</v></c>'
-                except:
+                except Exception:
                     # It's a string
                     xml += f'\n      <c r="{cell_ref}" t="inlineStr"><is><t>{cell_value}</t></is></c>'
 

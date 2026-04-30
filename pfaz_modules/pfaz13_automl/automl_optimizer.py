@@ -370,7 +370,7 @@ class AutoMLOptimizer:
         study.optimize(self.objective, n_trials=n_trials, n_jobs=n_jobs,
                        timeout=timeout, show_progress_bar=False)
 
-        logger.info(f"Best R²: {study.best_value:.4f}")
+        logger.info(f"Best R^2: {study.best_value:.4f}")
         logger.info(f"Best params: {study.best_params}")
         logger.info(f"Trials: {len(study.trials)} total")
         return study
@@ -387,7 +387,7 @@ class AutoMLOptimizer:
                 for t in study.trials
             ]
         }
-        with open(output_file, 'w') as f:
+        with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2)
         logger.info(f"[SAVE] {output_file}")
 
@@ -443,7 +443,7 @@ def optimize_all_targets(X_train, y_train_dict, X_val, y_val_dict,
         results_dict: {target: optuna.Study}
     """
     if not OPTUNA_AVAILABLE:
-        logger.warning("[SKIP] optuna not installed — AutoML skipped")
+        logger.warning("[SKIP] optuna not installed -- AutoML skipped")
         return {}
 
     output_dir = Path(output_dir)

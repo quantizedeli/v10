@@ -89,7 +89,7 @@ class ANFISModelSaver:
         metrics['timestamp'] = timestamp
         
         metrics_file = output_dir / f'{model_name}_metrics.json'
-        with open(metrics_file, 'w') as f:
+        with open(metrics_file, 'w', encoding='utf-8') as f:
             json.dump(metrics, f, indent=2)
         saved_files['metrics'] = str(metrics_file)
         logger.info(f"  [OK] Metrikler kaydedildi: {metrics_file.name}")
@@ -121,7 +121,7 @@ class ANFISModelSaver:
         }
         
         summary_file = output_dir / f'{model_name}_summary.json'
-        with open(summary_file, 'w') as f:
+        with open(summary_file, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         saved_files['summary'] = str(summary_file)
         
@@ -213,9 +213,9 @@ class ANFISModelSaver:
             logger.info(f"  [OK] Metrics bulundu: {metrics_files[0].name}")
             
             try:
-                with open(metrics_files[0], 'r') as f:
+                with open(metrics_files[0], 'r', encoding='utf-8') as f:
                     metrics = json.load(f)
-                    logger.info(f"    [OK] Metrics içeriği doğru (R²={metrics.get('R2', 'N/A')})")
+                    logger.info(f"    [OK] Metrics içeriği doğru (R^2={metrics.get('R2', 'N/A')})")
             except Exception as e:
                 verification['errors'].append(f"Metrics yükleme hatası: {str(e)}")
         else:
@@ -259,7 +259,7 @@ class ANFISModelSaver:
         fis_data = sio.loadmat(verification['fis_file'])
         
         # Metrics'i yükle
-        with open(verification['metrics_file'], 'r') as f:
+        with open(verification['metrics_file'], 'r', encoding='utf-8') as f:
             metrics = json.load(f)
         
         model_data = {
@@ -285,14 +285,14 @@ class ANFISModelRegistry:
     def _load_registry(self):
         """Kayıt defterini yükle"""
         if self.registry_file.exists():
-            with open(self.registry_file, 'r') as f:
+            with open(self.registry_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return {'models': [], 'last_updated': None}
     
     def _save_registry(self):
         """Kayıt defterini kaydet"""
         self.registry['last_updated'] = datetime.now().isoformat()
-        with open(self.registry_file, 'w') as f:
+        with open(self.registry_file, 'w', encoding='utf-8') as f:
             json.dump(self.registry, f, indent=2)
     
     def register_model(self, model_info):

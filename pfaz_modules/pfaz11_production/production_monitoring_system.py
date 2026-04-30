@@ -379,7 +379,7 @@ class AlertManager:
     
     def _save_alerts(self):
         """Save alerts to file"""
-        with open(self.alert_file, 'w') as f:
+        with open(self.alert_file, 'w', encoding='utf-8') as f:
             json.dump([asdict(a) for a in self.alerts], f, indent=2)
 
 
@@ -483,7 +483,7 @@ class ProductionMonitoringSystem:
     def _save_dashboard(self):
         """Save dashboard data"""
         dashboard_file = self.output_dir / 'dashboard.json'
-        with open(dashboard_file, 'w') as f:
+        with open(dashboard_file, 'w', encoding='utf-8') as f:
             json.dump(self.get_dashboard_data(), f, indent=2)
     
     def export_metrics_history(self, output_file: str = 'metrics_history.csv'):

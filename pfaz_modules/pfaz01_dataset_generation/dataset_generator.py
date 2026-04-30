@@ -344,7 +344,7 @@ class DatasetGenerator:
             'total_samples': len(X_train_scaled) + len(X_check_scaled) + len(X_test_scaled)
         }
         
-        with open(save_path / 'metadata.json', 'w') as f:
+        with open(save_path / 'metadata.json', 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2)
         
         # Kataloga ekle

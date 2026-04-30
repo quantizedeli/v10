@@ -37,9 +37,13 @@
 
 ### 1.2 Kritik Bug Kontrolu
 
-- [ ] **Nested parallelism** — `parallel_ai_trainer.py` icinde `_inner_n_jobs()` helper mevcut:
+> **NOT:** Asagidaki kontroller V10_QA_REREVIEW_REPORT.md sonrasi tamamen guncellendi.
+> Tum 22 bug + 2 ekstra duzeltme uygulanmis durumda (Son durum: 46/46 test PASS).
+
+- [ ] **Nested parallelism (RF/XGB/LightGBM)** — `parallel_ai_trainer.py` icinde `_inner_n_jobs()` helper mevcut:
   ```bash
   grep -n "_inner_n_jobs\|_PFAZ_PARALLEL_ACTIVE" pfaz_modules/pfaz02_ai_training/parallel_ai_trainer.py | head -10
+  # LightGBM satirinda da gozukmeli: n_jobs=(_inner_n_jobs() if lgbm_device == 'cpu' else 1)
   ```
 
 - [ ] **TF clear_session** — training loop `finally` blogu mevcut:
@@ -419,4 +423,5 @@ pip install <paket>
 ---
 
 *Hazirlandigi tarih: 2026-04-30*  
-*Referans: V10_QA_BUG_REPORT.md, CODING_RULES.md, hpc_slurm_job.sh*
+*Son guncelleme: 2026-04-30 (Re-Review sonrasi — 46/46 test PASS)*  
+*Referans: V10_QA_BUG_REPORT.md, V10_QA_REREVIEW_REPORT.md, CODING_RULES.md, hpc_slurm_job.sh*

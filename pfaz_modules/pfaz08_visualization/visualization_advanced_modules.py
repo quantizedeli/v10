@@ -33,6 +33,9 @@ try:
     from plotly.subplots import make_subplots
     PLOTLY_AVAILABLE = True
 except ImportError:
+    go = None
+    px = None
+    make_subplots = None
     PLOTLY_AVAILABLE = False
 
 from scipy import stats

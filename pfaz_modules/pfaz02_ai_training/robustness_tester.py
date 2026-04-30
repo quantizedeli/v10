@@ -82,14 +82,14 @@ class RobustnessTester:
             train_r2 = r2_score(y_current, y_train_pred)
             val_r2 = r2_score(y_val, y_val_pred)
             
-            logger.info(f"   Train R²: {train_r2:.4f} | Val R²: {val_r2:.4f}")
+            logger.info(f"   Train R^2: {train_r2:.4f} | Val R^2: {val_r2:.4f}")
             
             # Check if best
             if val_r2 > best_r2:
                 best_r2 = val_r2
                 best_model = model
                 best_iteration = iteration
-                logger.info(f"   [SUCCESS] New best model! R² = {best_r2:.4f}")
+                logger.info(f"   [SUCCESS] New best model! R^2 = {best_r2:.4f}")
             
             # Detect outliers
             outliers, outlier_info = self._detect_outliers(
@@ -165,7 +165,7 @@ class RobustnessTester:
         }
         
         logger.info("\n" + "="*60)
-        logger.info(f"[SUCCESS] Best R²: {best_r2:.4f} at iteration {best_iteration + 1}")
+        logger.info(f"[SUCCESS] Best R^2: {best_r2:.4f} at iteration {best_iteration + 1}")
         logger.info(f"[REPORT] Total modifications: {results['samples_modified']}")
         logger.info("="*60)
         

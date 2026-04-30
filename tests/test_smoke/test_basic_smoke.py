@@ -35,7 +35,7 @@ def test_config_file_exists(config_path):
 def test_config_file_valid_json(config_path):
     """Test config.json is valid JSON"""
     try:
-        with open(config_path) as f:
+        with open(config_path, encoding='utf-8') as f:
             config = json.load(f)
         assert isinstance(config, dict), "Config should be a dictionary"
         assert 'project_info' in config, "Config missing project_info"
@@ -61,7 +61,7 @@ def test_main_py_syntax(project_root):
     """Test main.py has valid Python syntax"""
     main_path = project_root / "main.py"
     try:
-        with open(main_path) as f:
+        with open(main_path, encoding='utf-8') as f:
             compile(f.read(), str(main_path), 'exec')
     except SyntaxError as e:
         pytest.fail(f"main.py has syntax error: {e}")

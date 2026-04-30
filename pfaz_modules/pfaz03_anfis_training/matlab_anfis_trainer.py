@@ -261,7 +261,7 @@ class MATLABAnfisTrainer:
         logger.info(f"\nValidation Metrics:")
         logger.info(f"  MAE:  {results['val_mae']:.6f}")
         logger.info(f"  RMSE: {results['val_rmse']:.6f}")
-        logger.info(f"  R²:   {results['val_r2']:.6f}")
+        logger.info(f"  R^2:   {results['val_r2']:.6f}")
         logger.info(f"  MAPE: {results['val_mape']:.2f}%")
         logger.info(f"{'='*60}\n")
         

@@ -28,6 +28,13 @@ try:
     from torch.cuda.amp import GradScaler, autocast
     TORCH_AVAILABLE = True
 except ImportError:
+    torch = None
+    nn = None
+    dist = None
+    DDP = None
+    DP = None
+    GradScaler = None
+    autocast = None
     TORCH_AVAILABLE = False
 
 logger = logging.getLogger(__name__)

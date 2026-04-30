@@ -45,6 +45,7 @@ try:
     from catboost import CatBoostRegressor
     CATBOOST_AVAILABLE = True
 except ImportError:
+    CatBoostRegressor = None
     CATBOOST_AVAILABLE = False
     logging.warning("CatBoost not available")
 
@@ -53,6 +54,7 @@ try:
     from xgboost import XGBRegressor
     XGBOOST_AVAILABLE = True
 except ImportError:
+    XGBRegressor = None
     XGBOOST_AVAILABLE = False
     logging.warning("XGBoost not available")
 
@@ -669,7 +671,7 @@ class ComprehensiveEnsembleEvaluator:
         
         # Save JSON
         json_path = self.output_dir / 'comprehensive_report.json'
-        with open(json_path, 'w') as f:
+        with open(json_path, 'w', encoding='utf-8') as f:
             # Convert numpy types to Python types for JSON serialization
             report_copy = report.copy()
             for result in report_copy['all_results']:
@@ -695,6 +697,7 @@ try:
     import joblib
     JOBLIB_AVAILABLE = True
 except ImportError:
+    joblib = None
     JOBLIB_AVAILABLE = False
 
 
@@ -1026,6 +1029,7 @@ def _write_ensemble_excel(all_target_results, output_dir):
     except ImportError:
         logger.warning('[WARNING] openpyxl not available; skipping Excel report')
         return None
+        openpyxl = None
     with pd.ExcelWriter(out_path, engine='openpyxl') as writer:
         for target, sub_results in all_target_results.items():
             for st, res in sub_results.items():

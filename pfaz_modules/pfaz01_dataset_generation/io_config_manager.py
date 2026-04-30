@@ -187,6 +187,13 @@ class InputOutputConfigManager:
         # --- Beta_2 5-input ---
         'MCZMNMZVNV': '5InAdv',
         'AMCZMNMBEA': '5InAdv',
+
+        # --- NnNp sets (raw aaa2.txt valence columns) ---
+        'NNPMC':   '3In1Out',   # 3-input
+        'AZNNP':   '4In1Out',   # 4-input
+        'ZNNPMC':  '4In1Out',   # 4-input
+        'AZNNPMC': '5InAdv',    # 5-input
+        'AZSNNNP': '5InAdv',    # 5-input
     }
 
     def __init__(self):
@@ -243,7 +250,7 @@ class InputOutputConfigManager:
         # Single target
         if n_features <= 2:
             return '2In1Out'
-        elif n_features <= 4:
+        elif n_features <= 3:
             return '3In1Out'
         elif n_features <= 4:
             return '4In1Out'
@@ -346,7 +353,7 @@ class InputOutputConfigManager:
             }
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(export_data, f, indent=2)
 
         logger.info(f"[OK] I/O configurations saved to: {output_path}")

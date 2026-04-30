@@ -5,14 +5,6 @@ WITH GPU SUPPORT
 """
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import cross_val_score
 import logging
 from typing import Dict, List, Tuple, Optional
 import time
@@ -20,13 +12,35 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    from torch.utils.data import TensorDataset, DataLoader
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    nn = None
+    optim = None
+    TensorDataset = None
+    DataLoader = None
+    TORCH_AVAILABLE = False
+    logger.warning("PyTorch not available -- BNN/PINN models disabled")
+
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, VotingRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+
 
 # ==================== GPU OPTIMIZER ====================
 
 class PyTorchGPUOptimizer:
     """Manage GPU resources for PyTorch models"""
-    
+
     def __init__(self, config: Dict = None):
+        if not TORCH_AVAILABLE:
+            raise ImportError("PyTorch is required for PyTorchGPUOptimizer. Install: pip install torch")
         self.config = config or {}
         self.device = self._setup_device()
         self.use_amp = self.config.get('use_amp', True)  # Automatic Mixed Precision
@@ -84,8 +98,10 @@ class BayesianNeuralNetwork:
     Bayesian Neural Network with uncertainty quantification
     GPU Accelerated
     """
-    
+
     def __init__(self, input_dim: int, config: Dict = None):
+        if not TORCH_AVAILABLE:
+            raise ImportError("PyTorch is required for BNN. Install: pip install torch")
         self.input_dim = input_dim
         self.config = config or {}
         
@@ -271,8 +287,10 @@ class PhysicsInformedNN:
     Incorporates physical constraints in loss function
     GPU Accelerated
     """
-    
+
     def __init__(self, input_dim: int, config: Dict = None):
+        if not TORCH_AVAILABLE:
+            raise ImportError("PyTorch is required for PINN. Install: pip install torch")
         self.input_dim = input_dim
         self.config = config or {}
         
@@ -495,7 +513,7 @@ class EnsembleRegressor:
     def build_ensemble(self, X_train: np.ndarray, y_train: np.ndarray, n_jobs: int = -1):
         """Build ensemble of multiple models"""
         
-        logger.info("\n🤝 BUILDING ENSEMBLE MODELS")
+        logger.info("\n[BUILD] BUILDING ENSEMBLE MODELS")
         logger.info("-" * 60)
         
         # Random Forest
@@ -601,7 +619,7 @@ class HybridModel:
     def train(self, X_train, y_train, X_val, y_val):
         """Train both components"""
         
-        logger.info("\n🔀 TRAINING HYBRID MODEL")
+        logger.info("\n[TRAIN] TRAINING HYBRID MODEL")
         logger.info("-" * 60)
         
         # Train neural network

@@ -44,6 +44,9 @@ try:
     EXCEL_STANDARDIZER_AVAILABLE = True
 except ImportError:
     ExcelStandardizer = None
+    autosize_and_header = None
+    add_r2_color_scale = None
+    color_cell = None
     EXCEL_STANDARDIZER_AVAILABLE = False
 
 __all__ = [

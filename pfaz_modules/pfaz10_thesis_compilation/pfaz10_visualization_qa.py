@@ -168,7 +168,7 @@ class VisualizationGalleryManager:
     def _save_catalog(self):
         """Save figure catalog to JSON"""
         catalog_file = self.output_dir / 'figure_catalog.json'
-        with open(catalog_file, 'w') as f:
+        with open(catalog_file, 'w', encoding='utf-8') as f:
             json.dump(self.catalog, f, indent=2)
         logger.info(f"[OK] Catalog saved: {catalog_file}")
     
@@ -478,7 +478,7 @@ class ThesisQualityAssurance:
         report_file = self.thesis_dir / 'quality_checks' / 'qa_report.json'
         report_file.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(self.qa_results, f, indent=2)
         
         logger.info(f"\n[OK] QA report saved: {report_file}")

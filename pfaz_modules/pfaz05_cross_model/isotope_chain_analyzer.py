@@ -149,7 +149,7 @@ class IsotopeChainAnalyzer:
         for target_key, raw_col in TARGET_COLS.items():
             col = self._get_column(df, [raw_col, target_key])
             if col is None:
-                logger.warning(f"Target column not found: {raw_col} — skipping {target_key}")
+                logger.warning(f"Target column not found: {raw_col} -- skipping {target_key}")
                 continue
 
             df[col] = pd.to_numeric(df[col], errors='coerce')
@@ -307,7 +307,7 @@ class IsotopeChainAnalyzer:
             logger.info(f"  Transitions: {s['total_transitions']}, Sudden: {s['n_sudden']} ({s['sudden_pct']:.1f}%)")
             logger.info(f"  Magic-N at sudden: {s['magic_N_in_sudden']} ({s['magic_N_pct']:.1f}%)")
             logger.info(f"  Magic-Z at sudden: {s['magic_Z_in_sudden']} ({s['magic_Z_pct']:.1f}%)")
-            logger.info(f"  Mean |Δ| at magic: {s['mean_delta_at_magic']:.4f} vs non-magic: {s['mean_delta_at_nonmagic']:.4f} "
+            logger.info(f"  Mean |Delta| at magic: {s['mean_delta_at_magic']:.4f} vs non-magic: {s['mean_delta_at_nonmagic']:.4f} "
                         f"(×{s['magic_amplification']:.2f})")
 
         return {'chain_results': self.chain_results,
@@ -327,6 +327,7 @@ class IsotopeChainAnalyzer:
             import openpyxl  # noqa
         except ImportError:
             pass
+            openpyxl = None
 
         if output_path is None:
             from datetime import datetime

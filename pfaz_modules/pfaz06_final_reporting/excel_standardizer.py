@@ -36,6 +36,7 @@ try:
     import xlsxwriter
     _XW_AVAILABLE = True
 except ImportError:
+    xlsxwriter = None
     _XW_AVAILABLE = False
 
 try:
@@ -51,6 +52,21 @@ try:
     from openpyxl.worksheet.table import Table, TableStyleInfo
     _OPX_AVAILABLE = True
 except ImportError:
+    openpyxl = None
+    Workbook = None
+    PatternFill = None
+    Font = None
+    Alignment = None
+    Border = None
+    Side = None
+    numbers = None
+    get_column_letter = None
+    ColorScaleRule = None
+    DataBarRule = None
+    CellIsRule = None
+    FormulaRule = None
+    Table = None
+    TableStyleInfo = None
     _OPX_AVAILABLE = False
 
 

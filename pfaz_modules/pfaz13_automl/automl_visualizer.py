@@ -43,6 +43,9 @@ try:
     from matplotlib.gridspec import GridSpec
     PLOTTING_AVAILABLE = True
 except ImportError:
+    plt = None
+    sns = None
+    GridSpec = None
     PLOTTING_AVAILABLE = False
     logging.error("Matplotlib/seaborn not available")
 
@@ -50,6 +53,7 @@ try:
     from scipy import stats
     SCIPY_AVAILABLE = True
 except ImportError:
+    stats = None
     SCIPY_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -357,10 +361,10 @@ class AutoMLVisualizer:
         Find configurations that are both accurate AND fast
         """
         if self.r2_vs_time is None or self.r2_vs_time.empty:
-            logger.warning("  No R² vs time data available")
+            logger.warning("  No R^2 vs time data available")
             return None
         
-        logger.info("\n-> Creating R² vs time trade-off plot...")
+        logger.info("\n-> Creating R^2 vs time trade-off plot...")
         
         fig, ax = plt.subplots(figsize=(12, 8))
         
@@ -647,7 +651,7 @@ class AutoMLVisualizer:
         
         filepath = self.output_dir / filename
         
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             f.write("="*70 + "\n")
             f.write("AUTOML OPTIMIZATION INSIGHTS\n")
             f.write("="*70 + "\n\n")

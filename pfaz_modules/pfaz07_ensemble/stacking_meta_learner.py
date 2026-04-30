@@ -148,7 +148,7 @@ class StackingMetaLearner:
             # OOF performance
             oof_r2 = r2_score(y_train, oof_predictions[:, model_idx])
             oof_rmse = np.sqrt(mean_squared_error(y_train, oof_predictions[:, model_idx]))
-            logger.info(f"  OOF R²: {oof_r2:.4f}, RMSE: {oof_rmse:.4f}")
+            logger.info(f"  OOF R^2: {oof_r2:.4f}, RMSE: {oof_rmse:.4f}")
         
         self.oof_predictions = oof_predictions
         
@@ -208,7 +208,7 @@ class StackingMetaLearner:
         mae_train = mean_absolute_error(y_meta, y_pred_train)
         
         logger.info(f"\n[OK] Meta-model trained")
-        logger.info(f"  Training R² = {r2_train:.4f}")
+        logger.info(f"  Training R^2 = {r2_train:.4f}")
         logger.info(f"  Training RMSE = {rmse_train:.4f}")
         logger.info(f"  Training MAE = {mae_train:.4f}")
         
@@ -290,7 +290,7 @@ class StackingMetaLearner:
         
         logger.info(f"\n{'='*60}")
         logger.info(f"STACKING PERFORMANCE:")
-        logger.info(f"  R² = {r2:.4f}")
+        logger.info(f"  R^2 = {r2:.4f}")
         logger.info(f"  RMSE = {rmse:.4f}")
         logger.info(f"  MAE = {mae:.4f}")
         logger.info(f"{'='*60}")
@@ -326,7 +326,7 @@ class StackingMetaLearner:
         }
         
         metadata_path = save_dir / 'metadata.json'
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2)
         
         logger.info(f"\n[OK] Stacking model saved: {save_dir}")
@@ -368,7 +368,7 @@ class StackingMetaLearner:
                 'MAE': mae
             })
             
-            logger.info(f"  Base: {model_id} - R²={r2:.4f}, RMSE={rmse:.4f}")
+            logger.info(f"  Base: {model_id} - R^2={r2:.4f}, RMSE={rmse:.4f}")
         
         # Stacking
         result = self.evaluate(X_test, y_test)
@@ -381,7 +381,7 @@ class StackingMetaLearner:
             'MAE': result['mae']
         })
         
-        logger.info(f"  Meta: Stacking - R²={result['r2']:.4f}, RMSE={result['rmse']:.4f}")
+        logger.info(f"  Meta: Stacking - R^2={result['r2']:.4f}, RMSE={result['rmse']:.4f}")
         
         df = pd.DataFrame(comparison)
         df = df.sort_values('R²', ascending=False)
