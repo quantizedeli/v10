@@ -1634,6 +1634,17 @@ class NuclearPhysicsAIOrchestrator:
     # MAIN EXECUTION
     # ========================================================================
 
+    # Dependency-correct execution order for the full pipeline.
+    # Rationale:
+    #   PFAZ6 (Final Report) must run AFTER PFAZ9 and PFAZ13 — it reads Monte Carlo
+    #     summaries (PFAZ9) and AutoML improvement data (PFAZ13) into the Excel report.
+    #   PFAZ8 (Visualization pass-1) must run AFTER PFAZ6 — it reads
+    #     THESIS_COMPLETE_RESULTS.xlsx from PFAZ6 for chart generation.
+    #   PFAZ10 (Thesis) must run LAST — it aggregates outputs from all active phases
+    #     including PFAZ12 (statistical tests) and PFAZ13 (AutoML content).
+    #   PFAZ11 is permanently deferred (always skipped).
+    PIPELINE_EXECUTION_ORDER = [1, 2, 3, 4, 5, 7, 9, 12, 13, 6, 8, 10, 11]
+
     def run_all_pfaz(self, start_from=1, end_at=13, modes=None):
         """
         Tüm PFAZ fazlarını çalıştır
@@ -1646,6 +1657,9 @@ class NuclearPhysicsAIOrchestrator:
         Note:
             PFAZ 11 (Production Deployment) kullanıcı talebi doğrultusunda ertelenmiştir.
             Otomatik olarak atlanacaktır.
+
+            Yürütme sırası PIPELINE_EXECUTION_ORDER ile belirlenir (numarasal sıra değil).
+            Bu, PFAZ6'nın PFAZ9/13'ten, PFAZ10'un PFAZ12/13'ten sonra çalışmasını sağlar.
         """
         if modes is None:
             modes = {i: 'run' for i in range(start_from, end_at + 1)}
@@ -1657,9 +1671,15 @@ class NuclearPhysicsAIOrchestrator:
 
         import time as _time
 
-        pfaz_list = [i for i in range(start_from, end_at + 1)]
+        # Build execution list using PIPELINE_EXECUTION_ORDER to respect data dependencies.
+        # Only include phases in the [start_from, end_at] range, in dependency order.
+        requested = set(range(start_from, end_at + 1))
+        pfaz_list = [p for p in self.PIPELINE_EXECUTION_ORDER if p in requested]
         n_total   = len(pfaz_list)
         pipeline_start = _time.time()
+
+        logger.info(f"[ORDER] Bagimsizlik sirasi: {pfaz_list}")
+        logger.info(f"[ORDER] Not: PFAZ6 PFAZ9/13'ten, PFAZ10 PFAZ12/13'ten sonra calisir")
 
         def _eta_str(elapsed: float, done: int, total: int) -> str:
             if done == 0:
@@ -1677,9 +1697,11 @@ class NuclearPhysicsAIOrchestrator:
         logger.info("\n" + "="*80)
         logger.info("[START] TUM PFAZ FAZLARI BASLATILIYOR")
         logger.info("="*80)
-        logger.info(f"Aralık  : PFAZ {start_from} -> PFAZ {end_at}  ({n_total} faz)")
-        logger.info(f"Başlangıç: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        logger.info("[NOTE] PFAZ 11 otomatik olarak atlanacaktır (deferred)")
+        logger.info(f"Aralik  : PFAZ {start_from} -> PFAZ {end_at}  ({n_total} faz)")
+        logger.info(f"Yurütme sirasi: {pfaz_list}")
+        logger.info(f"Baslangic: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info("[NOTE] PFAZ 11 otomatik olarak atlanacaktir (deferred)")
+        logger.info("[NOTE] PFAZ 6/10 bagimli fazlardan sonra calisacaktir (veri bütünlügü)")
 
         results    = {}
         done_count = 0
@@ -1736,8 +1758,11 @@ class NuclearPhysicsAIOrchestrator:
 
             done_count += 1
 
-        # PFAZ 8 Supplemental — PFAZ9/12/13 bittikten sonra ek grafik geçişi
-        if end_at >= 13:
+        # PFAZ 8 Supplemental — PFAZ9/12/13 ve PFAZ6 bittikten sonra ek grafik gecisi.
+        # Tetikleme: istenen aralikta 9, 12, 13 varsa yeterli; zaten en sona alinan PFAZ8
+        # main pass'i de tamamlanmis olmali (PIPELINE_EXECUTION_ORDER'da 8, 13'ten sonra).
+        _supp_deps = {9, 12, 13}
+        if _supp_deps & requested:
             logger.info("\n[PFAZ 8-SUPPLEMENTAL] PFAZ13 sonrası ek grafik geçişi başlatılıyor...")
             try:
                 results['8_supplemental'] = self.run_pfaz_08_supplemental()
@@ -1762,7 +1787,7 @@ class NuclearPhysicsAIOrchestrator:
         self.status_manager.print_status()
 
         # ---- Tahmin sistemi sorusu ----
-        if end_at >= 4:   # PFAZ4 tamamlandiysa modeller hazir
+        if 4 in requested:   # PFAZ4 tamamlandiysa modeller hazir
             if sys.stdin.isatty() and not os.environ.get('HPC_MODE'):
                 self._ask_prediction_after_pipeline()
             else:
