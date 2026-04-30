@@ -64,7 +64,7 @@ def generate_sample_model_reports(output_dir: Path):
 
                 # Save individual report
                 filename = f'{model_type}_{target}_trial{trial}.json'
-                with open(output_dir / filename, 'w') as f:
+                with open(output_dir / filename, 'w', encoding='utf-8') as f:
                     json.dump(report, f, indent=2)
 
     print(f"Generated {len(reports)} model reports")
@@ -130,7 +130,7 @@ def generate_ensemble_report(output_dir: Path):
         'improvement_over_best': 0.03
     }
 
-    with open(output_dir / 'ensemble_results.json', 'w') as f:
+    with open(output_dir / 'ensemble_results.json', 'w', encoding='utf-8') as f:
         json.dump(ensemble, f, indent=2)
 
     print("Generated ensemble report")
@@ -156,7 +156,7 @@ def generate_cross_model_report(output_dir: Path):
         'diversity_score': 0.68
     }
 
-    with open(output_dir / 'cross_model_analysis.json', 'w') as f:
+    with open(output_dir / 'cross_model_analysis.json', 'w', encoding='utf-8') as f:
         json.dump(cross_model, f, indent=2)
 
     print("Generated cross-model analysis report")

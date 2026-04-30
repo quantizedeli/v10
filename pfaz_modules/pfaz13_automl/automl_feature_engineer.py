@@ -53,6 +53,7 @@ try:
     import shap
     SHAP_AVAILABLE = True
 except ImportError:
+    shap = None
     SHAP_AVAILABLE = False
     logging.warning("SHAP not available - SHAP-based selection disabled")
 
@@ -61,6 +62,8 @@ try:
     import seaborn as sns
     PLOTTING_AVAILABLE = True
 except ImportError:
+    plt = None
+    sns = None
     PLOTTING_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -655,7 +658,7 @@ class AutoMLFeatureEngineer:
         }
         
         import json
-        with open(self.output_dir / 'feature_engineering_summary.json', 'w') as f:
+        with open(self.output_dir / 'feature_engineering_summary.json', 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         
         logger.info(f"  [OK] Exported: selected_features.csv")
@@ -714,7 +717,7 @@ class AutoMLFeatureEngineer:
         latex_lines.append("\\end{tabular}")
         latex_lines.append("\\end{table}")
         
-        with open(self.output_dir / 'features_latex_table.txt', 'w') as f:
+        with open(self.output_dir / 'features_latex_table.txt', 'w', encoding='utf-8') as f:
             f.write('\n'.join(latex_lines))
 
 

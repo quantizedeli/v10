@@ -257,7 +257,7 @@ def print_report(results):
 
 def save_report_json(results, output_path="/home/user/nucdatav1/pfaz_completeness_report.json"):
     """Save report to JSON"""
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2)
     print(f"[OK] Report saved to: {output_path}")
 

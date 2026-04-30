@@ -142,7 +142,7 @@ class ThesisOrchestrator:
         try:
             config_file = self.project_dir / 'config.json'
             if config_file.exists():
-                with open(config_file, 'r') as f:
+                with open(config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                 return {
                     'status': 'complete',
@@ -1241,7 +1241,7 @@ echo "Compilation complete!"
 """
         
         bash_file = self.thesis_dir / 'compile.sh'
-        with open(bash_file, 'w') as f:
+        with open(bash_file, 'w', encoding='utf-8') as f:
             f.write(bash_script)
         bash_file.chmod(0o755)
         
@@ -1261,7 +1261,7 @@ pause
 """
         
         bat_file = self.thesis_dir / 'compile.bat'
-        with open(bat_file, 'w') as f:
+        with open(bat_file, 'w', encoding='utf-8') as f:
             f.write(bat_script)
     
     def compile_pdf(self, cleanup: bool = True) -> Optional[Path]:

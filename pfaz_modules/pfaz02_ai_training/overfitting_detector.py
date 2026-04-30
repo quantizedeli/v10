@@ -33,6 +33,8 @@ try:
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
+    matplotlib = None
+    plt = None
     MATPLOTLIB_AVAILABLE = False
     logging.warning("Matplotlib not available - charts will be skipped")
 
@@ -42,6 +44,12 @@ try:
     from openpyxl.chart import LineChart, Reference
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
+    LineChart = None
+    Reference = None
     OPENPYXL_AVAILABLE = False
     logging.warning("openpyxl not available")
 
@@ -253,7 +261,7 @@ class OverfittingDetector:
         
         for metrics_file in metrics_files:
             try:
-                with open(metrics_file, 'r') as f:
+                with open(metrics_file, 'r', encoding='utf-8') as f:
                     metrics = json.load(f)
                 
                 # Extract identifiers from path
@@ -687,7 +695,7 @@ def main():
     sample_result_dir = test_results_dir / 'MM_75nuclei' / 'DNN' / 'TRAIN_001'
     sample_result_dir.mkdir(parents=True, exist_ok=True)
     
-    with open(sample_result_dir / 'metrics_TRAIN_001.json', 'w') as f:
+    with open(sample_result_dir / 'metrics_TRAIN_001.json', 'w', encoding='utf-8') as f:
         json.dump({'history': sample_history}, f)
     
     # Load results

@@ -31,6 +31,10 @@ try:
     import plotly.express as px
     PLOTLY_AVAILABLE = True
 except ImportError:
+    plotly = None
+    go = None
+    make_subplots = None
+    px = None
     PLOTLY_AVAILABLE = False
     logging.warning("Plotly not available - interactive plots disabled")
 
@@ -567,7 +571,7 @@ class ModelComparisonDashboard:
             })
         
         # Save
-        with open(self.output_dir / 'recommendations.json', 'w') as f:
+        with open(self.output_dir / 'recommendations.json', 'w', encoding='utf-8') as f:
             json.dump(recommendations, f, indent=2)
         
         self.comparison_report['recommendations'] = recommendations
@@ -588,14 +592,14 @@ class ModelComparisonDashboard:
         
         # JSON report
         report_file = self.output_dir / 'comparison_report.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(self.comparison_report, f, indent=2, default=str)
         
         logger.info(f"  [OK] Report exported: {report_file}")
         
         # Summary text
         summary_file = self.output_dir / 'comparison_summary.txt'
-        with open(summary_file, 'w') as f:
+        with open(summary_file, 'w', encoding='utf-8') as f:
             f.write("="*80 + "\n")
             f.write("MODEL COMPARISON DASHBOARD SUMMARY\n")
             f.write("="*80 + "\n\n")

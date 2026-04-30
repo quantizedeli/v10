@@ -131,7 +131,7 @@ class ModelServingManager:
         registry_file = self.models_dir / 'model_registry.json'
         
         if registry_file.exists():
-            with open(registry_file, 'r') as f:
+            with open(registry_file, 'r', encoding='utf-8') as f:
                 self.model_registry = json.load(f)
             logger.info(f"Loaded {len(self.model_registry)} models from registry")
         else:
@@ -156,7 +156,7 @@ class ModelServingManager:
         
         # Save registry
         registry_file = self.models_dir / 'model_registry.json'
-        with open(registry_file, 'w') as f:
+        with open(registry_file, 'w', encoding='utf-8') as f:
             json.dump(self.model_registry, f, indent=2)
         
         logger.info(f"Registered model: {model_name} (v{version})")

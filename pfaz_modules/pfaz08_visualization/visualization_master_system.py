@@ -45,6 +45,9 @@ try:
     from plotly.subplots import make_subplots
     PLOTLY_AVAILABLE = True
 except ImportError:
+    go = None
+    px = None
+    make_subplots = None
     PLOTLY_AVAILABLE = False
 
 # Scipy for advanced analysis
@@ -785,7 +788,7 @@ class PredictionVisualizer:
         plt.close()
         
         logger.info(f"[OK] Saved: {save_name}.png")
-        logger.info(f"  Mean R²: {np.mean(overall_r2):.4f}, Mean MAE: {np.mean(overall_mae):.4f}")
+        logger.info(f"  Mean R^2: {np.mean(overall_r2):.4f}, Mean MAE: {np.mean(overall_mae):.4f}")
     
     def plot_residual_analysis(self,
                               experimental: np.ndarray,
@@ -4191,7 +4194,7 @@ class MasterVisualizationSystem:
         try:
             from pfaz_modules.pfaz08_visualization.shap_analysis import SHAPAnalyzer, SHAP_AVAILABLE
             if not SHAP_AVAILABLE:
-                logger.info("  [INFO] SHAP kurulu degil — SHAP analizi atlanıyor (pip install shap)")
+                logger.info("  [INFO] SHAP kurulu degil -- SHAP analizi atlanıyor (pip install shap)")
             else:
                 import joblib as _jl
                 # Trained models dir'i bul (PFAZ2 ciktisi)
@@ -4205,7 +4208,7 @@ class MasterVisualizationSystem:
                         break
 
                 if _models_root is None:
-                    logger.info("  [INFO] trained_models dizini bulunamadı — SHAP atlanıyor")
+                    logger.info("  [INFO] trained_models dizini bulunamadı -- SHAP atlanıyor")
                 else:
                     _shap_analyzer = SHAPAnalyzer(output_dir=str(self.output_dir / 'shap_analysis'))
                     _shap_done = 0
@@ -4227,7 +4230,7 @@ class MasterVisualizationSystem:
                                 if not _mf.exists():
                                     continue
                                 import json as _js
-                                with open(_mf) as _mff:
+                                with open(_mf, encoding='utf-8') as _mff:
                                     _met = _js.load(_mff)
                                 _vr2 = _met.get('val', {}).get('r2', -999.0)
                                 if _vr2 > _best_r2:
@@ -4252,7 +4255,7 @@ class MasterVisualizationSystem:
                             _meta_f = _ds_dir / 'metadata.json'
                             _col_names = None
                             if _meta_f.exists():
-                                with open(_meta_f) as _mf2:
+                                with open(_meta_f, encoding='utf-8') as _mf2:
                                     _meta = _jsm.load(_mf2)
                                 _feat_cols = _meta.get('feature_names') or _meta.get('feature_columns', [])
                                 _tgt_cols  = _meta.get('target_names')  or _meta.get('target_columns',  [])
@@ -4324,7 +4327,7 @@ class MasterVisualizationSystem:
                 generated.append('anomaly_visualizations')
                 logger.info(f"  [OK] AnomalyVisualizationsComplete: anomali grafikleri -> anomaly_visualizations/")
             else:
-                logger.info("  [INFO] AnomalyVisualizationsComplete: AAA2 enriched verisi bulunamadı — atlanıyor")
+                logger.info("  [INFO] AnomalyVisualizationsComplete: AAA2 enriched verisi bulunamadı -- atlanıyor")
         except Exception as _e:
             logger.warning(f"[WARNING] AnomalyVisualizationsComplete basarisiz (devam): {_e}")
 
@@ -4352,7 +4355,7 @@ class MasterVisualizationSystem:
                 generated.append('interactive_html')
                 logger.info(f"  [OK] InteractiveHTMLVisualizer: HTML grafikleri -> interactive_html/")
             else:
-                logger.info("  [INFO] InteractiveHTMLVisualizer: AI training_summary bulunamadı — atlanıyor")
+                logger.info("  [INFO] InteractiveHTMLVisualizer: AI training_summary bulunamadı -- atlanıyor")
         except Exception as _e:
             logger.warning(f"[WARNING] InteractiveHTMLVisualizer basarisiz (devam): {_e}")
 
@@ -4407,9 +4410,9 @@ class MasterVisualizationSystem:
                     generated.append('log_analytics')
                     logger.info(f"  [OK] LogAnalyticsVisualizationsComplete: log grafikleri -> log_analytics/")
                 else:
-                    logger.info("  [INFO] LogAnalyticsVisualizationsComplete: log dosyasi parse edilemedi — atlanıyor")
+                    logger.info("  [INFO] LogAnalyticsVisualizationsComplete: log dosyasi parse edilemedi -- atlanıyor")
             else:
-                logger.info("  [INFO] LogAnalyticsVisualizationsComplete: .log dosyasi bulunamadı — atlanıyor")
+                logger.info("  [INFO] LogAnalyticsVisualizationsComplete: .log dosyasi bulunamadı -- atlanıyor")
         except Exception as _e:
             logger.warning(f"[WARNING] LogAnalyticsVisualizationsComplete basarisiz (devam): {_e}")
 
@@ -4447,7 +4450,7 @@ class MasterVisualizationSystem:
                 generated.append('master_report_complete')
                 logger.info(f"  [OK] MasterReportVisualizationsComplete: ozet grafikleri -> master_report_complete/")
             else:
-                logger.info("  [INFO] MasterReportVisualizationsComplete: PFAZ6 ozet verisi bulunamadı — atlanıyor")
+                logger.info("  [INFO] MasterReportVisualizationsComplete: PFAZ6 ozet verisi bulunamadı -- atlanıyor")
         except Exception as _e:
             logger.warning(f"[WARNING] MasterReportVisualizationsComplete basarisiz (devam): {_e}")
 
@@ -4480,9 +4483,9 @@ class MasterVisualizationSystem:
                     generated.append('model_comparison_dashboard')
                     logger.info(f"  [OK] ModelComparisonDashboard: karsilastirma panosu -> model_comparison_dashboard/")
                 else:
-                    logger.info("  [INFO] ModelComparisonDashboard: yüklenen sonuç yok — atlanıyor")
+                    logger.info("  [INFO] ModelComparisonDashboard: yüklenen sonuç yok -- atlanıyor")
             else:
-                logger.info("  [INFO] ModelComparisonDashboard: AI/ANFIS summary dosyasi bulunamadı — atlanıyor")
+                logger.info("  [INFO] ModelComparisonDashboard: AI/ANFIS summary dosyasi bulunamadı -- atlanıyor")
         except Exception as _e:
             logger.warning(f"[WARNING] ModelComparisonDashboard basarisiz (devam): {_e}")
 

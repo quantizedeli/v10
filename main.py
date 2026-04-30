@@ -217,7 +217,7 @@ class PFAZStatusManager:
     def _load_status(self) -> Dict:
         """Durum dosyasını yükle"""
         if self.status_file.exists():
-            with open(self.status_file, 'r') as f:
+            with open(self.status_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return self._create_default_status()
     
@@ -241,7 +241,7 @@ class PFAZStatusManager:
     
     def save_status(self):
         """Durumu kaydet"""
-        with open(self.status_file, 'w') as f:
+        with open(self.status_file, 'w', encoding='utf-8') as f:
             json.dump(self.status, f, indent=2)
     
     def update_pfaz(self, pfaz_id: str, status: str, progress: int):
@@ -334,7 +334,7 @@ class NuclearPhysicsAIOrchestrator:
         default_config = self._default_config()
 
         if Path(self.config_path).exists():
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
                 loaded_config = json.load(f)
 
             # Merge with defaults to ensure all required keys exist
@@ -1046,7 +1046,7 @@ class NuclearPhysicsAIOrchestrator:
             if ai_models_dir.exists():
                 for metrics_file in ai_models_dir.rglob('metrics_*.json'):
                     try:
-                        with open(metrics_file) as f:
+                        with open(metrics_file, encoding='utf-8') as f:
                             m = json.load(f)
                         val_r2 = m.get('val', {}).get('r2', None)
                         if val_r2 is None or np.isnan(val_r2) or val_r2 < -10:
@@ -1227,7 +1227,7 @@ class NuclearPhysicsAIOrchestrator:
             output_dir.mkdir(parents=True, exist_ok=True)
 
             if not OPTUNA_AVAILABLE:
-                logger.warning("[PFAZ 13] optuna kurulu değil → 'pip install optuna'")
+                logger.warning("[PFAZ 13] optuna kurulu değil -> 'pip install optuna'")
                 self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
                 return {'status': 'skipped', 'reason': 'optuna not installed'}
 
@@ -1238,7 +1238,7 @@ class NuclearPhysicsAIOrchestrator:
             if ai_models_dir.exists():
                 for metrics_file in ai_models_dir.rglob('metrics_*.json'):
                     try:
-                        with open(metrics_file) as f:
+                        with open(metrics_file, encoding='utf-8') as f:
                             m = json.load(f)
                         val_r2 = m.get('val', {}).get('r2', -999)
                         if val_r2 < -2 or np.isnan(val_r2):
@@ -1376,7 +1376,7 @@ class NuclearPhysicsAIOrchestrator:
 
             # ---- Save summary -----------------------------------------------
             summary_path = output_dir / 'automl_summary.json'
-            with open(summary_path, 'w') as f:
+            with open(summary_path, 'w', encoding='utf-8') as f:
                 json.dump(automl_results, f, indent=2)
             logger.info(f"[PFAZ13] Summary: {summary_path}")
 
@@ -1435,14 +1435,14 @@ class NuclearPhysicsAIOrchestrator:
             return {'deleted': [], 'kept': [], 'total_freed_mb': 0.0}
 
         logger.info(f"\n[CLEANUP] Başarısız dataset taraması başlıyor...")
-        logger.info(f"  Val R² eşiği: {val_r2_threshold}")
+        logger.info(f"  Val R^2 eşiği: {val_r2_threshold}")
         logger.info(f"  Mod: {'Simülasyon (dry_run)' if dry_run else 'GERÇEK SİLME'}")
 
         # Her dataset için en iyi Val R² bul
         dataset_best: Dict[str, float] = {}
         for metrics_file in models_dir.rglob('metrics_*.json'):
             try:
-                with open(metrics_file) as f:
+                with open(metrics_file, encoding='utf-8') as f:
                     m = json.load(f)
                 val_r2 = m.get('val', {}).get('r2')
                 if val_r2 is None:
@@ -1529,6 +1529,9 @@ class NuclearPhysicsAIOrchestrator:
 
             # ---- interaktif giris ----
             if nucleus_input is None:
+                if not sys.stdin.isatty() or os.environ.get('HPC_MODE'):
+                    logger.warning("[SKIP] Non-interactive mode: nucleus_input required via --predict")
+                    return
                 print()
                 print("[INPUT] Cekirdek bilgilerini girin:")
                 print("  Ornek (tek cekirdek) : Z=26 N=30 SPIN=0.0 PARITY=1")
@@ -1665,7 +1668,7 @@ class NuclearPhysicsAIOrchestrator:
         logger.info("\n" + "="*80)
         logger.info("[START] TUM PFAZ FAZLARI BASLATILIYOR")
         logger.info("="*80)
-        logger.info(f"Aralık  : PFAZ {start_from} → PFAZ {end_at}  ({n_total} faz)")
+        logger.info(f"Aralık  : PFAZ {start_from} -> PFAZ {end_at}  ({n_total} faz)")
         logger.info(f"Başlangıç: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("[NOTE] PFAZ 11 otomatik olarak atlanacaktır (deferred)")
 
@@ -1707,7 +1710,7 @@ class NuclearPhysicsAIOrchestrator:
                     self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
 
                 pfaz_elapsed = _time.time() - pfaz_start
-                logger.info(f"[PFAZ {pfaz_id}] Tamamlandı — süre: {_elapsed_str(pfaz_elapsed)}")
+                logger.info(f"[PFAZ {pfaz_id}] Tamamlandı -- süre: {_elapsed_str(pfaz_elapsed)}")
 
             except Exception as e:
                 pfaz_elapsed = _time.time() - pfaz_start
@@ -1751,7 +1754,10 @@ class NuclearPhysicsAIOrchestrator:
 
         # ---- Tahmin sistemi sorusu ----
         if end_at >= 4:   # PFAZ4 tamamlandiysa modeller hazir
-            self._ask_prediction_after_pipeline()
+            if sys.stdin.isatty() and not os.environ.get('HPC_MODE'):
+                self._ask_prediction_after_pipeline()
+            else:
+                logger.info("[AUTO] Non-interactive mode: skipping prediction prompt")
 
         return results
 
@@ -1863,7 +1869,7 @@ class NuclearPhysicsAIOrchestrator:
         # Satir sayisini kontrol et
         try:
             if data_path.suffix.lower() == '.csv':
-                row_count = sum(1 for _ in open(str(data_path))) - 1
+                row_count = sum(1 for _ in open(str(data_path, encoding='utf-8'))) - 1
             elif data_path.suffix.lower() in ('.xlsx', '.xls'):
                 import openpyxl
                 wb = openpyxl.load_workbook(str(data_path), read_only=True)
@@ -1879,7 +1885,7 @@ class NuclearPhysicsAIOrchestrator:
         logger.info(f"[CUSTOM-RUN] Dosya: {data_path.name}, tahmin edilen satir: {row_count}")
 
         if row_count == 1:
-            logger.info("[CUSTOM-RUN] Tek satir — tam pipeline yerine tek cekirdek tahmini yapiliyor")
+            logger.info("[CUSTOM-RUN] Tek satir -- tam pipeline yerine tek cekirdek tahmini yapiliyor")
             self.run_single_prediction(nucleus_input=str(data_path))
             return
 

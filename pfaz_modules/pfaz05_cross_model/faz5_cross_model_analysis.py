@@ -30,11 +30,14 @@ try:
     from .cross_model_evaluator import CrossModelEvaluator
 except ImportError:
     from cross_model_evaluator import CrossModelEvaluator
+    CrossModelEvaluator = None
+    CrossModelEvaluator = None
 
 try:
     import joblib
     JOBLIB_AVAILABLE = True
 except ImportError:
+    joblib = None
     JOBLIB_AVAILABLE = False
 
 try:
@@ -43,6 +46,8 @@ try:
     import matplotlib.pyplot as plt
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
+    matplotlib = None
+    plt = None
     MATPLOTLIB_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)

@@ -35,6 +35,10 @@ try:
     import seaborn as sns
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
+    matplotlib = None
+    plt = None
+    seaborn = None
+    sns = None
     MATPLOTLIB_AVAILABLE = False
     logging.warning("Matplotlib/Seaborn not available")
 
@@ -44,6 +48,14 @@ try:
     from openpyxl.chart import BarChart, Reference
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
+    Border = None
+    Side = None
+    BarChart = None
+    Reference = None
     OPENPYXL_AVAILABLE = False
     logging.warning("openpyxl not available")
 
@@ -273,7 +285,7 @@ class OptimizerComparisonReporter:
         logger.info("Loading training results...")
         
         # Load configs
-        with open(configs_file, 'r') as f:
+        with open(configs_file, 'r', encoding='utf-8') as f:
             configs = json.load(f)
         
         # Create config lookup
@@ -288,7 +300,7 @@ class OptimizerComparisonReporter:
         
         for metrics_file in metrics_files:
             try:
-                with open(metrics_file, 'r') as f:
+                with open(metrics_file, 'r', encoding='utf-8') as f:
                     metrics = json.load(f)
                 
                 # Extract identifiers
@@ -694,7 +706,7 @@ def main():
         }
     ]
     
-    with open(test_configs_file, 'w') as f:
+    with open(test_configs_file, 'w', encoding='utf-8') as f:
         json.dump(mock_configs, f)
     
     # Create mock metrics
@@ -712,7 +724,7 @@ def main():
             'epochs_trained': np.random.randint(50, 100)
         }
         
-        with open(metrics_dir / f"metrics_{config['id']}.json", 'w') as f:
+        with open(metrics_dir / f"metrics_{config['id']}.json", 'w', encoding='utf-8') as f:
             json.dump(mock_metrics, f)
     
     # Load results

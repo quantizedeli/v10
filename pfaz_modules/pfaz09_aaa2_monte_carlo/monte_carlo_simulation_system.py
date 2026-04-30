@@ -48,6 +48,8 @@ try:
     from tensorflow import keras
     TF_AVAILABLE = True
 except ImportError:
+    tf = None
+    keras = None
     TF_AVAILABLE = False
     logging.warning("TensorFlow not available - MC Dropout disabled")
 
@@ -261,7 +263,7 @@ class BootstrapSimulator:
         ci_upper = np.percentile(bootstrap_predictions, 97.5, axis=0)
         
         logger.info(f"  [OK] Mean CI width: {(ci_upper - ci_lower).mean():.4f}")
-        logger.info(f"  [OK] Mean R²: {np.mean(bootstrap_r2):.4f} ± {np.std(bootstrap_r2):.4f}")
+        logger.info(f"  [OK] Mean R^2: {np.mean(bootstrap_r2):.4f} +/- {np.std(bootstrap_r2):.4f}")
         
         return {
             'mean_predictions': mean_pred,
@@ -316,7 +318,7 @@ class NoiseSimulator:
         robustness_scores = {}
         
         for noise_level in self.noise_levels:
-            logger.info(f"    Noise σ={noise_level}...")
+            logger.info(f"    Noise sigma={noise_level}...")
             
             predictions_at_level = []
             
@@ -637,7 +639,7 @@ class MonteCarloSimulationSystem:
         elif 'R2_MM' in perf_df.columns:  # For MM_QM
             sort_col = 'R2_MM'
         else:
-            logger.error("  No R² column found in performance summary")
+            logger.error("  No R^2 column found in performance summary")
             return [], [], {}
         
         perf_df_sorted = perf_df.sort_values(sort_col, ascending=False)
@@ -645,7 +647,7 @@ class MonteCarloSimulationSystem:
         
         logger.info(f"  Top 10 models (by {sort_col}):")
         for i, row in top10_df.iterrows():
-            logger.info(f"    {row['model_id']}: R²={row[sort_col]:.4f}")
+            logger.info(f"    {row['model_id']}: R^2={row[sort_col]:.4f}")
         
         # Load models
         models = []
@@ -703,7 +705,7 @@ class MonteCarloSimulationSystem:
         # Save top 10 selection
         selection_file = self.output_dir / 'model_selection' / f'top10_models_{target}.json'
         selection_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(selection_file, 'w') as f:
+        with open(selection_file, 'w', encoding='utf-8') as f:
             json.dump({
                 'target': target,
                 'n_models': len(model_ids),
@@ -1226,7 +1228,7 @@ class MonteCarloSimulationSystem:
             'low_uncertainty_nuclei': aaa2_results['low_uncertainty_nuclei'][:10]
         }
         
-        with open(json_file, 'w') as f:
+        with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         
         logger.info(f"  [OK] JSON saved: {json_file.name}")

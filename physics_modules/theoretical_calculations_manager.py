@@ -432,7 +432,7 @@ class TheoreticalCalculationsManager:
             }
         }
         
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
         
         logger.info(f"\n[OK] Hesaplama raporu kaydedildi: {report_file}")

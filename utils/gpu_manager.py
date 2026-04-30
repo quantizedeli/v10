@@ -87,7 +87,7 @@ class GPUManager:
                 logger.debug(f"[GPU] PyTorch algilama hatasi: {e}")
 
         if not self.available:
-            logger.info("[GPU] GPU bulunamadi — CPU modu")
+            logger.info("[GPU] GPU bulunamadi -- CPU modu")
 
     # ------------------------------------------------------------------
     def configure_tf(self) -> bool:

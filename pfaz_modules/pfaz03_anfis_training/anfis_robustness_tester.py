@@ -31,6 +31,7 @@ try:
     import joblib
     JOBLIB_AVAILABLE = True
 except ImportError:
+    joblib = None
     JOBLIB_AVAILABLE = False
 
 try:
@@ -38,6 +39,10 @@ try:
     from openpyxl.styles import Font, PatternFill, Alignment
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
     OPENPYXL_AVAILABLE = False
 
 logging.basicConfig(
@@ -279,9 +284,9 @@ class ANFISRobustnessTester:
             
             iterations.append(iter_result)
             
-            logger.info(f"Train R²: {train_metrics['train_r2']:.4f}")
-            logger.info(f"Val R²:   {val_r2:.4f}")
-            logger.info(f"Test R²:  {test_r2:.4f}")
+            logger.info(f"Train R^2: {train_metrics['train_r2']:.4f}")
+            logger.info(f"Val R^2:   {val_r2:.4f}")
+            logger.info(f"Test R^2:  {test_r2:.4f}")
             logger.info(f"Outliers detected: {len(outlier_indices_in_current)}")
             logger.info(f"Robustness score: {robustness_score:.4f}")
             
@@ -455,7 +460,7 @@ class ANFISRobustnessTester:
                 'total_outliers_removed': sum(iter.n_outliers_removed for iter in iterations)
             }
         
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         
         logger.info(f"Summary report saved: {report_file}")

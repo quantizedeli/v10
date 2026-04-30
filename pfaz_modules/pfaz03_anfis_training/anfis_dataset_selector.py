@@ -82,69 +82,105 @@ class ANFISDatasetSelector:
         
         return self.results_df
     
-    def select_method_1_layered(self, target, n_datasets=50):
+    def select_method_1_layered(self, target, n_datasets=50,
+                                n_top_quota=None, n_mid_quota=None, n_low_quota=None):
         """
-        Method 1: Layered Selection
-        
-        Performance katmanlarına göre seçim:
-        - Top: R² > 0.90 (20 datasets)
-        - Mid: 0.80 < R² < 0.90 (15 datasets)
-        - Low: R² < 0.80 (15 datasets)
-        
+        Method 1: Layered Selection with adaptive quota redistribution.
+
+        Default quotas (per-tier): n_top=n_mid=n_low = n_datasets // 3.
+        When a tier has fewer datasets than its quota, the deficit is
+        redistributed to the other tiers in order of abundance so the total
+        always reaches min(n_datasets, total_available).
+
         Args:
-            target: Target variable (MM, QM, MM_QM, Beta_2)
-            n_datasets: Total datasets to select
+            target:       Target variable (MM, QM, MM_QM, Beta_2)
+            n_datasets:   Total datasets to select (default 50; use 150 for 50/50/50)
+            n_top_quota:  Desired count from Top tier  (None -> n_datasets // 3)
+            n_mid_quota:  Desired count from Mid tier  (None -> n_datasets // 3)
+            n_low_quota:  Desired count from Low tier  (None -> n_datasets - 2*(n//3))
         """
-        
+
         logger.info(f"\nMethod 1 (Layered) - Target: {target}")
-        
-        # Filter by target
+
         target_df = self.results_df[self.results_df['Target'] == target].copy()
-        
         if len(target_df) == 0:
-            logger.warning(f"[WARNING] {target} için sonuç bulunamadı!")
+            logger.warning(f"[WARNING] {target} icin sonuc bulunamadi!")
             return pd.DataFrame()
-        
-        # Layers
+
         top_threshold = 0.90
         mid_threshold = 0.80
-        
-        top_df = target_df[target_df['R2_test'] >= top_threshold]
-        mid_df = target_df[(target_df['R2_test'] >= mid_threshold) & 
-                           (target_df['R2_test'] < top_threshold)]
-        low_df = target_df[target_df['R2_test'] < mid_threshold]
-        
-        logger.info(f"  Top layer (R²≥{top_threshold}): {len(top_df)} datasets")
-        logger.info(f"  Mid layer ({mid_threshold}≤R²<{top_threshold}): {len(mid_df)} datasets")
-        logger.info(f"  Low layer (R²<{mid_threshold}): {len(low_df)} datasets")
-        
-        # Selection counts
-        n_top = min(20, len(top_df))
-        n_mid = min(15, len(mid_df))
-        n_low = min(15, len(low_df))
-        
-        # Adjust if total < 50
-        total_available = n_top + n_mid + n_low
-        if total_available < n_datasets:
-            logger.warning(f"  [WARNING] Sadece {total_available} dataset mevcut (hedef: {n_datasets})")
-            n_datasets = total_available
-        
-        # Select randomly from each layer (or all if not enough)
-        selected_top = top_df.sample(n=n_top, random_state=42) if len(top_df) > n_top else top_df
-        selected_mid = mid_df.sample(n=n_mid, random_state=42) if len(mid_df) > n_mid else mid_df
-        selected_low = low_df.sample(n=n_low, random_state=42) if len(low_df) > n_low else low_df
-        
-        # Combine
+
+        top_df = target_df[target_df['R2_test'] >= top_threshold].sort_values('R2_test', ascending=False)
+        mid_df = target_df[(target_df['R2_test'] >= mid_threshold) &
+                           (target_df['R2_test'] < top_threshold)].sort_values('R2_test', ascending=False)
+        low_df = target_df[target_df['R2_test'] < mid_threshold].sort_values('R2_test', ascending=False)
+
+        logger.info(f"  Top layer (R2>={top_threshold}): {len(top_df)} datasets")
+        logger.info(f"  Mid layer ({mid_threshold}<=R2<{top_threshold}): {len(mid_df)} datasets")
+        logger.info(f"  Low layer (R2<{mid_threshold}): {len(low_df)} datasets")
+
+        # --- Base quotas ---------------------------------------------------
+        base = n_datasets // 3
+        q_top = n_top_quota if n_top_quota is not None else base
+        q_mid = n_mid_quota if n_mid_quota is not None else base
+        q_low = n_low_quota if n_low_quota is not None else (n_datasets - 2 * base)
+
+        logger.info(f"  Initial quotas  -> Top:{q_top}  Mid:{q_mid}  Low:{q_low}")
+
+        # --- Adaptive redistribution ---------------------------------------
+        # Fill each tier up to its quota; collect any surplus capacity and
+        # redistribute the deficit to the tiers that still have room.
+        tiers = {'top': (top_df, q_top), 'mid': (mid_df, q_mid), 'low': (low_df, q_low)}
+
+        allocated = {}
+        for name, (df, quota) in tiers.items():
+            allocated[name] = min(quota, len(df))
+
+        deficit = n_datasets - sum(allocated.values())
+
+        if deficit > 0:
+            logger.info(f"  Deficit of {deficit} after initial fill -- redistributing...")
+            # Redistribute round-robin over tiers that still have spare capacity
+            for _pass in range(deficit):
+                for name, (df, _) in tiers.items():
+                    spare = len(df) - allocated[name]
+                    if spare > 0 and deficit > 0:
+                        allocated[name] += 1
+                        deficit -= 1
+                    if deficit == 0:
+                        break
+
+        if deficit > 0:
+            total_available = sum(len(df) for df, _ in tiers.values())
+            logger.warning(
+                f"  [WARNING] Toplam mevcut ({total_available}) < hedef ({n_datasets}). "
+                f"Maksimum {total_available} dataset seciliyor."
+            )
+
+        logger.info(
+            f"  Final allocations -> Top:{allocated['top']}  "
+            f"Mid:{allocated['mid']}  Low:{allocated['low']}"
+        )
+
+        # --- Sample each tier ----------------------------------------------
+        def _sample(df, n):
+            if n == 0:
+                return df.iloc[:0]
+            return df.sample(n=n, random_state=42) if len(df) > n else df
+
+        selected_top = _sample(top_df, allocated['top'])
+        selected_mid = _sample(mid_df, allocated['mid'])
+        selected_low = _sample(low_df, allocated['low'])
+
         selected = pd.concat([selected_top, selected_mid, selected_low], ignore_index=True)
-        
-        # Add selection method column
         selected['Selection_Method'] = 'Layered'
-        selected['Layer'] = (['Top'] * len(selected_top) + 
-                             ['Mid'] * len(selected_mid) + 
-                             ['Low'] * len(selected_low))
-        
-        logger.info(f"  [OK] {len(selected)} datasets seçildi")
-        
+        selected['Layer'] = (
+            ['Top'] * len(selected_top) +
+            ['Mid'] * len(selected_mid) +
+            ['Low'] * len(selected_low)
+        )
+
+        logger.info(f"  [OK] {len(selected)} datasets secildi")
         return selected
     
     def select_method_2_balanced(self, target, n_datasets=50):
@@ -261,14 +297,18 @@ class ANFISDatasetSelector:
         
         return selected
     
-    def select_both_methods(self, targets=None, n_datasets=50):
+    def select_both_methods(self, targets=None, n_datasets=150,
+                            n_top_quota=50, n_mid_quota=50, n_low_quota=50):
         """
-        Her target için her iki metodla seçim yap
-        
+        Her target icin her iki metodla secim yap.
+
         Args:
-            targets: List of targets (None = all)
-            n_datasets: Datasets per target per method
-        
+            targets:      List of targets (None = all)
+            n_datasets:   Total per target per method (default 150 = 50+50+50)
+            n_top_quota:  Desired Top tier count  (default 50)
+            n_mid_quota:  Desired Mid tier count  (default 50)
+            n_low_quota:  Desired Low tier count  (default 50)
+
         Returns:
             dict: {target: {'method1': df, 'method2': df}}
         """
@@ -288,8 +328,13 @@ class ANFISDatasetSelector:
             logger.info(f"{'='*80}")
             
             # Method 1
-            method1_df = self.select_method_1_layered(target, n_datasets)
-            
+            method1_df = self.select_method_1_layered(
+                target, n_datasets,
+                n_top_quota=n_top_quota,
+                n_mid_quota=n_mid_quota,
+                n_low_quota=n_low_quota,
+            )
+
             # Method 2
             method2_df = self.select_method_2_balanced(target, n_datasets)
             
@@ -419,7 +464,7 @@ class ANFISDatasetSelector:
                 }
         
         # Save summary
-        with open(self.output_dir / 'selection_summary.json', 'w') as f:
+        with open(self.output_dir / 'selection_summary.json', 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2)
         
         logger.info(f"\n[OK] Summary report: {self.output_dir / 'selection_summary.json'}")
@@ -536,7 +581,7 @@ class ANFISTrainingQueueGenerator:
         
         # JSON version
         json_path = self.selected_datasets_dir / 'anfis_training_queue.json'
-        with open(json_path, 'w') as f:
+        with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(self.queue, f, indent=2, default=str)
         
         logger.info(f"[OK] Training queue (JSON): {json_path}")

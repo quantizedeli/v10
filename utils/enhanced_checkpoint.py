@@ -30,12 +30,14 @@ try:
     import torch
     TORCH_AVAILABLE = True
 except ImportError:
+    torch = None
     TORCH_AVAILABLE = False
 
 try:
     import tensorflow as tf
     TF_AVAILABLE = True
 except ImportError:
+    tf = None
     TF_AVAILABLE = False
 
 try:
@@ -104,7 +106,7 @@ class EnhancedCheckpointManager:
     def _load_metadata(self):
         """Load checkpoint metadata"""
         if self.metadata_file.exists():
-            with open(self.metadata_file, 'r') as f:
+            with open(self.metadata_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 self.checkpoints = data.get('checkpoints', [])
                 self.best_metric = data.get('best_metric', self.best_metric)
@@ -121,7 +123,7 @@ class EnhancedCheckpointManager:
             'last_updated': datetime.now().isoformat()
         }
 
-        with open(self.metadata_file, 'w') as f:
+        with open(self.metadata_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, default=str)
 
     def _compute_checksum(self, filepath: Path) -> str:
@@ -260,7 +262,7 @@ class EnhancedCheckpointManager:
         if additional_data:
             metadata['additional_data'] = additional_data
 
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2, default=str)
 
     def _save_sklearn(self, path: Path, model, epoch, metrics, additional_data):
@@ -351,7 +353,7 @@ class EnhancedCheckpointManager:
         metadata_path = path.with_suffix('.meta.json')
         metadata = {}
         if metadata_path.exists():
-            with open(metadata_path, 'r') as f:
+            with open(metadata_path, 'r', encoding='utf-8') as f:
                 metadata = json.load(f)
 
         logger.info(f"Loaded TensorFlow checkpoint: {path.name}")

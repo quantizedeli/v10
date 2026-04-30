@@ -264,7 +264,7 @@ class Statistical12Visualizer:
             model_scores = {}
             for metrics_file in ai_models_dir.rglob('metrics_*.json'):
                 try:
-                    with open(metrics_file) as f:
+                    with open(metrics_file, encoding='utf-8') as f:
                         m = json.load(f)
                     val_r2 = m.get('val', {}).get('r2', None)
                     if val_r2 is None or np.isnan(val_r2) or val_r2 < -10:
@@ -528,7 +528,7 @@ class AutoML13Visualizer:
             try:
                 all_trials = {}
                 for jf in json_files:
-                    with open(jf) as f:
+                    with open(jf, encoding='utf-8') as f:
                         data = json.load(f)
                     if 'trials_data' not in data:
                         continue
@@ -977,7 +977,7 @@ class Statistical12Extended:
             if ai_dir:
                 for mf in ai_dir.rglob('metrics_*.json'):
                     try:
-                        with open(mf) as f:
+                        with open(mf, encoding='utf-8') as f:
                             m = json.load(f)
                         tgt = m.get('target', mf.parts[-4] if len(mf.parts) >= 4 else 'all')
                         r2  = m.get('val', {}).get('r2', None)
@@ -988,7 +988,7 @@ class Statistical12Extended:
             if anfis_dir:
                 for mf in anfis_dir.rglob('metrics_*.json'):
                     try:
-                        with open(mf) as f:
+                        with open(mf, encoding='utf-8') as f:
                             m = json.load(f)
                         tgt = m.get('target', 'all')
                         r2  = m.get('val', {}).get('r2', None)
@@ -1196,7 +1196,7 @@ class SupplementalVisualizer:
             except Exception as e:
                 logger.warning(f"  [MC9-EXT ERROR] {e}")
         else:
-            logger.info("  [INFO] PFAZ4 dizini bulunamadi — MC9 genisletilmis grafikleri atlandi")
+            logger.info("  [INFO] PFAZ4 dizini bulunamadi -- MC9 genisletilmis grafikleri atlandi")
 
         # PFAZ12 — Statistical Tests + Band Analysis + Extended
         if pfaz12_dir and Path(pfaz12_dir).exists():
@@ -1238,7 +1238,7 @@ class SupplementalVisualizer:
             except Exception as e:
                 logger.warning(f"  [ST12-COR ERROR] {e}")
         else:
-            logger.info("  [INFO] PFAZ12 dizini bulunamadi — istatistik/band grafikleri atlandi")
+            logger.info("  [INFO] PFAZ12 dizini bulunamadi -- istatistik/band grafikleri atlandi")
 
         # PFAZ13 — AutoML (temel + genisletilmis)
         if pfaz13_dir and Path(pfaz13_dir).exists():
@@ -1258,7 +1258,7 @@ class SupplementalVisualizer:
             except Exception as e:
                 logger.warning(f"  [AM13-EXT ERROR] {e}")
         else:
-            logger.info("  [INFO] PFAZ13 dizini bulunamadi — AutoML grafikleri atlandi")
+            logger.info("  [INFO] PFAZ13 dizini bulunamadi -- AutoML grafikleri atlandi")
 
         logger.info(f"\n[OK] Supplemental viz tamamlandi: {len(all_files)} grafik")
         logger.info(f"     Dizin: {self.output_dir}")

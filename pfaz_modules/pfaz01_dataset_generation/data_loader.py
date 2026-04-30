@@ -145,7 +145,7 @@ class NuclearDataLoader:
                 for idx, row in removed_azn.iterrows():
                     self._record_removal(row, f"A≠Z+N (A={row['A']}, Z+N={row['A_calculated']})")
                 df = df[df['A'] == df['A_calculated']]
-                logger.info(f"  -> {len(removed_azn)} çekirdek kaldırıldı (A≠Z+N)")
+                logger.info(f"  -> {len(removed_azn)} çekirdek kaldırıldı (A!=Z+N)")
             df.drop('A_calculated', axis=1, inplace=True)
 
         # 6. MM=0 kontrolü (Tek-A için) - sadece MM sütunu varsa
@@ -240,7 +240,7 @@ class NuclearDataLoader:
         reason_counts = df_removed['Reason'].value_counts()
         logger.info("\n  En yaygın ayıklanma nedenleri:")
         for reason, count in reason_counts.head(5).items():
-            logger.info(f"    • {reason}: {count}")
+            logger.info(f"    * {reason}: {count}")
     
     def get_data_statistics(self, df):
         """Veri istatistikleri"""

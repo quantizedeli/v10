@@ -42,6 +42,7 @@ try:
     from xgboost import XGBRegressor
     XGBOOST_AVAILABLE = True
 except ImportError:
+    XGBRegressor = None
     XGBOOST_AVAILABLE = False
     logging.warning("XGBoost not available")
 
@@ -52,6 +53,10 @@ try:
     from tensorflow.keras import layers, callbacks
     TF_AVAILABLE = True
 except ImportError:
+    tf = None
+    keras = None
+    layers = None
+    callbacks = None
     TF_AVAILABLE = False
     logging.warning("TensorFlow not available")
 
@@ -103,7 +108,7 @@ class BaseModelTrainer:
         # Load metadata
         metadata_file = dataset_path / 'metadata.json'
         if metadata_file.exists():
-            with open(metadata_file) as f:
+            with open(metadata_file, encoding='utf-8') as f:
                 metadata = json.load(f)
                 self.feature_names = metadata.get('feature_names')
                 self.target_names = metadata.get('target_names')
@@ -122,7 +127,7 @@ class BaseModelTrainer:
             'MAE': float(mae)
         }
         
-        logger.info(f"  {split_name}: R²={r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}")
+        logger.info(f"  {split_name}: R^2={r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}")
         
         return metrics
     

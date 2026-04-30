@@ -162,7 +162,7 @@ class ScalingManager:
                 'max': np.max(X, axis=0).tolist(),
                 'range': (np.max(X, axis=0) - np.min(X, axis=0)).tolist()
             }
-            logger.info("MinMax scaler fitted (min, max) → [0, 1]")
+            logger.info("MinMax scaler fitted (min, max) -> [0, 1]")
 
         self.is_fitted = True
 
@@ -309,7 +309,7 @@ class ScalingManager:
         """
         metadata = self.get_metadata()
 
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2)
 
         logger.info(f"Scaling metadata saved to: {filepath}")
@@ -325,7 +325,7 @@ class ScalingManager:
         Returns:
             ScalingManager instance
         """
-        with open(filepath, 'r') as f:
+        with open(filepath, 'r', encoding='utf-8') as f:
             metadata = json.load(f)
 
         scaler = ScalingManager(method=metadata['method'])

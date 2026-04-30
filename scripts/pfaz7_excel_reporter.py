@@ -74,7 +74,7 @@ class PFAZ7ExcelReporter:
         }
 
         self.ensemble_results.append(result)
-        logger.info(f"  [OK] Added: {ensemble_name} (R²={r2:.4f})")
+        logger.info(f"  [OK] Added: {ensemble_name} (R^2={r2:.4f})")
 
     def add_base_model_result(self,
                              model_id: str,

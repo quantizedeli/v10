@@ -29,6 +29,10 @@ try:
     from openpyxl.styles import Font, PatternFill, Alignment
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
     OPENPYXL_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)

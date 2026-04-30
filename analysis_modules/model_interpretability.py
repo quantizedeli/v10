@@ -36,6 +36,7 @@ try:
     import shap
     SHAP_AVAILABLE = True
 except ImportError:
+    shap = None
     SHAP_AVAILABLE = False
     logging.warning("SHAP not available! pip install shap")
 
@@ -458,7 +459,7 @@ class InterpretabilityAnalyzer:
             summary['top_3_features_model'] = results['model_importance'].head(3)['Feature'].tolist()
         
         # Save summary
-        with open(self.output_dir / 'interpretability_summary.json', 'w') as f:
+        with open(self.output_dir / 'interpretability_summary.json', 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2, default=str)
         
         logger.info(f"[OK] Summary report: {self.output_dir / 'interpretability_summary.json'}")
@@ -572,6 +573,7 @@ try:
     import shap
     SHAP_AVAILABLE = True
 except ImportError:
+    shap = None
     SHAP_AVAILABLE = False
     logging.warning("SHAP not available! pip install shap")
 
@@ -1140,7 +1142,7 @@ class InterpretabilityAnalyzer:
             summary['top_3_features_model'] = results['model_importance'].head(3)['Feature'].tolist()
         
         # Save summary
-        with open(self.output_dir / 'interpretability_summary.json', 'w') as f:
+        with open(self.output_dir / 'interpretability_summary.json', 'w', encoding='utf-8') as f:
             json.dump(summary, f, indent=2, default=str)
         
         logger.info(f"[OK] Summary report: {self.output_dir / 'interpretability_summary.json'}")

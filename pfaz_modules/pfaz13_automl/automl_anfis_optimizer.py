@@ -64,6 +64,7 @@ try:
     import matlab.engine
     MATLAB_AVAILABLE = True
 except ImportError:
+    matlab = None
     MATLAB_AVAILABLE = False
     logging.warning("MATLAB engine not available - using sklearn approximation")
 
@@ -733,7 +734,7 @@ if __name__ == "__main__":
     )
     
     logger.info("\n[OK] ANFIS optimization complete!")
-    logger.info(f"  Best R²: {result['best_score']:.4f}")
+    logger.info(f"  Best R^2: {result['best_score']:.4f}")
     logger.info(f"  Best config: {result['best_config']}")
     
     if 'excel_report' in result:

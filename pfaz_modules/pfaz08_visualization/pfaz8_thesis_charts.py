@@ -32,6 +32,9 @@ try:
     PLOTLY_OK = True
 except ImportError:
     PLOTLY_OK = False
+    go = None
+    px = None
+    make_subplots = None
 
 from scipy import stats
 
@@ -203,7 +206,7 @@ class ThesisChartGenerator:
         def _size(ds):
             for p in str(ds).split('_')[1:]:
                 try: return int(p)
-                except: pass
+                except (ValueError, TypeError): pass
             return None
         def _feature_code(ds):
             parts = str(ds).split('_')

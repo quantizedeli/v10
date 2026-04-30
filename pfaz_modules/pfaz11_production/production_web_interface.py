@@ -62,6 +62,8 @@ try:
     from xgboost import XGBRegressor
     ML_AVAILABLE = True
 except ImportError:
+    RandomForestRegressor = None
+    XGBRegressor = None
     ML_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)

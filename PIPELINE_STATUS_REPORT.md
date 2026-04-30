@@ -1,9 +1,25 @@
 # Pipeline Durum Raporu
-**Tarih:** 2026-04-30 (guncellendi)
+**Tarih:** 2026-04-30 (son guncelleme — Re-Review sonrasi)
 **Onceki rapor:** 2026-04-21  
 **Proje:** Nuclear Moments AI Pipeline (PFAZ 0-13)
 
-## 2026-04-30 Guncelleme — HPC Bug Fixes
+## 2026-04-30 Guncelleme — Re-Review Bug Fixes
+
+V10_QA_REREVIEW_REPORT.md'deki 5 yeni bug + 2 partial fix tamamlandi.
+Detay: `PFAZ_DEVELOPMENT_NOTES.md`.
+
+| Kategori | Onceki durum | Simdi |
+|----------|-------------|-------|
+| Yeni bug (re-review) | 5 | 0 |
+| keras NameError | Var (import fail) | Duzeltildi |
+| torch hard import | Var | try/except eklendi |
+| LightGBM n_jobs=-1 | Var (partial) | Duzeltildi |
+| input() TTY check | Partial | Tamamlandi |
+| Optuna/automl n_jobs=-1 | Var (5 yer) | Duzeltildi |
+| Smoke test | 7/8 PASS | 8/8 PASS |
+| Integration test | 34/38 PASS | 38/38 PASS |
+
+## 2026-04-30 Guncelleme — HPC Bug Fixes (Ilk Oturum)
 
 17 kritik/yuksek oncelikli bug duzeltildi. Detay: `PFAZ_DEVELOPMENT_NOTES.md` ve `V10_QA_BUG_REPORT.md`.
 

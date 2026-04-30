@@ -101,7 +101,7 @@ class CheckpointManager:
             'file_size_kb': checkpoint_file.stat().st_size / 1024
         }
 
-        with open(meta_file, 'w') as f:
+        with open(meta_file, 'w', encoding='utf-8') as f:
             json.dump(meta_data, f, indent=2)
 
         logger.info(f"[SAVE] Checkpoint saved: PFAZ {pfaz_id}")
@@ -123,7 +123,7 @@ class CheckpointManager:
         checkpoint_file = self.checkpoint_dir / f'pfaz_{pfaz_id}_checkpoint.pkl'
 
         if not checkpoint_file.exists():
-            logger.info(f"🚫 No checkpoint found for PFAZ {pfaz_id}")
+            logger.info(f"[MISS] No checkpoint found for PFAZ {pfaz_id}")
             return None
 
         # Load checkpoint
@@ -155,7 +155,7 @@ class CheckpointManager:
 
         state = checkpoint_data['state']
 
-        logger.info(f"▶️ Resuming from checkpoint: PFAZ {pfaz_id}")
+        logger.info(f"[RESUME] Resuming from checkpoint: PFAZ {pfaz_id}")
         logger.info(f"  Completed tasks: {state.get('completed_tasks', [])}")
         logger.info(f"  Next task: {state.get('current_task', 0)}")
 
@@ -171,7 +171,7 @@ class CheckpointManager:
         if meta_file.exists():
             meta_file.unlink()
 
-        logger.info(f"🗑️ Checkpoint deleted: PFAZ {pfaz_id}")
+        logger.info(f"[DEL] Checkpoint deleted: PFAZ {pfaz_id}")
 
     def list_checkpoints(self) -> List[Dict]:
         """
@@ -184,7 +184,7 @@ class CheckpointManager:
         checkpoints = []
 
         for meta_file in self.checkpoint_dir.glob('pfaz_*_meta.json'):
-            with open(meta_file) as f:
+            with open(meta_file, encoding='utf-8') as f:
                 meta = json.load(f)
                 checkpoints.append(meta)
 
@@ -304,7 +304,7 @@ def train_models_with_checkpoints(configs: List[Dict],
                 description=f"Training {target}, {len(completed_tasks)}/{len(configs)} models"
             )
 
-            logger.info(f"[OK] Model trained: R²={metrics['r2']:.4f}")
+            logger.info(f"[OK] Model trained: R^2={metrics['r2']:.4f}")
             logger.info(f"[SAVE] Checkpoint saved ({len(completed_tasks)}/{len(configs)})")
 
         except Exception as e:

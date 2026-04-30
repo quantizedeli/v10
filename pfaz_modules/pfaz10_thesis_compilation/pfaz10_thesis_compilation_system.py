@@ -124,7 +124,7 @@ class ThesisCompilationSystem:
         try:
             dataset_file = self.results_dir / 'dataset_catalog.json'
             if dataset_file.exists():
-                with open(dataset_file) as f:
+                with open(dataset_file, encoding='utf-8') as f:
                     dataset_info.update(json.load(f))
         except Exception as e:
             logger.warning(f"Could not load dataset catalog: {e}")
@@ -152,7 +152,7 @@ class ThesisCompilationSystem:
                     if model_dir.is_dir():
                         metrics_file = model_dir / 'metrics_summary.json'
                         if metrics_file.exists():
-                            with open(metrics_file) as f:
+                            with open(metrics_file, encoding='utf-8') as f:
                                 performance['ai_models'][model_dir.name] = json.load(f)
             
             # ANFIS models
@@ -162,13 +162,13 @@ class ThesisCompilationSystem:
                     if config_dir.is_dir():
                         metrics_file = config_dir / 'metrics_summary.json'
                         if metrics_file.exists():
-                            with open(metrics_file) as f:
+                            with open(metrics_file, encoding='utf-8') as f:
                                 performance['anfis_models'][config_dir.name] = json.load(f)
             
             # Ensemble results
             ensemble_file = self.results_dir / 'ensemble_evaluation_report.json'
             if ensemble_file.exists():
-                with open(ensemble_file) as f:
+                with open(ensemble_file, encoding='utf-8') as f:
                     performance['ensemble_models'] = json.load(f)
         
         except Exception as e:
@@ -203,7 +203,7 @@ class ThesisCompilationSystem:
         try:
             cross_file = self.results_dir / 'cross_model_analysis' / 'cross_model_analysis_summary.json'
             if cross_file.exists():
-                with open(cross_file) as f:
+                with open(cross_file, encoding='utf-8') as f:
                     cross_model = json.load(f)
         except Exception as e:
             logger.warning(f"Could not load cross-model analysis: {e}")
@@ -225,7 +225,7 @@ class ThesisCompilationSystem:
         try:
             ensemble_file = self.results_dir / 'ensemble_evaluation_report.json'
             if ensemble_file.exists():
-                with open(ensemble_file) as f:
+                with open(ensemble_file, encoding='utf-8') as f:
                     ensemble.update(json.load(f))
         except Exception as e:
             logger.warning(f"Could not load ensemble results: {e}")
@@ -2291,7 +2291,7 @@ echo "[OK] Compilation complete: thesis_main.pdf"
 """
         
         bash_file = self.thesis_dir / 'compile.sh'
-        with open(bash_file, 'w') as f:
+        with open(bash_file, 'w', encoding='utf-8') as f:
             f.write(bash_script)
         bash_file.chmod(0o755)  # Make executable
         
@@ -2316,7 +2316,7 @@ pause
 """
         
         bat_file = self.thesis_dir / 'compile.bat'
-        with open(bat_file, 'w') as f:
+        with open(bat_file, 'w', encoding='utf-8') as f:
             f.write(bat_script)
         
         logger.info(f"  [OK] Compilation scripts saved")

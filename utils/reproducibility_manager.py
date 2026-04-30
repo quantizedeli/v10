@@ -379,7 +379,7 @@ class ReproducibilityManager:
 
         # Save as JSON
         repro_file = output_dir / 'reproducibility_info.json'
-        with open(repro_file, 'w') as f:
+        with open(repro_file, 'w', encoding='utf-8') as f:
             json.dump(repro_info, f, indent=2, default=str)
 
         self.logger.info(f"Reproducibility info saved to {repro_file}")
@@ -402,7 +402,7 @@ class ReproducibilityManager:
 
             if result.returncode == 0:
                 requirements_file = output_dir / 'requirements.txt'
-                with open(requirements_file, 'w') as f:
+                with open(requirements_file, 'w', encoding='utf-8') as f:
                     f.write(result.stdout)
                 self.logger.info(f"Requirements saved to {requirements_file}")
         except Exception as e:
@@ -418,7 +418,7 @@ class ReproducibilityManager:
 
             if result.returncode == 0:
                 env_file = output_dir / 'environment.yml'
-                with open(env_file, 'w') as f:
+                with open(env_file, 'w', encoding='utf-8') as f:
                     f.write(result.stdout)
                 self.logger.info(f"Conda environment saved to {env_file}")
         except Exception as e:
@@ -434,7 +434,7 @@ class ReproducibilityManager:
         Returns:
             Validation results
         """
-        with open(reference_file, 'r') as f:
+        with open(reference_file, 'r', encoding='utf-8') as f:
             reference = json.load(f)
 
         current = self.snapshot_environment()
@@ -483,7 +483,7 @@ class ReproducibilityManager:
         Args:
             reproducibility_file: Path to reproducibility_info.json
         """
-        with open(reproducibility_file, 'r') as f:
+        with open(reproducibility_file, 'r', encoding='utf-8') as f:
             repro_info = json.load(f)
 
         # Apply seed

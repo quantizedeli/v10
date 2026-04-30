@@ -430,7 +430,7 @@ class ControlGroupGenerator:
         
         txt_file = self.output_dir / 'analysis_summary.txt'
         
-        with open(txt_file, 'w') as f:
+        with open(txt_file, 'w', encoding='utf-8') as f:
             f.write("="*80 + "\n")
             f.write("NUCLEUS PREDICTION ANALYSIS SUMMARY\n")
             f.write("="*80 + "\n\n")

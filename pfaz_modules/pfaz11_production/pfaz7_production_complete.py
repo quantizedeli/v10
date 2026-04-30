@@ -52,6 +52,7 @@ try:
     from catboost import CatBoostRegressor
     CATBOOST_AVAILABLE = True
 except ImportError:
+    CatBoostRegressor = None
     CATBOOST_AVAILABLE = False
 
 # Optional: XGBoost
@@ -59,6 +60,7 @@ try:
     from xgboost import XGBRegressor
     XGBOOST_AVAILABLE = True
 except ImportError:
+    XGBRegressor = None
     XGBOOST_AVAILABLE = False
 
 # Optional: TensorFlow
@@ -66,6 +68,7 @@ try:
     import tensorflow as tf
     TF_AVAILABLE = True
 except ImportError:
+    tf = None
     TF_AVAILABLE = False
 
 logging.basicConfig(
@@ -449,7 +452,7 @@ class ComprehensiveEnsembleEvaluator:
             ]
         }
         
-        with open(self.output_dir / 'ensemble_results.json', 'w') as f:
+        with open(self.output_dir / 'ensemble_results.json', 'w', encoding='utf-8') as f:
             json.dump(results_json, f, indent=2)
         
         logger.info(f"\n[OK] Results saved to: {self.output_dir}")
@@ -558,7 +561,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
             base_pred_test[model_id] = model.predict(X_test).flatten()
             
             r2 = r2_score(y_test, base_pred_test[model_id])
-            logger.info(f"  {model_id}: R²={r2:.4f}")
+            logger.info(f"  {model_id}: R^2={r2:.4f}")
         except Exception as e:
             logger.warning(f"  Failed {model_id}: {e}")
     
@@ -645,7 +648,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     logger.info("BEST ENSEMBLE")
     logger.info("="*80)
     logger.info(f"Method: {best_ensemble['name']}")
-    logger.info(f"R²: {best_ensemble['r2']:.4f}")
+    logger.info(f"R^2: {best_ensemble['r2']:.4f}")
     logger.info(f"RMSE: {best_ensemble['rmse']:.4f}")
     logger.info(f"MAE: {best_ensemble['mae']:.4f}")
     logger.info(f"MAPE: {best_ensemble['mape']:.2f}%")
@@ -654,7 +657,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     evaluator.save_results()
     
     # Save diversity metrics
-    with open(output_dir / 'diversity_metrics.json', 'w') as f:
+    with open(output_dir / 'diversity_metrics.json', 'w', encoding='utf-8') as f:
         json.dump(diversity_metrics, f, indent=2)
     
     # ========================================================================
@@ -701,7 +704,7 @@ def run_pfaz7_production(target='MM', trained_models_dir='trained_models',
     logger.info(f"Base models: {len(models)}")
     logger.info(f"Ensemble methods tested: {len(evaluator.results)}")
     logger.info(f"Best method: {best_ensemble['name']}")
-    logger.info(f"Best R²: {best_ensemble['r2']:.4f}")
+    logger.info(f"Best R^2: {best_ensemble['r2']:.4f}")
     logger.info(f"Output directory: {output_dir}")
     
     return {
@@ -756,7 +759,7 @@ def main():
     for target, results in all_results.items():
         logger.info(f"\n{target}:")
         logger.info(f"  Best: {results['best_ensemble']['name']}")
-        logger.info(f"  R²: {results['best_ensemble']['r2']:.4f}")
+        logger.info(f"  R^2: {results['best_ensemble']['r2']:.4f}")
         logger.info(f"  RMSE: {results['best_ensemble']['rmse']:.4f}")
     
     return all_results

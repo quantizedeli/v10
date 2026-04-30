@@ -287,7 +287,7 @@ class ExcludedNucleiTracker:
             'timestamp': datetime.now().isoformat()
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(sanitize_for_json(output_data), f, indent=2)
 
         logger.info(f"[OK] Excluded nuclei saved to JSON: {output_path}")

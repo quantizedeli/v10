@@ -141,7 +141,7 @@ class MetricsLogger:
             record['model'] = model_name
 
         # Write to JSONL file
-        with open(self.metrics_file, 'a') as f:
+        with open(self.metrics_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps(record, default=str) + '\n')
 
         # Write to TensorBoard
@@ -157,7 +157,7 @@ class MetricsLogger:
 
         # Write to file
         hparams_file = self.log_dir / 'hyperparameters.json'
-        with open(hparams_file, 'w') as f:
+        with open(hparams_file, 'w', encoding='utf-8') as f:
             json.dumps(hparams, f, indent=2, default=str)
 
     def log_model_graph(self, model, input_sample):

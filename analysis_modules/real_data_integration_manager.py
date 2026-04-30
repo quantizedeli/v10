@@ -13,6 +13,7 @@ Author: AI Dataset Training Pipeline
 Version: 1.0.0
 """
 
+import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -202,7 +203,8 @@ class RealDataIntegrationManager:
                 elif model_type == 'Lasso':
                     model = Lasso(alpha=0.1)
                 elif model_type == 'RF':
-                    model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42, n_jobs=-1)
+                    _n_jobs = 1 if os.environ.get('_PFAZ_PARALLEL_ACTIVE') == '1' else -1
+                    model = RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42, n_jobs=_n_jobs)
                 elif model_type == 'GBM':
                     model = GradientBoostingRegressor(n_estimators=100, max_depth=3, random_state=42)
                 elif model_type == 'MLP':
@@ -237,7 +239,7 @@ class RealDataIntegrationManager:
                 trained_models[model_id] = model_info
                 self.trained_models[model_id] = model_info
                 
-                logger.info(f"  [OK] {model_type}: R²={r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}")
+                logger.info(f"  [OK] {model_type}: R^2={r2:.4f}, RMSE={rmse:.4f}, MAE={mae:.4f}")
             
             except Exception as e:
                 logger.error(f"  [FAIL] Error training {model_type}: {str(e)}")
@@ -315,7 +317,7 @@ class RealDataIntegrationManager:
         
         # Weighted Voting
         if 'weighted_voting_r2' in ensemble_methods:
-            logger.info("\n-> Creating Weighted Voting (R²)...")
+            logger.info("\n-> Creating Weighted Voting (R^2)...")
             result = builder.create_weighted_voting(
                 model_ids=model_ids,
                 X_test=X_test,
@@ -428,7 +430,7 @@ class RealDataIntegrationManager:
         logger.info(f"{'='*60}")
         logger.info(f"Dataset: {overall_best['Dataset']}")
         logger.info(f"Ensemble: {overall_best['Ensemble']}")
-        logger.info(f"R² = {overall_best['R²']:.4f}")
+        logger.info(f"R^2 = {overall_best['R^2']:.4f}")
         logger.info(f"RMSE = {overall_best['RMSE']:.4f}")
         logger.info(f"MAE = {overall_best['MAE']:.4f}")
         
@@ -449,7 +451,7 @@ class RealDataIntegrationManager:
         
         # Save JSON
         report_path = self.output_dir / 'faz8_final_report.json'
-        with open(report_path, 'w') as f:
+        with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
         
         logger.info(f"\n[OK] Report saved: {report_path}")

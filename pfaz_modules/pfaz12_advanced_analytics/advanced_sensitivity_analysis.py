@@ -31,6 +31,10 @@ try:
     from SALib.analyze import sobol, morris
     SALIB_AVAILABLE = True
 except ImportError:
+    saltelli = None
+    morris_sample = None
+    sobol = None
+    morris = None
     SALIB_AVAILABLE = False
     logging.warning("SALib not available - install: pip install SALib")
 
@@ -39,6 +43,8 @@ try:
     import seaborn as sns
     PLOTTING_AVAILABLE = True
 except ImportError:
+    plt = None
+    sns = None
     PLOTTING_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -297,11 +303,11 @@ class AdvancedSensitivityAnalysis:
             }
         
         # Log
-        logger.info("\n  Morris indices (μ*, σ):")
+        logger.info("\n  Morris indices (mu*, sigma):")
         for name in problem['names']:
             mu_star = result['indices'][name]['mu_star']
             sigma = result['indices'][name]['sigma']
-            logger.info(f"    {name:15s}: μ*={mu_star:7.4f}, σ={sigma:7.4f}")
+            logger.info(f"    {name:15s}: mu*={mu_star:7.4f}, sigma={sigma:7.4f}")
         
         self.results['morris'] = result
         return result
@@ -521,6 +527,7 @@ class AdvancedSensitivityAnalysis:
         except ImportError:
             logger.error("  xlsxwriter not available")
             return None
+            xlsxwriter = None
         
         filepath = self.output_dir / filename
         

@@ -79,7 +79,7 @@ class CICDPipelineGenerator:
         }
         
         workflow_path = self.github_dir / 'test.yml'
-        with open(workflow_path, 'w') as f:
+        with open(workflow_path, 'w', encoding='utf-8') as f:
             yaml.dump(workflow, f, default_flow_style=False, sort_keys=False)
         
         logger.info(f"[OK] Generated: {workflow_path}")
@@ -159,7 +159,7 @@ class CICDPipelineGenerator:
         }
         
         workflow_path = self.github_dir / 'deploy.yml'
-        with open(workflow_path, 'w') as f:
+        with open(workflow_path, 'w', encoding='utf-8') as f:
             yaml.dump(workflow, f, default_flow_style=False, sort_keys=False)
         
         logger.info(f"[OK] Generated: {workflow_path}")
@@ -188,7 +188,7 @@ class CICDPipelineGenerator:
         }
         
         workflow_path = self.github_dir / 'code-quality.yml'
-        with open(workflow_path, 'w') as f:
+        with open(workflow_path, 'w', encoding='utf-8') as f:
             yaml.dump(workflow, f, default_flow_style=False, sort_keys=False)
         
         logger.info(f"[OK] Generated: {workflow_path}")
@@ -223,7 +223,7 @@ class CICDPipelineGenerator:
         }
         
         config_path = self.project_root / '.pre-commit-config.yaml'
-        with open(config_path, 'w') as f:
+        with open(config_path, 'w', encoding='utf-8') as f:
             yaml.dump(config, f, default_flow_style=False)
         
         logger.info(f"[OK] Generated: {config_path}")

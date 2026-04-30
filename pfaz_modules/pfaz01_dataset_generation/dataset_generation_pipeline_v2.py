@@ -616,12 +616,20 @@ class DatasetGenerationPipelineV2:
 
         return stats
 
-    # Küçük dataset boyutları için kısıtlar
-    # 75 ve 100 çekirdek: yalnızca S70 senaryosu + temel feature setleri
-    SMALL_NUCLEUS_THRESHOLD: int = 100   # <= bu değer "küçük" sayılır
-    SMALL_NUCLEUS_SCENARIO: str  = 'S70' # küçük için tek senaryo
-    # Küçük dataset'lerde yalnızca bu feature setleri üretilir
-    SMALL_NUCLEUS_FEATURE_SETS: list = ['Basic', 'Standard']
+    # Kucuk dataset boyutlari icin kisitlar
+    # 75 ve 100 cekirdek: yalnizca S70 senaryosu + 3-girisli SHAP-bazli setler
+    SMALL_NUCLEUS_THRESHOLD: int = 100   # <= bu deger "kucuk" sayilir
+    SMALL_NUCLEUS_SCENARIO: str  = 'S70' # kucuk icin tek senaryo
+    # Kucuk dataset'lerde yalnizca bu feature setleri uretilir.
+    # Eski 'Basic'/'Standard' legacy isimleri FEATURE_SETS'te tanimli degil/SHAP-bazli degil.
+    # Simdi sadece 3-girisli SHAP-bazli setler: 27 kural (3MF), kucuk sample ile ogrenilebilir.
+    SMALL_NUCLEUS_FEATURE_SETS: list = [
+        'AZN', 'AZS', 'AZMC', 'AZBEPA', 'AZB2E',  # Common_3in
+        'ASMC', 'AMCBEPA',                           # MM_3in
+        'ZB2EMC', 'B2EMCBEA',                        # QM_3in
+        'MCZMNM', 'AZVNV', 'ZMNMBEA',               # B2_3in
+        'NNPMC',                                      # NnNp_3in
+    ]
 
     def _generate_all_datasets(self):
         """
@@ -772,7 +780,7 @@ class DatasetGenerationPipelineV2:
 
             anomaly_report_path = self.output_base_dir / 'anomaly_explanation_report.json'
             import json as _json
-            with open(anomaly_report_path, 'w') as f:
+            with open(anomaly_report_path, 'w', encoding='utf-8') as f:
                 _json.dump(anomaly_report_data, f, indent=2)
             logger.info(f"[OK] Anomaly explanation report: {anomaly_report_path}")
             self.generation_report['anomaly_report_path'] = str(anomaly_report_path)
@@ -990,7 +998,7 @@ class DatasetGenerationPipelineV2:
         # Save metadata (sanitized for JSON)
         # FIXED: Simplified naming (dataset name is already in directory)
         metadata_file = dataset_dir / "metadata.json"
-        with open(metadata_file, 'w') as f:
+        with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(sanitize_for_json(metadata), f, indent=2)
 
         return {
@@ -1147,7 +1155,7 @@ class DatasetGenerationPipelineV2:
         # Save metadata (sanitized for JSON)
         # FIXED: Simplified naming (dataset name is already in directory)
         metadata_file = dataset_dir / "metadata.json"
-        with open(metadata_file, 'w') as f:
+        with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(sanitize_for_json(metadata), f, indent=2)
 
         return {
@@ -1187,14 +1195,14 @@ class DatasetGenerationPipelineV2:
 
         # Save master metadata (sanitized for JSON)
         master_metadata_file = self.output_base_dir / 'master_metadata.json'
-        with open(master_metadata_file, 'w') as f:
+        with open(master_metadata_file, 'w', encoding='utf-8') as f:
             json.dump(sanitize_for_json(master_metadata), f, indent=2)
 
         logger.info(f"[SUCCESS] Master metadata: {master_metadata_file}")
 
         # Generation report (sanitized for JSON)
         report_file = self.output_base_dir / 'generation_report.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(sanitize_for_json(self.generation_report), f, indent=2)
 
         logger.info(f"[SUCCESS] Generation report: {report_file}")

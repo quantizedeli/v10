@@ -112,7 +112,7 @@ class CrossValidationAnalyzer:
                 results_summary[f'{metric}_train_mean'] = train_scores.mean()
                 results_summary[f'{metric}_train_std'] = train_scores.std()
             
-            logger.info(f"  {metric}: {test_scores.mean():.4f} (±{test_scores.std():.4f})")
+            logger.info(f"  {metric}: {test_scores.mean():.4f} (+/-{test_scores.std():.4f})")
         
         # Save results
         self._save_results(results_summary)
@@ -126,7 +126,7 @@ class CrossValidationAnalyzer:
         """Save CV results"""
         
         # Summary JSON
-        with open(self.output_dir / 'cv_summary.json', 'w') as f:
+        with open(self.output_dir / 'cv_summary.json', 'w', encoding='utf-8') as f:
             json.dump(results_summary, f, indent=2)
         
         # Detailed CSV
@@ -462,7 +462,7 @@ class RobustnessTester:
             results['rmse'].append(rmse)
             results['mae'].append(mae)
             
-            logger.info(f"  Noise {noise_level:.2f}: R²={r2:.4f} (Δ={r2-baseline_r2:+.4f})")
+            logger.info(f"  Noise {noise_level:.2f}: R^2={r2:.4f} (Delta={r2-baseline_r2:+.4f})")
         
         self.test_results['noise_sensitivity'] = results
         
@@ -536,7 +536,7 @@ class RobustnessTester:
             results['rmse'].append(rmse)
             results['mae'].append(mae)
             
-            logger.info(f"  Outliers {outlier_frac:.2%}: R²={r2:.4f} (Δ={r2-baseline_r2:+.4f})")
+            logger.info(f"  Outliers {outlier_frac:.2%}: R^2={r2:.4f} (Delta={r2-baseline_r2:+.4f})")
         
         self.test_results['outlier_sensitivity'] = results
         
@@ -727,7 +727,7 @@ class RobustnessTester:
             report['outlier_max_drop'] = float(max(os['r2']) - min(os['r2']))
         
         # Save
-        with open(self.output_dir / 'robustness_report.json', 'w') as f:
+        with open(self.output_dir / 'robustness_report.json', 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
         
         logger.info(f"[OK] Robustness report: {self.output_dir / 'robustness_report.json'}")

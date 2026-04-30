@@ -28,6 +28,8 @@ try:
     import torch.nn as nn
     TORCH_AVAILABLE = True
 except ImportError:
+    torch = None
+    nn = None
     TORCH_AVAILABLE = False
 
 logger = logging.getLogger(__name__)

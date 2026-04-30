@@ -72,7 +72,7 @@ class ComprehensiveContentGenerator:
             filepath = self.results_dir / filename
             if filepath.exists():
                 try:
-                    with open(filepath, 'r') as f:
+                    with open(filepath, 'r', encoding='utf-8') as f:
                         results[key] = json.load(f)
                     logger.info(f"[OK] Loaded {filename}")
                 except Exception as e:

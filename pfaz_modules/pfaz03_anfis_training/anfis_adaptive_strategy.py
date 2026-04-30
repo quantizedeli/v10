@@ -201,7 +201,7 @@ class AdaptiveLearningStrategy:
         
         # Log
         avg_r2 = np.mean([m.get('R2', 0) for m in stats['metrics']])
-        logger.info(f"  Config {config_key}: n={stats['n_trained']}, avg_R²={avg_r2:.4f}, composite={composite:.4f}")
+        logger.info(f"  Config {config_key}: n={stats['n_trained']}, avg_R^2={avg_r2:.4f}, composite={composite:.4f}")
     
     def _get_current_stage(self):
         """Determine current stage based on iteration"""
@@ -245,7 +245,7 @@ class AdaptiveLearningStrategy:
         
         # Save JSON
         report_file = self.output_dir / 'adaptive_learning_report.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(stats, f, indent=2)
         
         logger.info(f"[OK] Adaptive learning report: {report_file}")

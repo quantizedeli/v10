@@ -15,7 +15,7 @@ from pathlib import Path
 @pytest.mark.integration
 def test_config_and_data_integration(config_path, data_file_path):
     """Test config file references correct data file"""
-    with open(config_path) as f:
+    with open(config_path, encoding='utf-8') as f:
         config = json.load(f)
 
     # Get data file name from config
@@ -37,6 +37,6 @@ def test_data_loading_pipeline(data_file_path):
     assert data_file_path.stat().st_size > 0, "Data file should not be empty"
 
     # Check file has content (basic check)
-    with open(data_file_path) as f:
+    with open(data_file_path, encoding='utf-8') as f:
         first_line = f.readline()
         assert len(first_line) > 0, "Data file should have content"

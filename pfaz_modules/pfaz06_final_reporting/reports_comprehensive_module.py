@@ -33,6 +33,13 @@ try:
     from openpyxl.utils import get_column_letter
     OPENPYXL_AVAILABLE = True
 except ImportError:
+    Workbook = None
+    Font = None
+    PatternFill = None
+    Alignment = None
+    Border = None
+    Side = None
+    get_column_letter = None
     OPENPYXL_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
@@ -579,7 +586,7 @@ class ComprehensiveReportsBuilder:
             }
         
         # Save JSON
-        with open(json_file, 'w') as f:
+        with open(json_file, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
         
         logger.info(f"[OK] JSON report saved: {json_file.name}")
@@ -843,7 +850,7 @@ class ComprehensiveReportsBuilder:
 </html>
 """
         
-        with open(html_file, 'w') as f:
+        with open(html_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         
         logger.info(f"[OK] HTML report saved: {html_file.name}")

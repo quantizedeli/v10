@@ -55,6 +55,9 @@ try:
     _PLOT = True
 except ImportError:
     _PLOT = False
+    matplotlib = None
+    plt = None
+    sns = None
 
 # ---------------------------------------------------------------------------
 # ExcelStandardizer opsiyonel
@@ -64,6 +67,7 @@ try:
     _ES = True
 except ImportError:
     _ES = False
+    ExcelStandardizer = None
 
 
 # ===========================================================================
@@ -184,7 +188,7 @@ class NuclearPatternAnalyzer:
         df["N_is_magic"] = df["N"].isin(MAGIC_NUMBERS).astype(int)
         df["ZN_both_magic"] = ((df["Z_is_magic"] == 1) & (df["N_is_magic"] == 1)).astype(int)
 
-        logger.info(f"  → {len(df)} çekirdek yüklendi, {len(df.columns)} sütun")
+        logger.info(f"  -> {len(df)} çekirdek yüklendi, {len(df.columns)} sütun")
         self.df = df
         return df
 
@@ -212,10 +216,10 @@ class NuclearPatternAnalyzer:
             except Exception as e:
                 logger.warning(f"  [WARNING] {target} analizi başarısız: {e}")
 
-        logger.info("\n[NuclearPatternAnalyzer] → Excel raporu üretiliyor...")
+        logger.info("\n[NuclearPatternAnalyzer] -> Excel raporu üretiliyor...")
         excel_path = self.generate_excel_report()
 
-        logger.info("[NuclearPatternAnalyzer] → Grafikler üretiliyor...")
+        logger.info("[NuclearPatternAnalyzer] -> Grafikler üretiliyor...")
         plot_paths = self.generate_plots() if _PLOT else []
 
         logger.info("\n" + "="*70)
@@ -276,7 +280,7 @@ class NuclearPatternAnalyzer:
                 spin_mode = sub["SPIN"].mode()
                 row["SPIN_mod"] = float(spin_mode.iloc[0]) if len(spin_mode) > 0 else None
             summary_rows.append(row)
-        logger.info(f"  Küme analizi: {len(summary_rows)} grup, µ={mu:.4f} ±{sigma:.4f}")
+        logger.info(f"  Küme analizi: {len(summary_rows)} grup, µ={mu:.4f} +/-{sigma:.4f}")
         return {"summary": pd.DataFrame(summary_rows), "mean": float(mu), "std": float(sigma)}
 
     # -----------------------------------------------------------------------
@@ -487,7 +491,7 @@ class NuclearPatternAnalyzer:
     def generate_excel_report(self) -> Optional[Path]:
         """Tüm analiz sonuçlarını standart biçimlendirilmiş Excel'e yaz."""
         if not self._results:
-            logger.warning("  [!] Sonuç yok — Excel üretilemiyor")
+            logger.warning("  [!] Sonuç yok -- Excel üretilemiyor")
             return None
 
         timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
@@ -563,7 +567,7 @@ class NuclearPatternAnalyzer:
                 sheets[f"{target}_Sıçrama_Çekirdek"[:31]] = jn
 
         if not sheets:
-            logger.warning("  [!] Sayfa verisi yok — Excel üretilemiyor")
+            logger.warning("  [!] Sayfa verisi yok -- Excel üretilemiyor")
             return None
 
         if _ES:
@@ -594,7 +598,7 @@ class NuclearPatternAnalyzer:
     def generate_plots(self) -> List[str]:
         """Tüm grafikler: zincir çizgileri, violin, heatmap."""
         if not _PLOT:
-            logger.info("  [INFO] matplotlib yok — grafikler atlanıyor")
+            logger.info("  [INFO] matplotlib yok -- grafikler atlanıyor")
             return []
 
         out_dir = self.output_dir / "plots"
@@ -615,7 +619,7 @@ class NuclearPatternAnalyzer:
             # 5. Küme dağılım barplot
             paths += self._plot_cluster_bar(res, target, out_dir)
 
-        logger.info(f"  [OK] {len(paths)} grafik üretildi → {out_dir}")
+        logger.info(f"  [OK] {len(paths)} grafik üretildi -> {out_dir}")
         return [str(p) for p in paths]
 
     def _plot_chains(

@@ -47,7 +47,7 @@ class InteractiveHTMLVisualizer:
         
         try:
             # 1. 3D R² Comparison
-            logger.info("1/5: Creating 3D R² comparison...")
+            logger.info("1/5: Creating 3D R^2 comparison...")
             self.create_3d_r2_comparison(results_df)
             
             # 2. Config × Target Heatmap

@@ -531,6 +531,7 @@ def get_deformation_type(beta_2):
                 return 'unknown'
         except Exception as e:
             return 'unknown'
+        np = None
 
     for def_type, (min_beta, max_beta) in DEFORMATION_REGIONS.items():
         if min_beta <= beta_2 < max_beta:

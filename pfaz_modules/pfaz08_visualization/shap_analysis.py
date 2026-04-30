@@ -10,6 +10,7 @@ Dokümanda belirtilen SHAP grafikleri:
 - Feature importance comparison
 """
 
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -21,6 +22,7 @@ try:
     import shap
     SHAP_AVAILABLE = True
 except ImportError:
+    shap = None
     SHAP_AVAILABLE = False
     logging.warning("SHAP not available")
 
@@ -293,11 +295,12 @@ class PermutationImportanceAnalyzer:
         logger.info(f"Permutation importance analizi: {model_name}")
         
         # Permutation importance hesapla
+        _n_jobs = 1 if os.environ.get('_PFAZ_PARALLEL_ACTIVE') == '1' else -1
         result = permutation_importance(
             model, X_test, y_test,
             n_repeats=10,
             random_state=42,
-            n_jobs=-1
+            n_jobs=_n_jobs
         )
         
         # Sırala

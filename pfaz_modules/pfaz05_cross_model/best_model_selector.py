@@ -218,7 +218,7 @@ class BestModelSelector:
         for i, (perf, score) in enumerate(top_models, 1):
             logger.info(f"{i}. {perf.model_name} (Type: {perf.model_type})")
             logger.info(f"   Score: {score:.4f}")
-            logger.info(f"   R²: {perf.r2:.4f} | MAE: {perf.mae:.4f} | RMSE: {perf.rmse:.4f}")
+            logger.info(f"   R^2: {perf.r2:.4f} | MAE: {perf.mae:.4f} | RMSE: {perf.rmse:.4f}")
             logger.info(f"   Training: {perf.training_time:.2f}s | Size: {perf.model_size:.2f}MB")
             logger.info(f"   Stability: {perf.stability_score:.4f} | Generalization: {perf.generalization_score:.4f}")
             logger.info("")
@@ -282,7 +282,7 @@ class BestModelSelector:
         
         # Save to file
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, 'w') as f:
+        with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2)
         
         logger.info(f"Selection report saved to {output_path}")
