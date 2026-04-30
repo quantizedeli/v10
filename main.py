@@ -527,6 +527,13 @@ class NuclearPhysicsAIOrchestrator:
             self.status_manager.update_pfaz(pfaz_id, 'skipped', 0)
             return {'status': 'skipped'}
 
+        if mode == 'resume':
+            _existing = list(self.pfaz_outputs[2].rglob('metrics_*.json'))
+            if _existing:
+                logger.info(f"[RESUME] PFAZ 2 ciktisi mevcut ({len(_existing)} metrics), atlaniyor.")
+                self.status_manager.update_pfaz(pfaz_id, 'completed', 100)
+                return {'status': 'resumed_from_existing'}
+
         try:
             self.status_manager.update_pfaz(pfaz_id, 'running', 10)
 
@@ -547,7 +554,7 @@ class NuclearPhysicsAIOrchestrator:
             trainer = ParallelAITrainer(
                 datasets_dir=str(self.pfaz_outputs[1]),
                 models_dir=str(self.pfaz_outputs[2]),
-                training_config_path='pfaz_modules/pfaz02_ai_training/training_configs_50.json',
+                training_config_path=str(self.project_root / 'pfaz_modules' / 'pfaz02_ai_training' / 'training_configs_50.json'),
                 gpu_enabled=_gpu_available,
                 n_workers=_n_workers,
                 use_hyperparameter_tuning=config.get('use_hyperparameter_tuning', False),
@@ -778,9 +785,11 @@ class NuclearPhysicsAIOrchestrator:
                 use_latex_generator=config.get('use_latex_generator', True)
             )
             # Pass aaa2.txt path for isotope chain analysis
-            aaa2_path = self.config.get('source_data_path') or self.config.get('aaa2_txt_path')
-            if aaa2_path:
-                reporter.aaa2_txt_path = str(aaa2_path)
+            _aaa2_f = self.config.get('data_file', 'aaa2.txt')
+            _aaa2_p = Path(_aaa2_f) if Path(_aaa2_f).is_absolute() else self.project_root / _aaa2_f
+            if not _aaa2_p.exists():
+                _aaa2_p = self.project_root / 'data' / 'aaa2.txt'
+            reporter.aaa2_txt_path = str(_aaa2_p)
             # Pass PFAZ9 output dir for Monte Carlo summary
             reporter.pfaz9_output_dir = str(self.pfaz_outputs[9])
             # Pass PFAZ13 output dir for AutoML improvements sheet
@@ -1218,7 +1227,7 @@ class NuclearPhysicsAIOrchestrator:
             logger.info(f"[GPU] PFAZ13 gpu={_gpu13}")
 
             from pfaz_modules.pfaz13_automl.automl_optimizer import (
-                AutoMLOptimizer, OPTUNA_AVAILABLE, optimize_all_targets
+                AutoMLOptimizer, OPTUNA_AVAILABLE
             )
             import json, numpy as np, pandas as pd
             from pathlib import Path
@@ -1869,7 +1878,7 @@ class NuclearPhysicsAIOrchestrator:
         # Satir sayisini kontrol et
         try:
             if data_path.suffix.lower() == '.csv':
-                row_count = sum(1 for _ in open(str(data_path, encoding='utf-8'))) - 1
+                row_count = sum(1 for _ in open(str(data_path), encoding='utf-8')) - 1
             elif data_path.suffix.lower() in ('.xlsx', '.xls'):
                 import openpyxl
                 wb = openpyxl.load_workbook(str(data_path), read_only=True)
@@ -1899,11 +1908,8 @@ class NuclearPhysicsAIOrchestrator:
         # Gecici config olustur
         tmp_config_path = custom_out / 'config.json'
         base_cfg = dict(self.config)
-        base_cfg['data_file']        = str(data_path)
-        base_cfg['output_base_dir']  = str(custom_out / 'generated_datasets')
-        base_cfg['ai_output_dir']    = str(custom_out / 'ai_models')
-        base_cfg['anfis_output_dir'] = str(custom_out / 'anfis_models')
-        base_cfg['reports_dir']      = str(custom_out / 'reports')
+        base_cfg['data_file']  = str(data_path)
+        base_cfg['output_dir'] = str(custom_out)  # orchestrator uses this key to build all pfaz_outputs
 
         with open(tmp_config_path, 'w', encoding='utf-8') as f:
             json.dump(base_cfg, f, indent=2, ensure_ascii=False)
