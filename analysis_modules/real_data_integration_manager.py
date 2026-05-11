@@ -25,8 +25,7 @@ warnings.filterwarnings('ignore')
 
 # Import FAZ 7 modules
 import sys
-sys.path.insert(0, '/home/claude')
-sys.path.insert(0, '/mnt/user-data/outputs')
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ensemble_model_builder import EnsembleModelBuilder
 from stacking_meta_learner import StackingMetaLearner

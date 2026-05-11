@@ -372,7 +372,8 @@ class FinalReportingPipeline:
                     try:
                         with open(metrics_file, encoding='utf-8') as f:
                             m = json.load(f)
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f'[PFAZ06] Metrics JSON okunamadi: {e}')
                         continue
 
                     # Skip diverged DNN models (val_R2 < -2 flag)
@@ -467,7 +468,8 @@ class FinalReportingPipeline:
                 try:
                     with open(metrics_file, encoding='utf-8') as f:
                         m = json.load(f)
-                except Exception:
+                except Exception as e:
+                    logger.warning(f'[PFAZ06] Metrics JSON okunamadi (robustness): {e}')
                     continue
 
                 train_m = m.get('train', {})
@@ -529,8 +531,8 @@ class FinalReportingPipeline:
                 row.update(cv)
                 self.all_results['robustness'].append(row)
                 count += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f'[PFAZ06] Robustness satir isleme hatasi: {e}')
         logger.info(f"  [OK] {count} saglamlik sonucu")
 
     def _collect_crossmodel_results(self):

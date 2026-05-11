@@ -495,6 +495,18 @@ class DNNTrainer(BaseModelTrainer):
             verbose=0
         )
         
+        # BUG-54: TF memory leak -- clear_session after each model training
+        try:
+            import tensorflow as tf
+            tf.keras.backend.clear_session()
+        except Exception:
+            pass
+        try:
+            import gc
+            gc.collect()
+        except Exception:
+            pass
+        
         training_time = time.time() - start_time
         
         # Predictions

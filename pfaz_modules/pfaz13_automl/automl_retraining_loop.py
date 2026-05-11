@@ -208,8 +208,8 @@ def _load_split_data(datasets_dir: Path, dataset_name: str, target: str):
                     y_val   = y_val.ravel()
 
                 return X_train, y_train, X_val, y_val
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f'[AutoML] Dataset yukleme hatasi: {e}')
 
     return None
 
@@ -302,8 +302,8 @@ class AutoMLRetrainingLoop:
                     if candidate2.exists():
                         logger.info(f"[AutoMLRetrain] aaa2_txt_path config'den alindi: {candidate2}")
                         return str(candidate2)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f'[AutoML] Config okuma hatasi: {e}')
 
         # 2) Standart fallback konumlari
         for fallback in [
@@ -577,7 +577,7 @@ class AutoMLRetrainingLoop:
                 test_r2_after = None
                 if X_test is not None:
                     try:
-                        from pfaz_modules.pfaz03_anfis_training.anfis_parallel_trainer_v2 import TakagiSugenoANFIS
+                        from pfaz_modules.pfaz03_anfis_training.anfis_core import TakagiSugenoANFIS
                         from sklearn.preprocessing import StandardScaler
                         scaler = StandardScaler()
                         X_sc = scaler.fit_transform(X_tr)
@@ -755,8 +755,8 @@ class AutoMLRetrainingLoop:
         try:
             with open(log_path, 'w', encoding='utf-8') as f:
                 json.dump([], f)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f'[AutoML] Log dosyasi baslatma hatasi: {e}')
 
     def _save_excel_report(self) -> Optional[Path]:
         """

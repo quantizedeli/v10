@@ -13,11 +13,21 @@ All models are GPU-accelerated and compatible with the existing pipeline.
 """
 
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    import torch.optim as optim
+    from torch.utils.data import TensorDataset, DataLoader
+    TORCH_AVAILABLE = True
+except ImportError:
+    torch = None
+    nn = None
+    F = None
+    optim = None
+    TensorDataset = None
+    DataLoader = None
+    TORCH_AVAILABLE = False
 from typing import Dict, List, Tuple, Optional
 import logging
 import math

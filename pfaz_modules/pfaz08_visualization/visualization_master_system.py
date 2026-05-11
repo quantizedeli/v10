@@ -1487,12 +1487,12 @@ class MasterVisualizationSystem:
                 logger.warning(f"  Could not load AI_vs_ANFIS_Comparison: {e}")
 
         cv_df = None
-        if 'Robustness_CV_Results' in available_sheets:
+        if 'Robustness_CV' in available_sheets:
             try:
-                cv_df = pd.read_excel(xl, sheet_name='Robustness_CV_Results')
-                logger.info(f"  Loaded Robustness_CV_Results: {len(cv_df)} rows")
+                cv_df = pd.read_excel(xl, sheet_name='Robustness_CV')
+                logger.info(f"  Loaded Robustness_CV: {len(cv_df)} rows")
             except Exception as e:
-                logger.warning(f"  Could not load Robustness_CV_Results: {e}")
+                logger.warning(f"  Could not load Robustness_CV: {e}")
 
         # ----------------------------------------------------------------
         # CHART 1: Model Type R2 Boxplot (RF vs XGBoost vs DNN)

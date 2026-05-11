@@ -146,8 +146,8 @@ class UnknownNucleiPredictor:
                     val_r2 = _val.get('r2') if isinstance(_val, dict) else m.get('val_r2')
                     _train = m.get('train')
                     train_r2 = _train.get('r2') if isinstance(_train, dict) else m.get('train_r2')
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f'[PFAZ04] Metrics JSON okunamadi: {e}')
 
             try:
                 model = joblib.load(pkl)
@@ -187,8 +187,8 @@ class UnknownNucleiPredictor:
                     val_r2 = _val.get('r2') if isinstance(_val, dict) else m.get('val_r2')
                     _train = m.get('train')
                     train_r2 = _train.get('r2') if isinstance(_train, dict) else m.get('train_r2')
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(f'[PFAZ04] Metrics JSON okunamadi: {e}')
 
             try:
                 model = joblib.load(pkl)

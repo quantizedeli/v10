@@ -207,7 +207,7 @@ class ComprehensiveExcelReporter:
         target_df = df[df['target'] == target] if 'target' in df.columns else pd.DataFrame()
         
         if not target_df.empty:
-            sheet_name = f'{target}_Sonuçlar'
+            sheet_name = f'{target}_Sonuçlar'[:31]
             target_df.to_excel(writer, sheet_name=sheet_name, index=False)
             
             worksheet = writer.sheets[sheet_name]
@@ -220,7 +220,7 @@ class ComprehensiveExcelReporter:
         config_df = df[df['config_id'] == config_id] if 'config_id' in df.columns else pd.DataFrame()
         
         if not config_df.empty:
-            sheet_name = f'{config_id}_Detay'
+            sheet_name = f'{config_id}_Detay'[:31]
             config_df.to_excel(writer, sheet_name=sheet_name, index=False)
             
             worksheet = writer.sheets[sheet_name]

@@ -28,7 +28,12 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 import warnings
 import time
-from tqdm import tqdm
+try:
+    from tqdm import tqdm
+    TQDM_AVAILABLE = True
+except ImportError:
+    tqdm = None
+    TQDM_AVAILABLE = False
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 warnings.filterwarnings('ignore')
 
@@ -82,18 +87,18 @@ plt.rcParams['font.size'] = 10
 DEFAULT_MC_CONFIG = {
     'mc_dropout': {
         'enabled': True,
-        'n_samples': 100,   # DNN forward-pass: 100 yeterli (her forward hizli)
+        'n_samples': 100,
         'applicable_models': ['DNN']
     },
     'bootstrap': {
         'enabled': True,
-        'n_bootstrap': 1000,  # Efron & Tibshirani (1993): n>=1000 CI stabilitesi icin
+        'n_bootstrap': 1000,  # Efron & Tibshirani 1993: stabil %95 CI icin n>=1000
         'stratified': True
     },
     'noise_sensitivity': {
         'enabled': True,
         'noise_levels': [0.01, 0.02, 0.05, 0.1, 0.2],
-        'n_samples_per_level': 1000,  # N=267 kucuk set; K=1000 literatur standardi
+        'n_samples_per_level': 1000,  # Shang et al. 2022: N=267 kucuk veri seti icin n=1000
         'noise_type': 'gaussian'
     },
     'feature_dropout': {
@@ -156,7 +161,7 @@ class MCDropoutSimulator:
         # Enable dropout during inference
         predictions = []
         
-        for i in tqdm(range(self.n_samples), desc="MC Dropout"):
+        for i in (tqdm(range(self.n_samples), desc="MC Dropout") if TQDM_AVAILABLE else range(self.n_samples)):
             # Forward pass with training=True to enable dropout
             y_pred = model(X, training=True).numpy()
             predictions.append(y_pred.flatten())
@@ -191,7 +196,9 @@ class MCDropoutSimulator:
 class BootstrapSimulator:
     """Bootstrap resampling for confidence intervals"""
     
-    def __init__(self, n_bootstrap: int = 100, stratified: bool = True):
+    def __init__(self, n_bootstrap: int = 1000, stratified: bool = True):
+        # BUG-38 (Sprint 5): default 100 -> 1000 (Efron & Tibshirani 1993)
+        # DEFAULT_MC_CONFIG ile uyumlu; direkt cagirimda da stabil CI saglar.
         self.n_bootstrap = n_bootstrap
         self.stratified = stratified
     
@@ -227,7 +234,7 @@ class BootstrapSimulator:
         bootstrap_r2 = []
         bootstrap_rmse = []
         
-        for i in tqdm(range(self.n_bootstrap), desc="Bootstrap"):
+        for i in (tqdm(range(self.n_bootstrap), desc="Bootstrap") if TQDM_AVAILABLE else range(self.n_bootstrap)):
             # Resample with replacement
             indices = np.random.choice(n_train, size=n_train, replace=True)
             X_boot = X_train[indices]
@@ -285,8 +292,9 @@ class NoiseSimulator:
     """Noise sensitivity analysis"""
     
     def __init__(self, noise_levels: List[float] = None,
-                 n_samples_per_level: int = 100,
+                 n_samples_per_level: int = 1000,
                  noise_type: str = 'gaussian'):
+        # BUG-38 (Sprint 5): default 100 -> 1000 (Shang et al. 2022, n>=1000 stabil)
         self.noise_levels = noise_levels or [0.01, 0.02, 0.05, 0.1, 0.2]
         self.n_samples_per_level = n_samples_per_level
         self.noise_type = noise_type
@@ -505,7 +513,7 @@ class EnsembleUncertaintyAnalyzer:
         # Collect predictions from all models
         all_predictions = np.zeros((n_models, n_samples))
         
-        for i, model in enumerate(tqdm(models, desc="Ensemble")):
+        for i, model in enumerate(tqdm(models, desc="Ensemble") if TQDM_AVAILABLE else models):
             try:
                 y_pred = model.predict(X)
                 all_predictions[i] = y_pred.flatten()

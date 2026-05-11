@@ -290,6 +290,17 @@ class AutoMLOptimizer:
             from sklearn.ensemble import RandomForestRegressor
             model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=_inner_n_jobs())
             model.fit(self.X_train, self.y_train)
+        finally:
+            # BUG-53: TF memory leak -- Optuna trial dongulerinde clear_session zorunlu
+            try:
+                tf.keras.backend.clear_session()
+            except Exception:
+                pass
+            try:
+                import gc
+                gc.collect()
+            except Exception:
+                pass
 
         return model
 

@@ -26,7 +26,12 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Optional
 import warnings
 import time
-from tqdm import tqdm
+try:
+    from tqdm import tqdm
+    TQDM_AVAILABLE = True
+except ImportError:
+    tqdm = None
+    TQDM_AVAILABLE = False
 import sys
 
 # Add project root to path
@@ -683,7 +688,7 @@ class AAA2ControlGroupAnalyzerComplete:
         predictions_array = []
         timing_info = {}
 
-        for record in tqdm(model_records, desc=f"Predicting {target}"):
+        for record in (tqdm(model_records, desc=f"Predicting {target}") if TQDM_AVAILABLE else model_records):
             try:
                 feature_names = record['feature_names']
                 # Check all features available in AAA2 enriched data

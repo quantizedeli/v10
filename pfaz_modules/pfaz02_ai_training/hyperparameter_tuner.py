@@ -454,6 +454,19 @@ class DNNTuner(HyperparameterTuner):
         
         return score
 
+    def _cleanup_trial(self):
+        """BUG-53: TF memory leak -- Optuna trial dongulerinde clear_session + gc.collect"""
+        try:
+            import tensorflow as tf
+            tf.keras.backend.clear_session()
+        except Exception:
+            pass
+        try:
+            import gc
+            gc.collect()
+        except Exception:
+            pass
+
 
 # ============================================================================
 # UNIFIED TUNER (ALL MODELS)
