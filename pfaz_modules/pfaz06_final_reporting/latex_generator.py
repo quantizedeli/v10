@@ -200,7 +200,10 @@ Features were derived from theoretical nuclear physics:
 
 SHAP-based feature importance analysis guided the design of 53 feature sets
 across targets, ranging from 3-input to 5-input combinations.
-Dataset sizes: 75, 100, 150, 200, ALL nuclei.
+Dataset sizes: 100, 150, 200, ALL (267) nuclei.
+(Size=75 removed: insufficient for DNN training and reliable CV folds.)
+Scaling methods: NoScaling, Standard, MinMax.
+(Robust scaling removed: systematic R²<0 failures on QM target.)
 Train/test splits: S70 (70/15/15) and S80 (80/10/10).
 
 \section{AI Models}
@@ -307,7 +310,7 @@ Adaptive $n_{\text{mfs}}$ selection: ensures $n_{\text{rules}} < n_{\text{train}
 \section{{Feature Set Analysis}}
 
 Feature sets ranging from 3 to 5 inputs were evaluated.
-Smaller datasets (75--100 nuclei) favour 3-input combinations to avoid overfitting.
+Smaller datasets (100 nuclei) favour 3-input combinations to avoid overfitting.
 Larger datasets (150--ALL) benefit from richer 4--5-input combinations.
 
 \section{{Anomaly Analysis}}

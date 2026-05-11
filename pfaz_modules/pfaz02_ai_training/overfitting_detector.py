@@ -241,6 +241,54 @@ class OverfittingDetector:
         logger.info(f"Output directory: {self.output_dir}")
         logger.info("=" * 80)
     
+    def analyze_training_metrics(
+        self,
+        train_metrics: Dict,
+        val_metrics: Dict,
+        test_metrics: Optional[Dict] = None
+    ) -> Dict:
+        """
+        Analyze train/val/test metrics for overfitting.
+
+        Called by parallel_ai_trainer after each model is saved.
+        Expects dicts with keys like 'r2', 'mse', 'mae'.
+
+        Returns:
+            Dict with keys: has_overfitting, severity, gaps, suggestions
+        """
+        analysis = {
+            'has_overfitting': False,
+            'severity': 'none',
+            'gaps': {},
+            'suggestions': []
+        }
+
+        train_r2 = train_metrics.get('r2', train_metrics.get('r2_avg'))
+        val_r2   = val_metrics.get('r2',   val_metrics.get('r2_avg'))
+
+        if train_r2 is None or val_r2 is None:
+            analysis['suggestions'] = ['[SKIP] R2 metrics not available for overfitting check']
+            return analysis
+
+        gap = float(train_r2) - float(val_r2)
+        gap_pct = (gap / abs(float(train_r2)) * 100) if float(train_r2) != 0 else 0.0
+        severity = OverfittingMetrics.detect_overfitting_severity(gap_pct)
+
+        analysis['gaps']['r2'] = {
+            'train': float(train_r2),
+            'val': float(val_r2),
+            'gap': gap,
+            'gap_percentage': gap_pct,
+            'severity': severity
+        }
+
+        if severity not in ('none', 'mild'):
+            analysis['has_overfitting'] = True
+
+        analysis['severity'] = severity
+        analysis['suggestions'] = self._generate_suggestions(analysis)
+        return analysis
+
     def load_training_results(self, results_dir: Path) -> List[Dict]:
         """
         Load training results from directory

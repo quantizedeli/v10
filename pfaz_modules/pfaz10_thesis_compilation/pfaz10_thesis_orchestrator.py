@@ -39,7 +39,7 @@ class ThesisOrchestrator:
     
     def __init__(self, 
                  thesis_dir: str = 'output/thesis',
-                 project_dir: str = '/mnt/project'):
+                 project_dir: str = '.'):
         """
         Initialize thesis orchestrator
         

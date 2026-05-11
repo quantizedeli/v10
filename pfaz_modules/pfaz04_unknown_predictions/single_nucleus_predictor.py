@@ -336,7 +336,11 @@ class SingleNucleusPredictor:
         is_mmqm = (target == 'MM_QM')
         records = self._collect_model_records(target)
         if not records:
-            logger.warning(f"  [WARN] {target}: hicbir model bulunamadi")
+            logger.warning(
+                f"  [WARN] {target}: hicbir model bulunamadi. "
+                f"Dual R2 filtresi (cv_R2>=0.0, gap<0.5) cok fazla modeli elemiş olabilir. "
+                f"PFAZ 02/03 ciktilarini kontrol et."
+            )
             return {}
 
         results: Dict[str, np.ndarray] = {}

@@ -22,7 +22,7 @@ warnings.filterwarnings('ignore')
 
 # Import custom modules
 import sys
-sys.path.insert(0, '/home/claude')
+# sys.path.insert(0, '/home/claude')  # REMOVED: hardcoded Unix path (BUG-20)
 
 from ensemble_model_builder import EnsembleModelBuilder
 from stacking_meta_learner import StackingMetaLearner

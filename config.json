@@ -16,7 +16,21 @@
 
   "pfaz01_dataset_generation": {
     "enabled": true,
-    "dataset_sizes": [75, 100, 150, 200, 267],
+    "dataset_sizes": [100, 150, 200, 267],
+    "_size_notes": {
+      "75": "KALDIRILDI — DNN_MIN_SAMPLES=80 ihlali + 5-fold CV fold basi ~12 ornek (yuksek varyans)",
+      "100": "KULLAN — hizli egitim, iyi performans",
+      "150": "KULLAN — NoAnomaly varyanti uretilir (IQR + IsolationForest)",
+      "200": "KULLAN — genis dataset, daha az N parcalanmasi",
+      "267": "KULLAN — tam dataset (ALL)"
+    },
+    "scalings": ["NoScaling", "Standard", "MinMax"],
+    "_scaling_notes": {
+      "NoScaling": "Agac tabanli modeller icin ideal (RF, XGBoost, LightGBM, CatBoost)",
+      "Standard": "DNN ve genel icin en iyi",
+      "MinMax": "TRUBA kapsamli tarama icin",
+      "Robust": "KALDIRILDI — QM target icin sistematik basarisizlik (R2 < 0, WARN-03)"
+    },
     "targets": ["MM", "QM"],
     "qm_filtering": {
       "enabled": true,
@@ -32,7 +46,7 @@
 
   "pfaz02_ai_training": {
     "enabled": true,
-    "models": ["RF", "GBM", "XGBoost", "DNN", "BNN", "PINN"],
+    "models": ["RF", "XGBoost", "LightGBM", "CatBoost", "SVR", "DNN"],
     "n_configurations": 50,
     "hyperparameter_optimization": {
       "method": "grid_search",
@@ -45,11 +59,19 @@
     "gpu": {
       "enabled": true,
       "device": "cuda:0"
-    }
+    },
+    "r2_min_threshold": 0.5,
+    "cv_r2_min_threshold": 0.0,
+    "max_train_cv_gap": 0.5,
+    "cv_folds": 3,
+    "cv_folds_large_n": 5,
+    "cv_large_n_threshold": 150,
+    "_dual_r2_note": "Literatur destegi: Shang et al. 2022, Utama et al. 2016. cv_R2 >= 0 = en az ortalamadan iyi. gap < 0.5 = asiri uyum siniri."
   },
 
   "pfaz03_anfis_training": {
     "enabled": true,
+    "_configurations_note": "DIKKAT: Bu liste kod tarafından okunmuyor. PILOT_IDS hafif kodlanmis (anfis_parallel_trainer_v2.py:1172). Aktif konfigurasyonlar: CFG_Grid_2MF_Trap/Bell/Gauss/Tri. n_configs parametresi config'den degil main.py'den gelir.",
     "matlab_engine": {
       "enabled": true,
       "fallback_python": true

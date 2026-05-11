@@ -93,10 +93,12 @@ class GeneralizationAnalyzer:
             known_r2 = known_row['r2']
             unknown_r2 = unknown_row['r2']
             
-            if known_r2 > 0:
-                gs = (unknown_r2 / known_r2) * 100
+            if known_r2 <= 0:
+                gs = None   # known_r2 anlamsiz -- GS tanimsiz
+            elif unknown_r2 < 0:
+                gs = 0.0    # model basarisiz -- GS=0
             else:
-                gs = 0
+                gs = (unknown_r2 / known_r2) * 100
             
             # Classify
             if gs >= 90:

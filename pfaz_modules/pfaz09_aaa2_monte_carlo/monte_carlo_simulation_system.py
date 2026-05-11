@@ -82,18 +82,18 @@ plt.rcParams['font.size'] = 10
 DEFAULT_MC_CONFIG = {
     'mc_dropout': {
         'enabled': True,
-        'n_samples': 100,
+        'n_samples': 100,   # DNN forward-pass: 100 yeterli (her forward hizli)
         'applicable_models': ['DNN']
     },
     'bootstrap': {
         'enabled': True,
-        'n_bootstrap': 100,
+        'n_bootstrap': 1000,  # Efron & Tibshirani (1993): n>=1000 CI stabilitesi icin
         'stratified': True
     },
     'noise_sensitivity': {
         'enabled': True,
         'noise_levels': [0.01, 0.02, 0.05, 0.1, 0.2],
-        'n_samples_per_level': 100,
+        'n_samples_per_level': 1000,  # N=267 kucuk set; K=1000 literatur standardi
         'noise_type': 'gaussian'
     },
     'feature_dropout': {
@@ -103,7 +103,7 @@ DEFAULT_MC_CONFIG = {
     },
     'ensemble_uncertainty': {
         'enabled': True,
-        'consensus_threshold': 0.1
+        'consensus_threshold': 0.1  # MM:0.1 muN, QM:0.20 barn -- per-target ayari PFAZ09 icinde yapilir
     },
     'thresholds': {
         'high_uncertainty': 0.3,
@@ -112,7 +112,7 @@ DEFAULT_MC_CONFIG = {
     },
     'parallel': {
         'enabled': True,
-        'n_jobs': 8
+        'n_jobs': min(8, __import__('os').cpu_count() or 4)  # Sistemin CPU sayisina uyarla (BUG-29)
     }
 }
 

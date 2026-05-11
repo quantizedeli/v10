@@ -128,7 +128,11 @@ class CrossModelEvaluator:
         logger.info(f"{'='*80}")
         
         if len(self.predictions) == 0:
-            raise ValueError("No predictions added! Use add_predictions() first.")
+            raise ValueError(
+                f"No predictions for {target_name}. "
+                f"After Dual R2 filtering (cv_R2>=0.0, gap<0.5), no models may have survived. "
+                f"Check PFAZ 02/03 outputs (R2_MIN_SAVE_THRESHOLD=0.5)."
+            )
         
         # Get common nuclei across all models
         common_nuclei = self._get_common_nuclei()

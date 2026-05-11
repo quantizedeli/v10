@@ -40,6 +40,9 @@ SEMF_PARAMS = {
 # Nuclear radius parameter (fm)
 R0 = 1.2  # fm - Nükleer yarıçap parametresi: r = R0 * A^(1/3)
 
+# Reduced Planck constant times speed of light (nükleer fizik birimi)
+HBAR_C = 197.3269804  # MeV * fm
+
 # ============================================================================
 # SCHMIDT MODELİ PARAMETRELERİ
 # ============================================================================
@@ -63,9 +66,12 @@ G_FACTORS = SCHMIDT_PARAMS
 # ============================================================================
 
 WOODS_SAXON_PARAMS = {
-    'V0': 51.0,     # Potansiyel derinliği (MeV)
-    'r0': 1.25,     # Yarıçap parametresi (fm)
-    'a': 0.67       # Surface diffuseness (yüzey difüzlüğü) (fm)
+    'V0': 51.0,     # Merkezi potansiyel derinligi (MeV)
+    'r0': 1.25,     # Yaricap parametresi (fm)
+    'a': 0.67,      # Yuzey difuzlugu (fm)
+    'V_so': 6.0,    # Spin-orbit potansiyel derinligi (MeV)
+    'r_so': 1.25,   # Spin-orbit yaricap parametresi (fm)
+    'a_so': 0.67    # Spin-orbit yuzey difuzlugu (fm)
 }
 
 # ============================================================================
@@ -145,7 +151,7 @@ SCENARIOS = {
 
 ANOMALY_MODES = ['anomalili', 'anomalisiz']
 
-SCALING_METHODS = ['none', 'standard', 'robust']
+SCALING_METHODS = ['none', 'standard', 'robust', 'minmax']
 
 SAMPLING_METHODS = ['random', 'stratified']
 

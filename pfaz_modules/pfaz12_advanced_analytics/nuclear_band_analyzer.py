@@ -1172,3 +1172,7 @@ class NuclearMomentBandAnalyzer:
         except Exception as e:
             logger.error(f"[BandAnalyzer] Excel yazma hatasi: {e}")
             return None
+
+
+# BUG-31 fix: __init__.py NuclearBandAnalyzer adini bekliyor
+NuclearBandAnalyzer = NuclearMomentBandAnalyzer

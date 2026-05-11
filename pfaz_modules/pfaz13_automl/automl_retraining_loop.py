@@ -38,9 +38,6 @@ except ImportError:
     except ImportError:
         AutoMLOptimizer = None
         OPTUNA_AVAILABLE = False
-    OPTUNA_AVAILABLE = None
-    OPTUNA_AVAILABLE = None
-        OPTUNA_AVAILABLE = None
 
 try:
     import openpyxl
@@ -266,7 +263,7 @@ class AutoMLRetrainingLoop:
 
         self.r2_threshold    = r2_threshold
         self.n_trials        = n_trials
-        self.model_types     = model_types or ['rf', 'xgb', 'lgb']
+        self.model_types     = model_types or ['rf', 'xgb', 'lgb', 'cb', 'svr']  # BUG-34: cb/svr eklendi
         self.max_retrain     = max_retrain
         self.n_per_category  = n_per_category
         self.anfis_models_dir = Path(anfis_models_dir) if anfis_models_dir else None
@@ -537,9 +534,6 @@ class AutoMLRetrainingLoop:
             except ImportError:
                 logger.warning("[AutoMLANFIS] AutoMLANFISOptimizer import edilemedi -- atlaniyor")
                 return []
-            AutoMLANFISOptimizer = None
-            AutoMLANFISOptimizer = None
-                AutoMLANFISOptimizer = None
 
         anfis_dir = self.output_dir / 'anfis_optimization' / category
         anfis_dir.mkdir(parents=True, exist_ok=True)
@@ -583,7 +577,7 @@ class AutoMLRetrainingLoop:
                 test_r2_after = None
                 if X_test is not None:
                     try:
-                        from pfaz_modules.pfaz03_anfis_training.anfis_core import TakagiSugenoANFIS
+                        from pfaz_modules.pfaz03_anfis_training.anfis_parallel_trainer_v2 import TakagiSugenoANFIS
                         from sklearn.preprocessing import StandardScaler
                         scaler = StandardScaler()
                         X_sc = scaler.fit_transform(X_tr)

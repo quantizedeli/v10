@@ -362,11 +362,11 @@ class NuclearPhysicsAIOrchestrator:
             'pfaz_config': {
                 1: {
                     'enabled': True,
-                    'dataset_sizes': [75, 100, 150, 200, 'ALL'],
+                    'dataset_sizes': [100, 150, 200, 'ALL'],  # 75 kaldirildi: DNN_MIN_SAMPLES=80 ihlali
                     'scenarios': ['S70', 'S80'],
                     'targets': ['MM', 'QM'],
-                    # Çoklu scaling ve sampling varyantları (her kombinasyon için ayrı dataset üretilir)
-                    'scaling_methods': ['NoScaling', 'Standard', 'Robust', 'MinMax'],
+                    # Robust kaldirildi: QM target icin sistematik basarisizlik (WARN-03)
+                    'scaling_methods': ['NoScaling', 'Standard', 'MinMax'],
                     'sampling_methods': ['Random', 'Stratified'],
                     'feature_sets': None,  # None = hedef-bazli SHAP setleri
                 },
@@ -551,6 +551,7 @@ class NuclearPhysicsAIOrchestrator:
             _n_workers = _gm.optimal_workers(mode='ai')
             logger.info(f"[GPU] PFAZ2 gpu={_gpu_available}, workers={_n_workers}")
 
+            _pfaz02_cfg = self.config.get('pfaz02_ai_training', {})
             trainer = ParallelAITrainer(
                 datasets_dir=str(self.pfaz_outputs[1]),
                 models_dir=str(self.pfaz_outputs[2]),
@@ -559,7 +560,12 @@ class NuclearPhysicsAIOrchestrator:
                 n_workers=_n_workers,
                 use_hyperparameter_tuning=config.get('use_hyperparameter_tuning', False),
                 use_model_validation=config.get('use_model_validation', True),
-                use_advanced_models=config.get('use_advanced_models', False)
+                use_advanced_models=config.get('use_advanced_models', False),
+                cv_r2_min_threshold=_pfaz02_cfg.get('cv_r2_min_threshold', 0.0),
+                max_train_cv_gap=_pfaz02_cfg.get('max_train_cv_gap', 0.5),
+                cv_folds=_pfaz02_cfg.get('cv_folds', 3),
+                cv_folds_large_n=_pfaz02_cfg.get('cv_folds_large_n', 5),
+                cv_large_n_threshold=_pfaz02_cfg.get('cv_large_n_threshold', 150)
             )
 
             self.status_manager.update_pfaz(pfaz_id, 'running', 50)

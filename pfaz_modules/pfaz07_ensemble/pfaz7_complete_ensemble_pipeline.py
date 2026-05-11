@@ -64,6 +64,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+STACKING_RF_MAX_DEPTH = 10  # RF meta-model icin standart derinlik (BUG-19 fix)
 
 # ============================================================================
 # ADVANCED VOTING ENSEMBLE BUILDER
@@ -113,7 +114,15 @@ class AdvancedVotingEnsemble:
     def simple_voting(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict:
         """Simple voting ensemble (equal weights)"""
         logger.info("\n-> Simple Voting Ensemble")
-        
+
+        if not self.models:
+            logger.error(
+                "[ERROR] Ensemble has 0 models. "
+                "Dual R2 filtering (cv_R2>=0.0, gap<0.5) may have eliminated all candidates. "
+                "Check PFAZ 02/03 saved model count."
+            )
+            raise ValueError("Ensemble has 0 models - cannot create voting.")
+
         predictions = np.array([model.predict(X_test) for model in self.models.values()])
         ensemble_pred = np.mean(predictions, axis=0)
         
@@ -345,7 +354,7 @@ class AdvancedStackingEnsemble:
             'ridge': Ridge(alpha=1.0),
             'lasso': Lasso(alpha=0.1),
             'elasticnet': ElasticNet(alpha=0.1, l1_ratio=0.5),
-            'rf': RandomForestRegressor(n_estimators=100, max_depth=10, random_state=42),
+            'rf': RandomForestRegressor(n_estimators=100, max_depth=STACKING_RF_MAX_DEPTH, random_state=42),
             'gbm': GradientBoostingRegressor(n_estimators=100, max_depth=3, random_state=42),
             'mlp': MLPRegressor(hidden_layer_sizes=(32, 16), max_iter=500, random_state=42)
         }
@@ -938,7 +947,7 @@ class RealEnsembleRunner:
         meta_configs = {
             'ridge': Ridge(alpha=1.0),
             'lasso': Lasso(alpha=0.1),
-            'rf_meta': RandomForestRegressor(n_estimators=50, max_depth=5, random_state=42),
+            'rf_meta': RandomForestRegressor(n_estimators=50, max_depth=STACKING_RF_MAX_DEPTH, random_state=42),
             'gbm_meta': GradientBoostingRegressor(n_estimators=50, max_depth=3, random_state=42),
         }
         for name, meta in meta_configs.items():

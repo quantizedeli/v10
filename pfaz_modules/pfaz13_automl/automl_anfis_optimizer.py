@@ -535,7 +535,7 @@ class AutoMLANFISOptimizer:
 
         # Try actual PFAZ3 ANFIS
         try:
-            from pfaz_modules.pfaz03_anfis_training.anfis_core import TakagiSugenoANFIS, _adaptive_n_mfs
+            from pfaz_modules.pfaz03_anfis_training.anfis_parallel_trainer_v2 import TakagiSugenoANFIS, _adaptive_n_mfs
             n_inputs = X_tr_sc.shape[1]
             method   = config.get('fis_generation', 'grid')
             mf_type  = config.get('mf_type', 'trapezoid')

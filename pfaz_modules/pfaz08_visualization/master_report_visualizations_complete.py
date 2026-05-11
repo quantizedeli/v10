@@ -283,8 +283,8 @@ KEY INSIGHTS & RECOMMENDATIONS
         ax_a2 = fig.add_subplot(gs[0, 1])
         
         # A1: Dataset size distribution
-        dataset_sizes = dataset_info.get('sizes', [75, 100, 150, 200, 'ALL'])
-        dataset_counts = dataset_info.get('counts', [250, 350, 450, 550, 650])
+        dataset_sizes = dataset_info.get('sizes', [100, 150, 200, 'ALL'])
+        dataset_counts = dataset_info.get('counts', [350, 450, 550, 650])
         
         colors_dataset = plt.cm.viridis(np.linspace(0.2, 0.8, len(dataset_sizes)))
         bars = ax_a1.bar(range(len(dataset_sizes)), dataset_counts, 

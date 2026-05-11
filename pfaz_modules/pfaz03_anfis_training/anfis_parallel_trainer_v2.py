@@ -1167,6 +1167,48 @@ class ANFISParallelTrainerV2:
         dataset_paths = self.discover_datasets()
         logger.info(f"Found {len(dataset_paths)} datasets")
 
+        # ANFISDatasetSelector: PFAZ2 R2_test sonuclarina gore dataset filtrele
+        # Top=50, Mid=50, Low=100 (Low agirlikli — ML basarisiz -> ANFIS dene hipotezi)
+        # training_summary.xlsx yoksa (PFAZ2 tamamlanmamis) -> tum datasetler kullanilir
+        try:
+            from pfaz_modules.pfaz03_anfis_training.anfis_dataset_selector import ANFISDatasetSelector
+            _summary_candidates = [
+                self.output_dir.parent / 'trained_models' / 'training_summary.xlsx',
+                self.output_dir.parent.parent / 'outputs' / 'trained_models' / 'training_summary.xlsx',
+            ]
+            _summary_file = next((f for f in _summary_candidates if f.exists()), None)
+            if _summary_file:
+                _ads = ANFISDatasetSelector(
+                    ai_results_dir=str(_summary_file.parent),
+                    output_dir=str(self.output_dir / 'anfis_dataset_selection'),
+                )
+                _ads.load_ai_results(summary_file=str(_summary_file))
+                _selected_names: set = set()
+                for _tgt in ['MM', 'QM']:
+                    _sel_df = _ads.select_method_1_layered(
+                        target=_tgt,
+                        n_datasets=200,
+                        n_top_quota=50,
+                        n_mid_quota=50,
+                        n_low_quota=100,
+                    )
+                    if not _sel_df.empty and 'Dataset_Name' in _sel_df.columns:
+                        _selected_names.update(_sel_df['Dataset_Name'].tolist())
+                if _selected_names:
+                    _before = len(dataset_paths)
+                    dataset_paths = [dp for dp in dataset_paths if dp.name in _selected_names]
+                    logger.info(
+                        f"[OK] ANFISDatasetSelector: {_before} -> {len(dataset_paths)} datasets "
+                        f"(Top=50 Mid=50 Low=100 per target, summary={_summary_file.name})"
+                    )
+                else:
+                    logger.warning("[WARNING] ANFISDatasetSelector: bos secim -- tum datasetler kullaniliyor")
+            else:
+                logger.info("[INFO] ANFISDatasetSelector: training_summary.xlsx bulunamadi "
+                            "-- tum datasetler kullaniliyor (PFAZ2 tamamlanmamis?)")
+        except Exception as _ads_exc:
+            logger.warning(f"[WARNING] ANFISDatasetSelector basarisiz -- tum datasetler kullaniliyor: {_ads_exc}")
+
         # Split configs into pilot (2MF) and advanced (3MF + SubClust)
         PILOT_IDS = {'CFG_Grid_2MF_Trap', 'CFG_Grid_2MF_Bell',
                      'CFG_Grid_2MF_Gauss', 'CFG_Grid_2MF_Tri'}
@@ -1424,8 +1466,9 @@ class ANFISParallelTrainerV2:
         except Exception as _e:
             logger.warning(f"[WARNING] ANFISAdaptiveStrategy basarisiz (devam): {_e}")
 
-        # ANFISDatasetSelector: deactivated — ANFIS 3-phase strategy covers all datasets
-        logger.info("[INFO] ANFISDatasetSelector: deactivated (3-phase pilot strategy active)")
+        # ANFISDatasetSelector: egitim oncesinde (discover_datasets sonrasi) aktif edildi
+        # Top=50, Mid=50, Low=100; training_summary.xlsx gerektiriyor (PFAZ2 ciktisi)
+        logger.info("[INFO] ANFISDatasetSelector: egitim oncesi filtreleme uygulandi (bkz. train_all_anfis_parallel)")
 
         # ---- NuclearPatternAnalyzer: ANFIS sonrasi nuklear desen analizi ----
         try:

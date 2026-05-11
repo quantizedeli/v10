@@ -142,8 +142,10 @@ class UnknownNucleiPredictor:
                 try:
                     with open(metrics_file, encoding='utf-8') as f:
                         m = json.load(f)
-                    val_r2 = m.get('val', {}).get('r2')
-                    train_r2 = m.get('train', {}).get('r2')
+                    _val = m.get('val')
+                    val_r2 = _val.get('r2') if isinstance(_val, dict) else m.get('val_r2')
+                    _train = m.get('train')
+                    train_r2 = _train.get('r2') if isinstance(_train, dict) else m.get('train_r2')
                 except Exception:
                     pass
 
@@ -181,8 +183,10 @@ class UnknownNucleiPredictor:
                 try:
                     with open(metrics_file, encoding='utf-8') as f:
                         m = json.load(f)
-                    val_r2 = m.get('val', {}).get('r2')
-                    train_r2 = m.get('train', {}).get('r2')
+                    _val = m.get('val')
+                    val_r2 = _val.get('r2') if isinstance(_val, dict) else m.get('val_r2')
+                    _train = m.get('train')
+                    train_r2 = _train.get('r2') if isinstance(_train, dict) else m.get('train_r2')
                 except Exception:
                     pass
 

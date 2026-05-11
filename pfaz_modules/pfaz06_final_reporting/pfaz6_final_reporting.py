@@ -1261,11 +1261,6 @@ class FinalReportingPipeline:
             except ImportError:
                 logger.warning("  [INFO] IsotopeChainAnalyzer import edilemedi -- IsoChain_SuddenChanges atlandı")
                 return
-            IsotopeChainAnalyzer = None
-            sys = None
-            IsotopeChainAnalyzer = None
-                sys = None
-                IsotopeChainAnalyzer = None
 
         # Find aaa2.txt
         aaa2_path = self.aaa2_txt_path

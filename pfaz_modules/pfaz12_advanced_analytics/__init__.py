@@ -29,9 +29,25 @@ except ImportError:
     AdvancedSensitivityAnalysis = None
     ADVANCED_SENSITIVITY_ANALYSIS_AVAILABLE = False
 
+try:
+    from .nuclear_band_analyzer import NuclearBandAnalyzer
+    NUCLEAR_BAND_ANALYZER_AVAILABLE = True
+except ImportError:
+    NuclearBandAnalyzer = None
+    NUCLEAR_BAND_ANALYZER_AVAILABLE = False
+
+try:
+    from .nuclear_pattern_analyzer import NuclearPatternAnalyzer
+    NUCLEAR_PATTERN_ANALYZER_AVAILABLE = True
+except ImportError:
+    NuclearPatternAnalyzer = None
+    NUCLEAR_PATTERN_ANALYZER_AVAILABLE = False
+
 __all__ = [
     'StatisticalTestingSuite',      'STATISTICAL_TESTING_SUITE_AVAILABLE',
     'BayesianModelComparison',      'BAYESIAN_MODEL_COMPARISON_AVAILABLE',
     'BootstrapConfidenceIntervals', 'BOOTSTRAP_CONFIDENCE_INTERVALS_AVAILABLE',
     'AdvancedSensitivityAnalysis',  'ADVANCED_SENSITIVITY_ANALYSIS_AVAILABLE',
+    'NuclearBandAnalyzer',          'NUCLEAR_BAND_ANALYZER_AVAILABLE',
+    'NuclearPatternAnalyzer',       'NUCLEAR_PATTERN_ANALYZER_AVAILABLE',
 ]
